@@ -1,0 +1,1297 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens — ตามภาษาการออกแบบของ YouTube (dark theme)
+ *
+ * ค่าสีชุดนี้คือค่าที่ YouTube ใช้จริงใน dark mode
+ * สิ่งที่ทำให้หน้าตา "เป็น YouTube" ไม่ใช่สีแดงอย่างเดียว แต่เป็น:
+ *   • พื้นหลังดำสนิท #0f0f0f ไม่ใช่เทาเข้ม
+ *   • surface ยกระดับด้วย #272727 ไม่ใช่เส้นขอบ
+ *   • ตัวอักษรรอง #aaa ที่คอนทราสต์ต่ำกว่าที่คนส่วนใหญ่กล้าใช้
+ *   • ปุ่มทรงแคปซูล (pill) ไม่ใช่สี่เหลี่ยมมุมมน
+ *   • ระยะห่างแน่น ข้อมูลหนาแน่น
+ */
+@theme {
+  /* ─── พื้นผิว ─────────────────────────────────────────────── */
+  /*
+   * ★ ห้ามตั้งชื่อ token นี้ว่า "base"
+   *
+   *   Tailwind มี utility `text-base` อยู่แล้วซึ่งหมายถึง "ขนาดฟอนต์ 16px"
+   *   ถ้ามี color token ชื่อ base ด้วย มันจะสร้าง `text-base` ที่หมายถึง "สี" ขึ้นมาชนกัน
+   *   ผลคือ <h3 class="text-base"> ที่ตั้งใจให้เป็นขนาดฟอนต์ กลายเป็นสี #0f0f0f
+   *   → ตัวหนังสือสีดำบนพื้นดำ มองไม่เห็นเลย แต่ยังกินพื้นที่อยู่
+   *
+   *   หาสาเหตุยากมากเพราะ build ผ่าน ไม่มี warning และ DOM มีข้อความครบ
+   *   (เจอตอนวัด getComputedStyle จริงว่า color = rgb(15,15,15))
+   */
+  --color-page: #0f0f0f;        /* พื้นหลังหลัก */
+  --color-elevated: #212121;    /* เมนู / dropdown */
+  --color-surface: #272727;     /* ปุ่ม chip การ์ด */
+  --color-surface-hover: #3f3f3f;
+  --color-line: #303030;        /* เส้นคั่น */
+  --color-line-strong: #454545;
+
+  /* ─── ตัวอักษร ────────────────────────────────────────────── */
+  --color-ink: #f1f1f1;
+  --color-ink-soft: #aaaaaa;
+  --color-ink-faint: #717171;
+
+  /* ─── สีแบรนด์ ───────────────────────────────────────────── */
+  --color-accent: #ff0033;      /* แดงสำหรับปุ่มหลัก/ตรามาร์ค */
+  --color-accent-hover: #cc0029;
+  --color-accent-ink: #ffffff;
+  --color-link: #3ea6ff;        /* สีลิงก์/CTA ใน dark mode ของ YouTube */
+
+  /* ─── สถานะ ──────────────────────────────────────────────── */
+  --color-danger: #ff4e45;
+  --color-warn: #ffd24d;
+  --color-live: #ff0033;
+
+  /* ─── ช่องกรอก / ปุ่มในแถบค้นหา ──────────────────────────── */
+  /*
+   * ★ เดิมสามค่านี้ฮาร์ดโค้ดอยู่ใน className (bg-[#121212] · bg-[#222222] ·
+   *   hover:bg-[#2c2c2c]) ซึ่งใช้ได้ตอนมีธีมเดียว แต่พอมี light mode
+   *   ค่าที่ฝังอยู่ใน class จะสลับตามธีมไม่ได้เลย — ต้องยกมาเป็น token ก่อน
+   */
+  --color-input: #121212;        /* พื้นช่องค้นหา — เข้มกว่าหน้าเล็กน้อย */
+  --color-control: #222222;      /* ปุ่มแว่นขยายท้ายช่อง */
+  --color-control-hover: #2c2c2c;
+  --color-scroll: #5c5c5c;       /* แถบเลื่อน */
+
+  /* Roboto จับละติน · Noto Sans Thai จับไทย — เรียงตามลำดับที่เบราว์เซอร์จะลอง */
+  --font-sans: var(--font-roboto), var(--font-noto-thai), Arial, sans-serif;
+  --font-mono: var(--font-roboto-mono), ui-monospace, monospace;
+
+  /* YouTube ใช้ 12px กับการ์ด/ผู้เล่น และ 8px กับกล่องเล็ก */
+  --radius-card: 12px;
+  --radius-box: 8px;
+
+  --spacing-header: 56px;       /* ความสูง header ของ YouTube เป๊ะ ๆ */
+}
+
+:root {
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------------
+ * โทนสว่าง
+ * ---------------------------------------------------------------------------
+ * ★★ ทำไมทับค่าที่ html[data-theme] ไม่ใช่เขียน @theme ชุดที่สอง
+ *
+ *    @theme ของ Tailwind v4 สร้าง utility จากชื่อ token (bg-page, text-ink …)
+ *    แล้วให้ utility นั้นอ้าง var(--color-page) เสมอ — ตัว utility ไม่ได้ฝังค่าสี
+ *    ★ เราจึงเปลี่ยนแค่ค่าของตัวแปรที่ระดับ <html> ได้ แล้วทั้งเว็บเปลี่ยนตาม
+ *      โดยไม่ต้องแตะ class สักบรรทัด และไม่มี CSS ซ้ำสองชุดให้หลุดกัน
+ *
+ * ★★ ทำไมไม่ใช้ @media (prefers-color-scheme) ตรง ๆ
+ *
+ *    ผู้ใช้ต้องเลือกทับระบบได้ (บางคนใช้เครื่องโหมดสว่างแต่อยากดูเว็บนี้แบบมืด
+ *    เพราะนั่งฟังเพลงตอนกลางคืน) ถ้าผูกกับ media query ล้วน จะไม่มีทางเลือกทับ
+ *
+ *    ★ สคริปต์ใน <head> เป็นคนแปลง "system" เป็น light/dark ให้เสร็จ
+ *      ก่อนหน้าจะวาดครั้งแรก — CSS จึงเห็นแค่สองค่าและไม่ต้องรู้จัก system เลย
+ *
+ * ★ ค่าสีชุดนี้คือชุดที่ YouTube ใช้จริงใน light mode
+ *   จุดที่คนมักพลาดคือ ink-soft: ของจริงคือ #606060 ซึ่งเข้มกว่าที่หลายคนเดา
+ *   (ในโหมดมืดใช้ #aaa ซึ่งจาง — กลับด้านกันไม่ได้ตรง ๆ เพราะตาคนไวกับ
+ *   ตัวอักษรจางบนพื้นขาวมากกว่าตัวอักษรจางบนพื้นดำ)
+ * ------------------------------------------------------------------------- */
+html[data-theme='light'] {
+  color-scheme: light;
+
+  --color-page: #ffffff;
+  --color-elevated: #f9f9f9;
+  --color-surface: #f2f2f2;
+  --color-surface-hover: #e5e5e5;
+  --color-line: #e5e5e5;
+  --color-line-strong: #cccccc;
+
+  --color-ink: #0f0f0f;
+  --color-ink-soft: #606060;
+  --color-ink-faint: #909090;
+
+  /*
+   * ★ แดงเข้มลงเล็กน้อยบนพื้นขาว
+   *   #ff0033 บนพื้นดำอ่านง่าย แต่บนพื้นขาวมันสว่างจนแสบตาและคอนทราสต์
+   *   ของตัวอักษรขาวบนปุ่มตกลงมาต่ำกว่าเกณฑ์ — #e60029 แก้ทั้งสองข้อ
+   */
+  --color-accent: #e60029;
+  --color-accent-hover: #c20022;
+  --color-accent-ink: #ffffff;
+  --color-link: #065fd4;
+
+  --color-danger: #c4302b;
+  --color-warn: #8a6100;
+  --color-live: #e60029;
+
+  --color-input: #ffffff;
+  --color-control: #f8f8f8;
+  --color-control-hover: #f0f0f0;
+  --color-scroll: #c1c1c1;
+}
+
+html,
+body {
+  background-color: var(--color-page);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+/*
+ * scrollbar แบบ YouTube — บางและจางจนแทบไม่รบกวนสายตา
+ * โผล่ชัดเฉพาะตอนชี้เมาส์
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scroll) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-scroll);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* โฟกัสที่มองเห็นชัด — จำเป็นสำหรับการใช้งานด้วยคีย์บอร์ด */
+:where(a, button, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-link);
+  outline-offset: 2px;
+}
+
+/*
+ * ★ input ไม่ใช้ outline เพราะเปลี่ยนสีเส้นขอบเป็นฟ้าอยู่แล้วตอนโฟกัส
+ *   ถ้าใส่ทั้งสองอย่างจะเห็นขอบซ้อนกันสองชั้นซึ่งดูรก
+ */
+:where(input):focus-visible {
+  outline: none;
+}
+
+/*
+ * ★ ไม่เขียน .clamp-* เอง — ใช้ utility line-clamp-* ของ Tailwind
+ *
+ *   เคยเขียนเองด้วย `-webkit-box` + `-webkit-box-orient: vertical`
+ *   แล้ว Lightning CSS (ตัว compile ของ Tailwind v4) ตัด -webkit-box-orient ทิ้ง
+ *   เพราะไม่ใช่ property มาตรฐาน — กล่องเลยยุบจนข้อความหายไปทั้งบรรทัด
+ *
+ *   อาการ: ชื่อเพลงในผลการค้นหาไม่ขึ้นเลย แต่ยังกินพื้นที่อยู่
+ *   (เห็นตอนเทียบภาพหน้าจอ ไม่ใช่ตอน build — build ผ่านปกติ)
+ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+ * แถบเลื่อนระดับเสียง
+ * ---------------------------------------------------------------------------
+ * ★ ต้องอยู่ที่นี่ ไม่ใช่ arbitrary variant ของ Tailwind
+ *   สีของ track คำนวณจากระดับเสียงตอน runtime (ส่งมาทาง --track)
+ *   ซึ่ง Tailwind ที่ compile ล่วงหน้าทำไม่ได้
+ *
+ * ★ input สูง 36px เพื่อให้นิ้วกดติด แต่เส้นที่เห็นสูงแค่ 4px
+ *   (เทสต์ responsive เคยจับได้ว่าพื้นที่กดสูงแค่ 4px — กดไม่ติดบนมือถือ)
+ * ------------------------------------------------------------------------- */
+input[type='range'].volume-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--track);
+}
+
+input[type='range'].volume-range::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--track);
+}
+
+/* ---------------------------------------------------------------------------
+ * อีโมจิลอยขึ้นจอ
+ * ---------------------------------------------------------------------------
+ * ★ ส่ายซ้ายขวาเล็กน้อยระหว่างลอย ไม่ใช่ขึ้นตรง ๆ
+ *   การลอยเป็นเส้นตรงดูเหมือนของที่ถูกสั่งให้เคลื่อน ส่วนการส่ายนิดหน่อย
+ *   ทำให้รู้สึกเหมือนลอยขึ้นจริง (หลักเดียวกับหัวใจในไลฟ์ทุกเจ้า)
+ *
+ * ★ ใช้ translate + opacity เท่านั้น — สองอย่างนี้ browser ทำบน compositor
+ *   ได้โดยไม่ต้อง reflow อีโมจิ 40 ตัวพร้อมกันจึงไม่ทำให้เฟรมตก
+ * ------------------------------------------------------------------------- */
+@keyframes reaction-rise {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    transform: translate3d(0, -12vh, 0) scale(1.1);
+    opacity: 1;
+  }
+  40% {
+    transform: translate3d(-18px, -38vh, 0) scale(1);
+  }
+  70% {
+    transform: translate3d(14px, -62vh, 0) scale(0.95);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(-6px, -88vh, 0) scale(0.8);
+    opacity: 0;
+  }
+}
+
+.reaction-float {
+  animation-name: reaction-rise;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-fill-mode: forwards;
+  will-change: transform, opacity;
+}
+
+/* ★ ผู้ใช้ที่ตั้งค่าว่าไม่ชอบภาพเคลื่อนไหว ต้องไม่โดนยัดเยียด */
+@media (prefers-reduced-motion: reduce) {
+  .reaction-float {
+    animation-duration: 1s !important;
+    animation-name: reaction-fade;
+  }
+
+  @keyframes reaction-fade {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * วงแหวนกระเพื่อมของปุ่มไมค์ (หน้าต่างค้นหาด้วยเสียง)
+ * ---------------------------------------------------------------------------
+ * ★★ ทำไมไม่ใช้ animate-ping ของ Tailwind
+ *
+ *    ping ขยายเป็น 2 เท่าแล้วจางหมดภายในจังหวะเดียว ซึ่งอ่านว่า "กะพริบ"
+ *    มากกว่า "กำลังฟัง" — บนปุ่มเล็ก ๆ ในแถบบนยังพอไหว แต่พอเป็นวงกลม 88px
+ *    กลางจอมันดูกระตุก
+ *
+ *    ★ ตัวนี้ขยายไกลกว่า (2.6 เท่า) ด้วย ease-out และจางแบบค่อยเป็นค่อยไป
+ *      ใช้สองวงเหลื่อมเวลากัน 0.9s จึงมีวงกำลังเดินทางอยู่ตลอด ไม่มีช่วงว่าง
+ *
+ * ★ transform + opacity เท่านั้น — ทำบน compositor ไม่ต้อง reflow
+ * ------------------------------------------------------------------------- */
+@keyframes voice-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.voice-ring {
+  animation: voice-pulse 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+/* ★ ไม่ชอบภาพเคลื่อนไหว → เหลือวงนิ่ง ๆ จาง ๆ ไว้พอให้รู้ว่ากำลังฟัง */
+@media (prefers-reduced-motion: reduce) {
+  .voice-ring {
+    animation: none;
+    transform: scale(1.35);
+    opacity: 0.35;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * แสงเหนือบนหน้าแรก
+ * ---------------------------------------------------------------------------
+ * ★★ ทำไมเป็น CSS ล้วน ไม่ใช่รูปหรือ canvas
+ *
+ *    หน้าแรกคือสิ่งแรกที่คนเห็น และเป็นหน้าที่ต้องโหลดเร็วที่สุดในเว็บ
+ *    รูปพื้นหลังสวย ๆ หนัก 300KB ขึ้นไป ส่วน canvas ต้องรอ JS โหลดก่อน
+ *    ทั้งสองทางทำให้เฟรมแรกว่างเปล่า ซึ่งตรงข้ามกับคำว่า "ว้าว"
+ *
+ *    ★ radial-gradient สามก้อน + blur = ศูนย์ไบต์ ศูนย์ request
+ *      และถูกวาดโดย compositor ของ GPU จึงไม่แย่งเวลากับการ hydrate
+ *
+ * ★★ ทำไมสีต้องแยกตามโทน ไม่ใช่ลดความทึบเอา
+ *
+ *    สีเดียวกันที่ opacity ต่างกันให้ผลคนละเรื่องบนพื้นดำกับพื้นขาว —
+ *    แดงจาง ๆ บนพื้นขาวกลายเป็นชมพูซีดที่ดูเหมือนหน้าเว็บพัง
+ *    ส่วนบนพื้นดำมันเรืองแสงพอดี จึงต้องกำหนดสีของแต่ละโทนแยกกันจริง ๆ
+ *
+ * ★ ขยับช้ามาก (30 วินาทีต่อรอบ) — เร็วกว่านี้จะกลายเป็นสิ่งรบกวนสายตา
+ *   ของที่เคลื่อนไหวอยู่เบื้องหลังตลอดเวลาทำให้อ่านตัวหนังสือยากขึ้นจริง ๆ
+ * ------------------------------------------------------------------------- */
+:root {
+  --aurora-1: 255 0 51;      /* แดงแบรนด์ */
+  --aurora-2: 120 60 255;    /* ม่วง */
+  --aurora-3: 0 140 255;     /* ฟ้า */
+  --aurora-alpha: 0.28;
+  --aurora-blur: 90px;
+}
+
+html[data-theme='light'] {
+  /*
+   * ★ บนพื้นขาวต้องใช้สีที่ "อิ่ม" กว่าและจางกว่า
+   *   สีอ่อนบนพื้นขาวหายไปเลย ส่วนสีเข้มที่ทึบเกินจะกลายเป็นคราบสกปรก
+   */
+  --aurora-1: 255 60 100;
+  --aurora-2: 150 100 255;
+  --aurora-3: 60 170 255;
+  --aurora-alpha: 0.22;
+  --aurora-blur: 100px;
+}
+
+.aurora-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* ★ จางหายที่ขอบล่าง ไม่ตัดขาด — เส้นตัดคม ๆ ทำให้ดูเหมือนภาพถูกครอบ */
+  mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(var(--aurora-blur));
+  will-change: transform;
+}
+
+.aurora-blob-1 {
+  width: 46rem;
+  height: 46rem;
+  top: -18rem;
+  left: -10rem;
+  background: rgb(var(--aurora-1) / var(--aurora-alpha));
+  animation: aurora-drift-a 32s ease-in-out infinite;
+}
+
+.aurora-blob-2 {
+  width: 40rem;
+  height: 40rem;
+  top: -14rem;
+  right: -8rem;
+  background: rgb(var(--aurora-2) / var(--aurora-alpha));
+  animation: aurora-drift-b 38s ease-in-out infinite;
+}
+
+.aurora-blob-3 {
+  width: 34rem;
+  height: 34rem;
+  top: 6rem;
+  left: 38%;
+  background: rgb(var(--aurora-3) / var(--aurora-alpha));
+  animation: aurora-drift-c 44s ease-in-out infinite;
+}
+
+@keyframes aurora-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(6rem, 3rem, 0) scale(1.12); }
+}
+@keyframes aurora-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50%      { transform: translate3d(-5rem, 4rem, 0) scale(0.92); }
+}
+@keyframes aurora-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.95); }
+  50%      { transform: translate3d(-4rem, -3rem, 0) scale(1.15); }
+}
+
+/* ★ ไม่ชอบภาพเคลื่อนไหว → หยุดนิ่ง แต่ยังสวย ไม่ใช่หายไปทั้งหมด */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob {
+    animation: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * ตัวอักษรไล่สี — ใช้กับคำเดียวในหัวเรื่องเท่านั้น
+ * ---------------------------------------------------------------------------
+ * ★ ทั้งประโยคไล่สีจะอ่านยากและดูเหมือนเทมเพลตสำเร็จรูป
+ *   เน้นคำเดียวที่เป็นใจความ ("ด้วยกัน") ทำให้ตารู้ทันทีว่าเว็บนี้เกี่ยวกับอะไร
+ * ------------------------------------------------------------------------- */
+.text-aurora {
+  background-image: linear-gradient(
+    100deg,
+    rgb(var(--aurora-1)),
+    rgb(var(--aurora-2)) 55%,
+    rgb(var(--aurora-3))
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------------------------------------------------------------------------
+ * เกรน — ชั้นเม็ดละเอียดบาง ๆ คลุมทั้งหน้า
+ * ---------------------------------------------------------------------------
+ * ★★ ทำไมหน้าเว็บที่ "สะอาดเกินไป" ถึงดูถูก
+ *
+ *    ไล่สีขนาดใหญ่ที่เรียบสนิทจะเกิด banding — เห็นเป็นวงแหวนสีเป็นชั้น ๆ
+ *    บนจอ 8-bit ซึ่งเป็นจอส่วนใหญ่ เม็ดเกรนละเอียด ๆ ทำลายขอบของชั้นพวกนั้น
+ *    ทิ้ง (เทคนิคเดียวกับที่ใช้ในงานพิมพ์และภาพยนตร์มาตลอด)
+ *
+ *    ★ ผลข้างเคียงที่อยากได้: มันให้ "เนื้อ" กับพื้นผิว ทำให้หน้าเว็บดูเหมือน
+ *      ของที่มีคนตั้งใจทำ มากกว่าสีแบนที่เบราว์เซอร์เททับ
+ *
+ * ★ SVG ฝังเป็น data URI — ไม่มี request ไม่มีไฟล์ ~200 ไบต์
+ *   feTurbulence สร้างสัญญาณรบกวนด้วยคณิตศาสตร์ ไม่ใช่รูปที่ต้องดาวน์โหลด
+ * ------------------------------------------------------------------------- */
+.grain-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+html[data-theme='light'] .grain-layer {
+  /* ★ บนพื้นขาวเม็ดเกรนเด่นกว่ามาก ต้องเบากว่ากันครึ่งหนึ่ง */
+  opacity: 0.02;
+}
+
+/* ---------------------------------------------------------------------------
+ * แท่งอีควอไลเซอร์
+ * ---------------------------------------------------------------------------
+ * ★★ ทำไมไม่ต่อกับเสียงจริง
+ *
+ *    Web Audio API อ่านคลื่นเสียงจาก YouTube iframe ไม่ได้เลย (cross-origin)
+ *    และถึงอ่านได้ การต่อ AnalyserNode ก็กินแรงเครื่องตลอดเวลาที่เปิดหน้า
+ *
+ *    ★ สิ่งที่แท่งพวกนี้ต้องสื่อคือ "ที่นี่มีเสียงอยู่" ไม่ใช่ "เสียงหน้าตาแบบนี้"
+ *      จังหวะสุ่มที่ดูเป็นธรรมชาติทำหน้าที่นั้นได้ครบโดยไม่แตะ CPU เลย
+ *      (คนดูไม่มีทางรู้ และไม่มีใครเอาไปเทียบกับเพลงจริง)
+ *
+ * ★ ความยาวรอบต่างกันทุกแท่ง — ถ้าเท่ากันจะเต้นพร้อมกันเป๊ะแบบหุ่นยนต์
+ *   ตัวเลขที่ไม่ลงตัวกันทำให้ลวดลายไม่ซ้ำเดิมนานมาก
+ * ------------------------------------------------------------------------- */
+.eq-bar {
+  transform-origin: bottom;
+  animation: eq-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes eq-pulse {
+  from { transform: scaleY(0.25); }
+  to   { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-bar { animation: none; transform: scaleY(0.6); }
+}
+
+/* ---------------------------------------------------------------------------
+ * ขอบเรืองแสงตอนชี้เมาส์
+ * ---------------------------------------------------------------------------
+ * ★ ใช้ mask ตัดให้เหลือแค่ "ขอบ" ไม่ใช่วาดกรอบสีทับ
+ *   กรอบสีธรรมดาทำให้การ์ดดูเหมือนถูกเลือกอยู่ (selected) ส่วนขอบไล่สีบาง ๆ
+ *   อ่านว่า "กดได้" ซึ่งเป็นคนละความหมาย
+ * ------------------------------------------------------------------------- */
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    rgb(var(--aurora-1) / 0.7),
+    rgb(var(--aurora-2) / 0.5),
+    rgb(var(--aurora-3) / 0.7)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+
+.glow-border:hover::before {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------------------
+ * พื้นลอบบี้
+ * ---------------------------------------------------------------------------
+ * ★★ ทำไมต้องมีลายตาราง ไม่ใช่พื้นสีเรียบ
+ *
+ *    พื้นเรียบทำให้มองไม่ออกว่าตัวเองกำลังเคลื่อนที่อยู่หรือเปล่า —
+ *    ตัวละครอยู่กลางจอเสมอ (กล้องตาม) สิ่งเดียวที่บอกว่าเดินอยู่คือ
+ *    ของที่เลื่อนผ่านไปข้างหลัง
+ *
+ *    ★ ลายตารางจาง ๆ ทำหน้าที่นั้นโดยไม่แย่งความสนใจจากห้องและตัวละคร
+ *      (หลักเดียวกับพื้นกระดานหมากรุกในเกมเดินสำรวจทุกเกม)
+ * ------------------------------------------------------------------------- */
+.lobby-floor {
+  background-color: var(--color-page);
+  background-image:
+    radial-gradient(
+      ellipse 70% 55% at 50% 0%,
+      rgb(var(--aurora-2) / 0.16),
+      transparent 70%
+    ),
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 100% 100%, 64px 64px, 64px 64px;
+  /* ★ ตารางจางลงเรื่อย ๆ ที่ขอบ — ทำให้โลกดูไม่มีขอบเขตชัด ไม่ใช่กระดาษแผ่นหนึ่ง */
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 45%, #000 40%, transparent 100%);
+}
+
+html[data-theme='light'] .lobby-floor {
+  /* เส้นตารางบนพื้นขาวเด่นเกินไป — หรี่ลงด้วยการทับสีพื้นอีกชั้น */
+  background-image:
+    radial-gradient(
+      ellipse 70% 55% at 50% 0%,
+      rgb(var(--aurora-2) / 0.1),
+      transparent 70%
+    ),
+    linear-gradient(rgb(0 0 0 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(0 0 0 / 0.045) 1px, transparent 1px);
+}
+
+/* ── ป้ายจาง ๆ ที่โผล่แล้วหายเอง ──────────────────────────────────
+ *
+ * ★ ทั้งสองอันวิ่งด้วย CSS ล้วน ไม่มี JS คอยไล่ opacity ทีละเฟรม
+ *   ของที่ "โผล่แล้วหาย" คือกรณีที่ CSS animation ทำได้ดีที่สุดอยู่แล้ว
+ *   และมันเริ่ม/จบตรงเวลาแม้แท็บจะโดนเบราว์เซอร์หรี่ timer อยู่
+ */
+@keyframes fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.18); }
+}
+
+@keyframes notice-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  10%  { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-4px); }
+}
+
+.join-notice {
+  animation: notice-in 4.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .join-notice { animation: none; opacity: 0.9; }
+}
+
+/* ---------------------------------------------------------------------------
+ * ชั้นดนตรีของหน้าแรก
+ * ---------------------------------------------------------------------------
+ * ★★★ ทำไมทุกอนิเมชันในไฟล์นี้ขยับแค่ transform กับ opacity
+ *
+ *     สองคุณสมบัตินี้เบราว์เซอร์ยกไปให้การ์ดจอทำ ไม่ต้องคำนวณ layout ใหม่
+ *     ★ ส่วน width/height/top/left บังคับให้ browser วัดหน้าใหม่ทุกเฟรม —
+ *       บนมือถือที่ CPU ช้า หน้าแรกจะกระตุกตั้งแต่วินาทีแรกที่คนเปิดเข้ามา
+ *       ซึ่งเป็นวินาทีที่แพงที่สุดของทั้งเว็บ
+ *
+ * ★★ และทุกอันต้องหยุดได้ด้วย prefers-reduced-motion
+ *    คนที่ตั้งค่านี้ไว้ไม่ได้ "ไม่ชอบอนิเมชัน" — หลายคนเวียนหัวจริง ๆ
+ *    ★ การละเลยมันคือการทำให้เว็บใช้ไม่ได้สำหรับคนกลุ่มนั้น ไม่ใช่แค่สวยน้อยลง
+ * --------------------------------------------------------------------------- */
+
+/* ── แผ่นเสียงหมุน ─────────────────────────────────────────────────────────
+ * ★ วาดด้วย CSS ทั้งใบ ไม่มีไฟล์รูป — มาพร้อม HTML ไม่ต้องรอโหลด
+ *   และคมทุกความละเอียดหน้าจอโดยไม่ต้องมี @2x
+ *
+ * ★★★ ต้องมีสองชุดสี ไม่ใช่ชุดเดียวแล้วลด opacity เอา
+ *
+ *     ตอนแรกทำชุดเดียว (แผ่นสีดำ ร่องสีขาวจาง) แล้วลด opacity ทั้งก้อน
+ *     ★ บนโทนสว่างมันกลายเป็น "วงกลมเทา ๆ" ก้อนหนึ่งกลางจอ —
+ *       ร่องเสียงสีขาวบนพื้นขาวหายสนิท เหลือแต่รูปทรงกลมที่ไม่ได้สื่ออะไร
+ *       (เห็นตอนดูภาพจริง ไม่ใช่ตอนเขียน)
+ *
+ *     ★★ สิ่งที่ทำให้มันอ่านออกว่าเป็นแผ่นเสียงคือ "ร่อง" ไม่ใช่ "สีดำ"
+ *        โทนสว่างจึงต้องกลับด้าน: แผ่นเกือบใส ร่องเป็นเส้นเข้ม
+ */
+:root {
+  --vinyl-groove: rgb(255 255 255 / 0.06);
+  --vinyl-core: #1c1c1e;
+  --vinyl-edge: #0d0d0f;
+  --vinyl-sheen: rgb(255 255 255 / 0.10);
+  --vinyl-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.9);
+}
+
+html[data-theme='light'] {
+  --vinyl-groove: rgb(20 20 30 / 0.07);
+  /* ★ เกือบใส — ให้เห็นร่อง ไม่ใช่ให้เห็นแผ่น */
+  --vinyl-core: rgb(20 20 30 / 0.03);
+  --vinyl-edge: rgb(20 20 30 / 0.05);
+  --vinyl-sheen: rgb(255 255 255 / 0.5);
+  --vinyl-shadow: none;
+}
+
+.vinyl {
+  position: relative;
+  border-radius: 9999px;
+  background:
+    /* ร่องเสียง — เส้นถี่ ๆ ที่ทำให้มันอ่านเป็นแผ่นเสียง ไม่ใช่วงกลมทึบ */
+    repeating-radial-gradient(
+      circle at center,
+      var(--vinyl-groove) 0 1px,
+      transparent 1px 4px
+    ),
+    radial-gradient(circle at 30% 25%, var(--vinyl-sheen), transparent 45%),
+    radial-gradient(circle at center, var(--vinyl-core) 0 38%, var(--vinyl-edge) 38% 100%);
+  box-shadow: var(--vinyl-shadow);
+  animation: vinyl-spin 14s linear infinite;
+}
+
+/* ป้ายกลางแผ่น */
+.vinyl::after {
+  content: '';
+  position: absolute;
+  inset: 36%;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgb(var(--aurora-1)), rgb(var(--aurora-2)));
+  box-shadow: inset 0 0 0 3px rgb(0 0 0 / 0.35);
+}
+
+/* รูเข็มตรงกลาง */
+.vinyl::before {
+  content: '';
+  position: absolute;
+  inset: 47.5%;
+  z-index: 1;
+  border-radius: 9999px;
+  /* ★ ใช้ตัวแปรสีพื้นที่มีอยู่แล้ว ไม่ใช่สีดำตายตัว
+       ไม่งั้นโทนสว่างจะมีจุดดำเล็ก ๆ กลางแผ่นโผล่มาโดยไม่มีเหตุผล */
+  background: var(--color-page);
+}
+
+@keyframes vinyl-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── โน้ตดนตรีลอยขึ้น ──────────────────────────────────────────────────────
+ * ★ ลอยช้ามาก (14–22 วินาทีต่อรอบ) และจางมาก
+ *   เร็วกว่านี้จะแย่งสายตาจากพาดหัว ซึ่งเป็นสิ่งเดียวที่ต้องอ่านในหน้านี้
+ */
+.note-float {
+  animation: note-rise var(--dur, 18s) linear var(--d, 0s) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes note-rise {
+  0%   { transform: translate3d(0, 20px, 0) rotate(0deg); opacity: 0; }
+  12%  { opacity: 0.5; }
+  70%  { opacity: 0.5; }
+  100% { transform: translate3d(var(--dx, 20px), -320px, 0) rotate(var(--rot, 22deg)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vinyl { animation: none; }
+  .note-float { animation: none; opacity: 0; }
+}
+
+
+/* ---------------------------------------------------------------------------
+ * อนิเมชันของหน้าแรก
+ * ---------------------------------------------------------------------------
+ * ★★★ มีสองโหมด และทั้งสองต้องให้ผลที่ "ตาเห็นเหมือนกัน"
+ *
+ *     css — เบราว์เซอร์ทำ scroll-driven ให้เอง (Chrome/Edge) เร็วที่สุด
+ *           ไม่แตะ main thread เลยสักเฟรม
+ *     js  — Safari/Firefox ใช้ IntersectionObserver ติดคลาส .is-in ให้
+ *
+ *     ★ รอบก่อนผมทำแต่โหมด css แล้วบอกตัวเองว่า "ที่เหลือเห็นหน้าปกติก็พอ"
+ *       ผลคือคนใช้ Safari เห็นอนิเมชันเป็นศูนย์ และนั่นคือบั๊ก ไม่ใช่ทางเลือกออกแบบ
+ *
+ * ★★ ทุกอันยังคงแตะแค่ transform / opacity / filter — ไม่มีสีใหม่แม้แต่สีเดียว
+ *    เงา ขอบ พื้นหลัง ตัวอักษร ระยะห่าง เหมือนเดิมทุกค่า
+ *
+ * ★ จังหวะเดียวกันทั้งหน้า: cubic-bezier(0.16, 1, 0.3, 1)
+ *   ออกตัวเร็วแล้วค่อย ๆ หยุด — อ่านว่า "มีน้ำหนัก" ไม่ใช่ "เด้ง"
+ * ------------------------------------------------------------------------- */
+
+/* ══ ท่าเผยตัว — ทำงานทั้งขาลงและขาขึ้น ═══════════════════════════════════
+ * ★★★ คีย์เฟรมมีสี่จุด ไม่ใช่สองจุด
+ *
+ *     แบบสองจุด (จาง → ชัด) ทำงานทางเดียว: เลื่อนลงแล้วโผล่ จบ
+ *     ★ เลื่อนกลับขึ้นไปก็ไม่มีอะไรเกิดขึ้นอีก เพราะมันถึงสถานะจบไปแล้ว
+ *
+ *     สี่จุดทำให้ชิ้นเดียวมีทั้ง "เข้า" และ "ออก":
+ *       0%   ยังอยู่ใต้ขอบจอ  — จาง เบลอ อยู่ต่ำกว่าที่ควร
+ *       22%  เข้ามาเต็มตัว    — ชัด นิ่ง
+ *       78%  ยังชัดอยู่        — ★ ที่ราบยาว ๆ ตรงนี้สำคัญที่สุด
+ *       100% กำลังพ้นขอบบน   — จาง เบลอ ลอยขึ้นต่อ
+ *
+ *     ★★ ที่ราบกลาง (22–78%) คือสิ่งที่แยก "พรีเมียม" ออกจาก "รบกวน"
+ *        ถ้าไม่มี เนื้อหาจะจาง ๆ ตลอดเวลาที่คนเลื่อน อ่านไม่ได้สักบรรทัด
+ *        มีที่ราบ = ชัดเต็มตลอดช่วงที่ตาอยู่กับมัน จาง เฉพาะตอนกำลังผ่านไป
+ *
+ * ★ ผลพลอยได้ของไทม์ไลน์แบบผูกกับการเลื่อน: เลื่อนขึ้นคืออนิเมชันเดินถอยหลัง
+ *   ได้ฟรีโดยไม่ต้องเขียนอะไรเพิ่มเลยสักบรรทัด
+ */
+@keyframes reveal-pass {
+  0%   { opacity: 0; transform: translate3d(0, 56px, 0); filter: blur(6px); }
+  22%  { opacity: 1; transform: none; filter: blur(0); }
+  78%  { opacity: 1; transform: none; filter: blur(0); }
+  100% { opacity: 0; transform: translate3d(0, -40px, 0); filter: blur(5px); }
+}
+
+@keyframes reveal-pass-zoom {
+  0%   { opacity: 0; transform: translate3d(0, 44px, 0) scale(0.92); filter: blur(8px); }
+  22%  { opacity: 1; transform: none; filter: blur(0); }
+  78%  { opacity: 1; transform: none; filter: blur(0); }
+  100% { opacity: 0; transform: translate3d(0, -32px, 0) scale(0.96); filter: blur(6px); }
+}
+
+/* ── โหมด css: ผูกกับตำแหน่งการเลื่อนโดยตรง ───────────────────────────────
+ * ★★ ใช้ช่วง cover ไม่ใช่ entry
+ *
+ *    entry ครอบแค่ตอน "กำลังโผล่เข้ามาจากขอบล่าง" ★ พอเลื่อนขึ้นจนมันจะ
+ *      ออกทางขอบบน ไทม์ไลน์จบไปแล้ว ไม่มีอะไรให้เล่น
+ *    cover ครอบตั้งแต่แตะขอบล่างจนพ้นขอบบน — ครบทั้งชีวิตของมันบนจอ
+ */
+@supports (animation-timeline: view()) {
+  html[data-reveal='css'] .reveal {
+    animation: reveal-pass linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+
+  html[data-reveal='css'] .reveal-scale {
+    animation: reveal-pass-zoom linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+
+  /*
+   * ★★★ ไล่ลำดับด้วยการเลื่อนช่วง ไม่ใช่ animation-delay
+   *     delay นับเป็น "เวลา" แต่ไทม์ไลน์นี้เดินด้วย "ตำแหน่งการเลื่อน"
+   *     ★ ใส่ delay ไปเท่าไหร่ก็ไม่มีอะไรเกิดขึ้นเลย
+   *
+   *     ขยับจุดเริ่มของแต่ละใบทีละนิด ใบหลัง ๆ จึงเข้าช้ากว่าใบแรก
+   *     และตอนเลื่อนขึ้นก็ออกไล่กันเป็นระลอกเหมือนกัน
+   */
+  html[data-reveal='css'] .reveal-stagger > * {
+    animation: reveal-pass linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+  html[data-reveal='css'] .reveal-stagger > *:nth-child(2) { animation-range: cover -6% cover 94%; }
+  html[data-reveal='css'] .reveal-stagger > *:nth-child(3) { animation-range: cover -12% cover 88%; }
+  html[data-reveal='css'] .reveal-stagger > *:nth-child(4) { animation-range: cover -17% cover 83%; }
+  html[data-reveal='css'] .reveal-stagger > *:nth-child(5) { animation-range: cover -21% cover 79%; }
+  html[data-reveal='css'] .reveal-stagger > *:nth-child(6) { animation-range: cover -25% cover 75%; }
+}
+
+/* ── โหมด js: สามสถานะ ไม่ใช่สองสถานะ ─────────────────────────────────────
+ * ★★★ ของที่ "ยังไม่ถึง" กับ "ผ่านไปแล้ว" ต้องอยู่คนละทิศ
+ *
+ *     ถ้ามีแค่ซ่อน/แสดง พอเลื่อนขึ้นแล้วมันจะโผล่กลับมาจากด้านล่างเสมอ
+ *     ★ ซึ่งผิดธรรมชาติ — ของที่อยู่เหนือจอต้องกลับเข้ามาจากข้างบน
+ *
+ *     ค่าเริ่มต้น = ยังอยู่ข้างล่าง (เลื่อนลงไปหา)
+ *     .is-above    = ผ่านขึ้นไปแล้ว (เลื่อนขึ้นไปหา)
+ *     .is-in       = อยู่บนจอ ชัดเต็ม
+ *
+ * ★ ธงซ่อนอยู่ใต้ html[data-reveal='js'] ซึ่งถูกติดโดยสคริปต์เท่านั้น
+ *   JS พัง = ไม่มีธง = กฎไม่ทำงาน = เนื้อหาปรากฏครบตามปกติ
+ */
+html[data-reveal='js'] .reveal,
+html[data-reveal='js'] .reveal-scale,
+html[data-reveal='js'] .reveal-stagger > * {
+  opacity: 0;
+  transform: translate3d(0, 56px, 0);
+  filter: blur(6px);
+  transition:
+    opacity 820ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 820ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 820ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html[data-reveal='js'] .reveal-scale {
+  transform: translate3d(0, 44px, 0) scale(0.92);
+  filter: blur(8px);
+}
+
+/* ผ่านขึ้นไปแล้ว — รอกลับเข้ามาจากข้างบน */
+html[data-reveal='js'] .reveal.is-above,
+html[data-reveal='js'] .reveal-stagger > .is-above {
+  opacity: 0;
+  transform: translate3d(0, -40px, 0);
+  filter: blur(5px);
+}
+
+html[data-reveal='js'] .reveal-scale.is-above {
+  opacity: 0;
+  transform: translate3d(0, -32px, 0) scale(0.96);
+  filter: blur(6px);
+}
+
+html[data-reveal='js'] .reveal.is-in,
+html[data-reveal='js'] .reveal-scale.is-in,
+html[data-reveal='js'] .reveal-stagger > .is-in {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+
+/* ★ โหมด js ใช้ transition-delay ได้ตามปกติ เพราะเป็นไทม์ไลน์เวลาจริง */
+html[data-reveal='js'] .reveal-stagger > *:nth-child(2) { transition-delay: 90ms; }
+html[data-reveal='js'] .reveal-stagger > *:nth-child(3) { transition-delay: 180ms; }
+html[data-reveal='js'] .reveal-stagger > *:nth-child(4) { transition-delay: 260ms; }
+html[data-reveal='js'] .reveal-stagger > *:nth-child(5) { transition-delay: 330ms; }
+html[data-reveal='js'] .reveal-stagger > *:nth-child(6) { transition-delay: 400ms; }
+
+/* ══ หัวหน้าแรก: เข้าเมื่อโหลด ════════════════════════════════════════════
+ * ★★ ของที่อยู่เหนือขอบจอตั้งแต่เปิดหน้า ใช้ scroll timeline ไม่ได้ —
+ *    มันจะกระโดดไปสถานะจบทันทีโดยไม่มีใครเห็นการเคลื่อนไหวเลย
+ *    จึงผูกกับ "เวลา" แทน และหน่วงทีละชั้นตามลำดับที่ตาอ่านอยู่แล้ว
+ */
+html:not([data-reveal='off']) .hero-in {
+  animation: hero-rise 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* ── ไล่ทีละชิ้นในหัวหน้าแรก ───────────────────────────────────────────────
+ * ★★★ ของที่อยู่ "ใน" หัวหน้าแรก ใช้ scroll-reveal ไม่ได้
+ *
+ *     หัวหน้าแรกมี overflow-hidden ★ ซึ่งทำให้มันกลายเป็น "กล่องเลื่อน"
+ *       ในสายตาของ CSS — และ view() จะไปผูกกับกล่องนั้นแทนที่จะผูกกับหน้า
+ *
+ *     ★★ กล่องนั้นไม่มีวันเลื่อน ความคืบหน้าของอนิเมชันจึงค้างอยู่ค่าเดียว
+ *        ตลอดกาล การ์ดใบแรกค้างที่ความทึบ 0.899 ไม่ว่าจะเลื่อนหน้าไปไหน
+ *
+ *     ★ จับได้เพราะด่าน "ทุกชิ้นต้องเคยชัดเต็ม" ไม่ใช่เพราะมองเห็นด้วยตา —
+ *       0.899 กับ 1.0 แยกด้วยตาไม่ออก แต่มันคือการ์ดที่ไม่เคยแสดงผลถูกเลย
+ *
+ *     ★★ และนี่คือเหตุผลที่โหมด js ผ่านแต่โหมด css ตก:
+ *        IntersectionObserver วัดกับ "จอ" ส่วน view() วัดกับ "กล่องเลื่อน"
+ *        — ทางสำรองไม่ได้แค่ทำงานแทนกันได้ มันจับบั๊กของอีกทางให้ด้วย
+ *
+ *     ของในหัวหน้าแรกจึงใช้ไทม์ไลน์เวลาเหมือน .hero-in ซึ่งถูกกว่าอยู่แล้ว
+ *     เพราะมันอยู่ในสายตาตั้งแต่วินาทีแรก
+ */
+html:not([data-reveal='off']) .hero-stagger > * {
+  animation: hero-rise 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+.hero-stagger > *:nth-child(2) { --extra: 90ms; }
+.hero-stagger > *:nth-child(3) { --extra: 180ms; }
+html:not([data-reveal='off']) .hero-stagger > *:nth-child(2) { animation-delay: calc(var(--d, 0ms) + 90ms); }
+html:not([data-reveal='off']) .hero-stagger > *:nth-child(3) { animation-delay: calc(var(--d, 0ms) + 180ms); }
+
+@keyframes hero-rise {
+  from { opacity: 0; transform: translate3d(0, 40px, 0); filter: blur(10px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* ── พาดหัวเผยแบบม่านเปิด ──────────────────────────────────────────────────
+ * ★★★ ตัวเอกของหน้านี้ ต้องได้ท่าที่ดีกว่าท่าอื่น
+ *
+ *     clip-path ไล่เปิดจากล่างขึ้นบน พร้อมตัวอักษรเลื่อนขึ้นตาม —
+ *     ★ ให้ความรู้สึกว่าตัวหนังสือ "ถูกเปิดเผย" ไม่ใช่ "ลอยเข้ามา"
+ *       ซึ่งเป็นท่าที่หนังกับงานไตเติลใช้มาตลอด และเป็นที่มาของคำว่า cinematic
+ *
+ *     ★ ห่อสองชั้น: ชั้นนอกตัดด้วย clip-path ชั้นในเลื่อน —
+ *       ใส่ทั้งสองอย่างบน element เดียวกันไม่ได้ เพราะ clip-path จะตัดตาม
+ *       กล่องที่ขยับไปแล้ว ผลคือขอบม่านวิ่งตามตัวหนังสือแทนที่จะอยู่นิ่ง
+ */
+html:not([data-reveal='off']) .curtain > span {
+  display: block;
+  animation: curtain-up 1200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes curtain-up {
+  from { opacity: 0; transform: translate3d(0, 105%, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ══ พารัลแลกซ์ในหัวหน้าแรก ══════════════════════════════════════════════
+ * ★★ ผูกกับการเลื่อนของ "หน้า" ไม่ใช่ของตัว element
+ *    ชั้นฉากหลังต้องขยับตอนคนเลื่อนหน้า ไม่ใช่ตอนมันเข้ามาในจอ —
+ *    มันอยู่ในจอตั้งแต่วินาทีแรกอยู่แล้ว
+ *
+ * ★ ต้องครอบด้วย element อีกชั้นเสมอ ห้ามใส่ทับของที่มี transform ของตัวเอง
+ *   (แผ่นเสียงหมุนอยู่ — สองอนิเมชันที่แย่ง transform กันจะมีอันหายไปเงียบ ๆ)
+ */
+@supports (animation-timeline: scroll()) {
+  html:not([data-reveal='off']) .parallax-slow,
+  html:not([data-reveal='off']) .parallax-slower {
+    animation: parallax-lift linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 800px;
+    will-change: transform;
+  }
+  html:not([data-reveal='off']) .parallax-slow { --lift: -140px; }
+  html:not([data-reveal='off']) .parallax-slower { --lift: -70px; }
+}
+
+@keyframes parallax-lift {
+  to { transform: translate3d(0, var(--lift, -100px), 0); }
+}
+
+/* ══ ชี้แล้วยกขึ้น ════════════════════════════════════════════════════════
+ * ★★★ ต้องเขียน transition ให้ครบทุกอย่าง ไม่ใช่แค่ transform
+ *
+ *     การ์ดพวกนี้มี transition-colors ของ Tailwind อยู่แล้ว
+ *     ★ `transition: transform ...` เป็น shorthand — มันรีเซ็ต
+ *       transition-property ทิ้งหมดแล้วเหลือแค่ transform
+ *       ขอบที่เคยค่อย ๆ สว่างตอนชี้จะกระโดดเปลี่ยนทันที
+ *
+ *     ★★ นั่นคือ "เปลี่ยนดีไซน์เดิม" โดยไม่ได้ตั้งใจ และพังแบบเงียบ ๆ
+ *        จึงเขียนสีไว้ด้วยจังหวะเดิมของ Tailwind เป๊ะ (150ms) แล้วต่อ transform เข้าไป
+ */
+.lift {
+  transition:
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (hover: hover) {
+  .lift:hover { transform: translate3d(0, -6px, 0) scale(1.012); }
+}
+
+.zoom-media { transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1); }
+
+@media (hover: hover) {
+  .group:hover .zoom-media { transform: scale(1.07); }
+}
+
+/* ══ มือถือ: ลดความซับซ้อน ไม่ใช่ปิดทิ้ง ══════════════════════════════════
+ * ★★ พารัลแลกซ์บนมือถือให้ผลตรงข้ามกับที่ตั้งใจ: จอเตี้ย ระยะเลื่อนสั้น
+ *    ★ ฉากหลังจึงวิ่งเร็วจนดูเหมือนภาพสั่น แทนที่จะดูลึก
+ *    ส่วน blur ตัดออกเพราะมันแพงที่สุดในชุดนี้บนเครื่องที่ GPU อ่อน
+ */
+@media (max-width: 640px) {
+  /*
+   * ★★★ ต้องใช้ selector ที่ "เจาะจงเท่ากัน" กับกฎที่เปิดมันไว้
+   *
+   *     กฎที่เปิดคือ html:not([data-reveal='off']) .parallax-slow
+   *     ★ เขียนปิดด้วย `html .parallax-slow` เฉย ๆ จะแพ้ เพราะเจาะจงน้อยกว่า
+   *       — พารัลแลกซ์ยังเดินอยู่บนมือถือทั้งที่ตั้งใจปิด
+   *
+   *     ★★ และมันไม่มีอะไรฟ้องเลย CSS ไม่เคยบอกว่า "กฎนี้ถูกทับ"
+   *        จับได้เพราะมีด่านที่นับจำนวนอนิเมชันบนมือถือจริง ๆ
+   */
+  html:not([data-reveal='off']) .parallax-slow,
+  html:not([data-reveal='off']) .parallax-slower { animation: none; }
+
+  /* ★ ตัด blur ออกทั้งหมดบนมือถือ — มันแพงที่สุดในชุดนี้บนเครื่องที่ GPU อ่อน
+       และระยะสั้นลงเพราะจอเตี้ย ระยะยาว ๆ จะกลายเป็นของกระโดดไปมา */
+  @keyframes reveal-pass {
+    0%   { opacity: 0; transform: translate3d(0, 34px, 0); }
+    22%  { opacity: 1; transform: none; }
+    78%  { opacity: 1; transform: none; }
+    100% { opacity: 0; transform: translate3d(0, -24px, 0); }
+  }
+  @keyframes reveal-pass-zoom {
+    0%   { opacity: 0; transform: translate3d(0, 28px, 0) scale(0.95); }
+    22%  { opacity: 1; transform: none; }
+    78%  { opacity: 1; transform: none; }
+    100% { opacity: 0; transform: translate3d(0, -20px, 0) scale(0.97); }
+  }
+  @keyframes hero-rise {
+    from { opacity: 0; transform: translate3d(0, 24px, 0); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  html[data-reveal='js'] .reveal,
+  html[data-reveal='js'] .reveal-scale,
+  html[data-reveal='js'] .reveal-stagger > * {
+    transform: translate3d(0, 34px, 0);
+    filter: none;
+  }
+  html[data-reveal='js'] .reveal-scale { transform: translate3d(0, 28px, 0) scale(0.95); }
+  html[data-reveal='js'] .reveal.is-above,
+  html[data-reveal='js'] .reveal-stagger > .is-above { transform: translate3d(0, -24px, 0); filter: none; }
+  html[data-reveal='js'] .reveal-scale.is-above { transform: translate3d(0, -20px, 0) scale(0.97); filter: none; }
+}
+
+/* ══ เมนูที่เด้งออกมาจากปุ่มในแถบบน (ภาษา · โทนสี) ═════════════════════════
+ * ★★ เด้งจากมุมที่ติดกับปุ่ม ไม่ใช่จากกลางกล่อง
+ *
+ *    transform-origin ปลายบรรทัดด้านบน ★ ทำให้ตาเห็นว่าเมนูนี้ "ออกมาจาก
+ *      ปุ่มที่เพิ่งกด" ไม่ใช่กล่องที่โผล่ขึ้นมาเฉย ๆ ตรงกลางจอ
+ *
+ *    ★ logical property — ภาษาอาหรับเมนูอยู่ซ้าย ต้องเด้งจากมุมซ้าย
+ */
+.menu-pop {
+  transform-origin: var(--menu-pop-origin, 100%) top;
+  animation: menu-pop 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+[dir='rtl'] .menu-pop { --menu-pop-origin: 0%; }
+
+@keyframes menu-pop {
+  from { opacity: 0; transform: translate3d(0, -6px, 0) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ★ ธงไล่เข้ามาทีละใบ — หน่วงสั้นมากและจบพร้อมกล่อง ไม่ให้ต้องรอ */
+.menu-pop .menu-item {
+  animation: menu-item 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 12ms);
+}
+
+@keyframes menu-item {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-pop,
+  .menu-pop .menu-item {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ══ ปิดทุกอย่างเมื่อผู้ใช้ขอ ═════════════════════════════════════════════
+ * ★★★ ด่านที่พลาดไม่ได้: ปิดอนิเมชันแล้วเนื้อหาต้องไม่หายไปด้วย
+ *    reveal ที่เริ่มจาก opacity 0 ถ้าลืมคืนค่า คนที่ตั้ง reduce motion
+ *    จะเจอหน้าว่างเปล่า ซึ่งไม่ใช่ "ไม่มีลูกเล่น" แต่คือ "เว็บใช้ไม่ได้"
+ */
+@media (prefers-reduced-motion: reduce) {
+  .hero-in,
+  .hero-stagger > *,
+  .curtain > span,
+  .reveal,
+  .reveal-scale,
+  .reveal-stagger > *,
+  .is-above,
+  .parallax-slow,
+  .parallax-slower {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .lift, .zoom-media { transition: none; }
+}
+
+html[data-reveal='off'] .reveal,
+html[data-reveal='off'] .reveal-scale,
+html[data-reveal='off'] .reveal-stagger > *,
+html[data-reveal='off'] .is-above {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * กล่องโต้ตอบ
+ * ---------------------------------------------------------------------------
+ * ★★ กล่องที่โผล่มาเฉย ๆ ทำให้คนหาไม่เจอว่ามันโผล่มาตรงไหน
+ *
+ *    ตากระตุกไปหาสิ่งที่ "เคลื่อนไหว" ไม่ใช่สิ่งที่ "ปรากฏ" ★ การยกขึ้น
+ *      6px พร้อมย่อเล็กน้อยบอกตาว่าของชิ้นนี้เพิ่งมาจากข้างหลัง
+ *      และตอนนี้มันอยู่ชั้นบนสุด — โดยไม่ต้องใช้เวลาเกินหนึ่งในสี่วินาที
+ *
+ * ★ ฉากหลังจางแยกจากกล่อง เพราะสองอย่างนี้ต้องมาคนละจังหวะ:
+ *   ฉากหลังมืดลงก่อน (เตรียมตา) แล้วกล่องค่อยเข้ามา
+ */
+.dialog-veil { animation: dialog-veil 160ms ease-out both; }
+
+@keyframes dialog-veil {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.dialog-pop { animation: dialog-pop 240ms cubic-bezier(0.16, 1, 0.3, 1) 40ms both; }
+
+@keyframes dialog-pop {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------------------------------------------------------------------------
+ * ปกกล่องโปรไฟล์
+ * ---------------------------------------------------------------------------
+ * ★★★ ปกเป็นสีเข้มเสมอ ไม่สลับตามธีม — และนั่นคือความตั้งใจ
+ *
+ *     ถ้าให้ปกสว่างตามโหมดสว่าง มันจะกลืนไปกับพื้นกล่องจนไม่เหลือ "ปก"
+ *     ★ ของแบบนี้ทั้งโลกรู้จักในฐานะแบนเนอร์โปรไฟล์ ซึ่งเป็นรูปเข้ม ๆ
+ *       เสมอไม่ว่าแอปจะโหมดไหน — การทำให้มันสว่างคือการทิ้งภาษาที่คนอ่านออกแล้ว
+ *
+ *     ★★ ผลพลอยได้ที่สำคัญกว่า: ตัวหนังสือขาวบนปกอ่านได้ทั้งสองโหมด
+ *        โดยไม่ต้องมีเงื่อนไขสีสักบรรทัด
+ *
+ * ★ สีออโรรายืมจากหน้าแรกทั้งสามดวง คนที่ผ่านหน้าแรกมาจะรู้สึกว่าเป็นที่เดียวกัน
+ */
+.profile-cover {
+  background-color: #14131b;
+  background-image:
+    radial-gradient(85% 150% at 10% -30%, rgb(var(--aurora-1) / 0.55), transparent 62%),
+    radial-gradient(75% 140% at 88% -20%, rgb(var(--aurora-2) / 0.45), transparent 60%);
+}
+
+/* ---------------------------------------------------------------------------
+ * ★★★ ปกมีชีวิต — ดวงแสงลอยช้า ๆ ไม่ใช่ไล่สีที่แข็งอยู่กับที่
+ *
+ *     ไล่สีนิ่ง ๆ อ่านว่า "ภาพพื้นหลัง" ★ แต่แสงที่เคลื่อนช้ามากอ่านว่า
+ *       "ของชิ้นนี้ยังทำงานอยู่" ซึ่งเป็นความรู้สึกที่ต่างกันคนละเรื่อง
+ *
+ *     ★★ ช้าระดับ 20–30 วินาทีต่อรอบโดยตั้งใจ — เร็วกว่านี้มันจะแย่งสายตา
+ *        ไปจากช่องกรอก ซึ่งเป็นงานเดียวที่กล่องนี้มี
+ *
+ * ★★ ดวงแรกย้อมด้วยสีประจำตัวของเจ้าของโปรไฟล์ (--cover-hue)
+ *
+ *    เป็นองศาสีเดียวกับที่อวาตาร์ใช้ตอนไม่มีรูป ★ ปกของแต่ละคนจึงไม่เหมือนกัน
+ *      และเป็นสีที่เขาเห็นคู่กับชื่อตัวเองอยู่แล้วทุกที่ในเว็บ
+ *
+ * ★ mix-blend-mode: screen — ดวงแสงต้องบวกแสงเข้าไป ไม่ใช่ทาสีทับ
+ *   การทาทับบนพื้นเข้มจะได้คราบขุ่น ๆ ส่วน screen ได้แสงที่ดูเหมือนแสงจริง
+ * ------------------------------------------------------------------------- */
+.cover-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(30px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.cover-blob-1 {
+  width: 13rem;
+  height: 13rem;
+  top: -5.5rem;
+  left: -2rem;
+  background: hsl(var(--cover-hue, 350) 85% 58% / 0.5);
+  animation: cover-drift-a 26s ease-in-out infinite;
+}
+
+.cover-blob-2 {
+  width: 11rem;
+  height: 11rem;
+  top: -4.5rem;
+  right: -1.5rem;
+  background: rgb(var(--aurora-2) / 0.45);
+  animation: cover-drift-b 31s ease-in-out infinite;
+}
+
+.cover-blob-3 {
+  width: 9rem;
+  height: 9rem;
+  bottom: -5rem;
+  left: 42%;
+  background: rgb(var(--aurora-3) / 0.4);
+  animation: cover-drift-c 23s ease-in-out infinite;
+}
+
+@keyframes cover-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(3rem, 1rem, 0) scale(1.12); }
+}
+
+@keyframes cover-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50%      { transform: translate3d(-2.5rem, 1.2rem, 0) scale(0.92); }
+}
+
+@keyframes cover-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.95); }
+  50%      { transform: translate3d(-3rem, -1rem, 0) scale(1.15); }
+}
+
+/* ★ แสงกวาดผ่านครั้งเดียวตอนกล่องเปิด — เหมือนแสงพาดผ่านผิวมันวาว
+ *   ★★ ครั้งเดียวเท่านั้น ไม่วนซ้ำ: มันมีหน้าที่บอกว่า "กล่องเพิ่งเปิด"
+ *      ถ้าวนตลอดมันจะกลายเป็นของกวนใจที่ไม่มีวันหยุด */
+.cover-sheen {
+  position: absolute;
+  inset: -60% -30%;
+  pointer-events: none;
+  background: linear-gradient(
+    104deg,
+    transparent 42%,
+    rgb(255 255 255 / 0.14) 50%,
+    transparent 58%
+  );
+  animation: cover-sheen 1500ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
+}
+
+@keyframes cover-sheen {
+  from { transform: translate3d(-75%, 0, 0); }
+  to   { transform: translate3d(75%, 0, 0); }
+}
+
+/* ---------------------------------------------------------------------------
+ * แสงเรือง — เฉพาะโหมดมืด
+ * ---------------------------------------------------------------------------
+ * ★★★ แสงสีบนพื้นขาวไม่ได้อ่านว่า "เรืองแสง" แต่อ่านว่า "เลอะ"
+ *
+ *     เงาเรืองแสงทำงานได้เพราะรอบข้างมืดกว่าตัวมัน ★ พอพื้นขาว มันกลายเป็น
+ *       คราบสีชมพูรอบปุ่ม ซึ่งดูเหมือนข้อผิดพลาดมากกว่าการเน้น
+ *
+ *     ★★ จึงไม่ใช่การ "ลดค่า" ในโหมดสว่าง แต่เปลี่ยนเป็นเงาจริงไปเลย
+ *        เพราะบนพื้นขาว สิ่งที่ทำให้ของดูลอยคือเงา ไม่ใช่แสง
+ *
+ * ★ เขียนเป็นคลาสไม่ใช่ inline style เพราะ inline style สลับตามธีมไม่ได้
+ * ------------------------------------------------------------------------- */
+.avatar-glow {
+  box-shadow:
+    0 10px 26px rgb(0 0 0 / 0.45),
+    0 0 34px hsl(var(--cover-hue, 350) 85% 55% / 0.3);
+}
+
+html[data-theme='light'] .avatar-glow {
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.16);
+}
+
+.cta-glow { box-shadow: 0 10px 28px -12px var(--color-accent); }
+
+html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.55); }
+
+/* ★ เนื้อหาไล่ขึ้นมาทีละชั้น — ตาจึงอ่านตามลำดับที่เราวางไว้จริง ๆ
+ *   (รูป → ชื่อ → ช่องกรอก → ปุ่ม) แทนที่จะเจอทุกอย่างพร้อมกันแล้วต้องเลือกเอง */
+.pop-step {
+  animation: pop-step 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 55ms + 140ms);
+}
+
+@keyframes pop-step {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ★ เม็ดเกรนบนปก — เหตุผลเดียวกับ .grain-layer: ไล่สีใหญ่ ๆ ที่เรียบสนิท
+ *   จะขึ้นเป็นวงแหวนสีบนจอ 8-bit ซึ่งเป็นจอส่วนใหญ่ */
+.profile-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-veil,
+  .dialog-pop,
+  .pop-step,
+  .cover-blob,
+  .cover-sheen {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* ★ แสงกวาดที่ไม่เคลื่อนคือแถบขาวพาดกลางปกค้างอยู่ — ต้องเอาออกทั้งชิ้น */
+  .cover-sheen { display: none; }
+}
