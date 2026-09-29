@@ -17,13 +17,15 @@ import {
   type Restaurant,
   type RestaurantList,
 } from '@/lib/office/food'
-import { RandomWheel, type WheelItem } from './RandomWheel'
+import { SpinWheel, type WheelSlot } from './SpinWheel'
 
 /**
  * หน้าสุ่มอาหาร (FR-A07)
  *
- * ★ ใช้ RandomWheel กลางตัวเดียวกับโมดูล C ตามที่ FR-X05 บังคับ
- *   หน้านี้มีหน้าที่แค่ "เลือกว่าร้านไหนเข้าวงล้อ" แล้วส่งให้มันหมุน
+ * ★ หน้านี้มีหน้าที่แค่ "เลือกว่าร้านไหนเข้าวงล้อ" แล้วส่งให้มันหมุน
+ *   ★★ ใช้ SpinWheel (วงล้อกลม) ไม่ใช่ RandomWheel (แถบเลื่อน) —
+ *      ทั้งสองตัวเรียก planDraw/easeOut ชุดเดียวกัน จังหวะลุ้นจึงเหมือนกัน
+ *      ตามที่ FR-X05 ต้องการ ★ ต่างกันแค่รูปร่างที่มองเห็น
  */
 export function FoodRandom() {
   const [data, setData] = useState<RestaurantList>({ items: [], cuisines: [] })
@@ -63,7 +65,7 @@ export function FoodRandom() {
    *   ส่วนการถ่วงตัดสินว่า "ร้านที่เข้าข่ายแล้วมีโอกาสเท่าไหร่"
    *   สลับลำดับแล้วร้านที่ถูกกรองออกจะกลับเข้ามาผ่านการทำซ้ำ
    */
-  const wheelItems: WheelItem[] = useMemo(() => {
+  const wheelItems: WheelSlot[] = useMemo(() => {
     const weighted = avoidRecent ? weightByRecency(pool, recent.ids) : pool
     /* ★ id ต้องไม่ซ้ำใน RandomWheel — ต่อ index ท้ายช่องที่ซ้ำ
        ตอนคืนผลจึงต้องตัดส่วนนั้นออกก่อนหาร้านจริง */
@@ -161,8 +163,8 @@ export function FoodRandom() {
             </Link>
           </div>
         ) : (
-          <RandomWheel
-            items={wheelItems}
+          <SpinWheel
+            slots={wheelItems}
             spinLabel={ot('food.random.spin')}
             onResult={(item) => {
               const realId = item.id.split('#')[0]
