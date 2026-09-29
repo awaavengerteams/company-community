@@ -3,11 +3,10 @@ import type { Metadata } from 'next'
 import { MarketList } from '@/components/office/MarketList'
 import { getOfficeViewer } from '@/lib/office/session'
 
-export const metadata: Metadata = { title: 'ตลาดนัด' }
+export const metadata: Metadata = { title: 'ของฉัน' }
 
-export default async function MarketPage() {
+export default async function MarketMinePage() {
   const viewer = await getOfficeViewer()
   if (!viewer) redirect('/')
-  if (!viewer.employeeCode) redirect('/office/link')
-  return <MarketList selfId={viewer.id} />
+  return <MarketList mineOnly selfId={viewer.id} />
 }

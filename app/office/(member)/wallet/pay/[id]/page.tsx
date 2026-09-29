@@ -14,7 +14,6 @@ export const metadata: Metadata = { title: 'จ่ายเงิน' }
 export default async function WalletPayPage(props: PageProps<'/office/wallet/pay/[id]'>) {
   const viewer = await getOfficeViewer()
   if (!viewer) redirect('/')
-  if (!viewer.employeeCode) redirect('/office/link')
 
   const { id } = await props.params
 

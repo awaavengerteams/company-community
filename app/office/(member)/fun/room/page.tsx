@@ -8,6 +8,5 @@ export const metadata: Metadata = { title: 'ห้องสุ่มกลุ่
 export default async function DrawRoomListPage() {
   const viewer = await getOfficeViewer()
   if (!viewer) redirect('/')
-  if (!viewer.employeeCode) redirect('/office/link')
   return <DrawRoomList />
 }

@@ -8,6 +8,5 @@ export const metadata: Metadata = { title: 'โปรไฟล์' }
 export default async function OfficeProfilePage() {
   const viewer = await getOfficeViewer()
   if (!viewer) redirect('/')
-  if (!viewer.employeeCode) redirect('/office/link')
   return <OfficeProfile />
 }

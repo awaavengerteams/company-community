@@ -10,7 +10,6 @@ export default async function MarketChatPage({
 }: PageProps<'/office/market/chat'>) {
   const viewer = await getOfficeViewer()
   if (!viewer) redirect('/')
-  if (!viewer.employeeCode) redirect('/office/link')
 
   /* ★ searchParams เป็น Promise ใน Next 16 */
   const { listing } = await searchParams
