@@ -3,7 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/cn'
-import { activeHref, navLabel, visibleNav, MUSIC_LINK, type NavSection } from '@/lib/office/nav'
+import {
+  activeHref,
+  navLabel,
+  visibleNav,
+  MUSIC_LINK,
+  PROFILE_LINK,
+  type NavSection,
+} from '@/lib/office/nav'
 
 /**
  * เมนูหลัก — แถบซ้ายบนคอม · แถบล่างบนมือถือ (FR-X07)
@@ -57,6 +64,18 @@ export function OfficeSidebar({ isAdmin }: { isAdmin: boolean }) {
       ))}
 
       <div className="mt-auto border-t border-line pt-3">
+        <Link
+          href={PROFILE_LINK.href}
+          className={cn(
+            'flex items-center gap-3 rounded-[var(--radius-box)] px-3 py-2',
+            'text-sm transition-colors hover:bg-surface',
+            pathname === PROFILE_LINK.href ? 'bg-surface text-ink' : 'text-ink-soft hover:text-ink',
+          )}
+        >
+          <Icon d={PROFILE_LINK.icon} className="size-5 shrink-0" />
+          {navLabel(PROFILE_LINK.labelKey)}
+        </Link>
+
         <Link
           href={MUSIC_LINK.href}
           className={cn(

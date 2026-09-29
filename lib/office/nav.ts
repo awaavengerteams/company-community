@@ -44,6 +44,7 @@ const ICONS = {
   admin:
     'M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6zM9.5 12l2 2 3.5-3.5',
   music: 'M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
+  profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 8a7 7 0 0 1 14 0',
 } as const
 
 export const OFFICE_NAV: NavSection[] = [
@@ -111,6 +112,17 @@ export const OFFICE_NAV: NavSection[] = [
  *   (FR-X11 จะเชื่อมสองระบบลึกกว่านี้ในเฟส 2 — ตอนนี้แค่ลิงก์ก็พอ)
  */
 export const MUSIC_LINK = { href: '/', labelKey: 'nav.music' as OfficeKey, icon: ICONS.music }
+
+/**
+ * ★ โปรไฟล์อยู่ท้ายแถบ ไม่ใช่ในเมนูหลัก
+ *   เมนูหลักคือ "กิจกรรม" ส่วนโปรไฟล์คือ "ตั้งค่าของฉัน" — คนละหมวด
+ *   ★ ถ้าเอาไปปนกัน แถบล่างบนมือถือจะมี 6 ปุ่มซึ่งแคบเกินกดถูก
+ */
+export const PROFILE_LINK = {
+  href: '/office/profile',
+  labelKey: 'profile.title' as OfficeKey,
+  icon: ICONS.profile,
+}
 
 /** เมนูที่ผู้ใช้คนนี้เห็นจริง — กรอง adminOnly ออกถ้าไม่ใช่ Admin */
 export function visibleNav(isAdmin: boolean): NavSection[] {
