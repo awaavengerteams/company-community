@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { AppHeader } from '@/components/AppHeader'
 import { PortalHero } from '@/components/home/PortalHero'
 import { SystemHub } from '@/components/home/SystemHub'
+import { HubFeatures } from '@/components/home/HubFeatures'
 import { SetupNotice } from '@/components/home/SetupNotice'
 import { getHomeStats } from '@/lib/home/stats'
 import { SignInScreen } from '@/components/SignInScreen'
@@ -42,6 +43,11 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* ★ แถบความคืบหน้าการเลื่อน — CSS ล้วนด้วย animation-timeline: scroll()
+          ★★ ไม่มี scroll listener จึงไม่มีทางทำให้การเลื่อนกระตุก
+             และเบราว์เซอร์ที่ไม่รองรับก็แค่ไม่เห็นแถบ ไม่พังอะไร */}
+      <div className="scroll-progress" aria-hidden="true" />
+
       <AppHeader center={<span />} />
 
       <PortalHero stats={stats} />
@@ -52,6 +58,11 @@ export default async function HomePage() {
 
       {/* ★ id="systems" — ปุ่มหลักบนหัวหน้าเลื่อนมาที่นี่ */}
       <SystemHub />
+
+      {/* ★ เนื้อหาอธิบายความสามารถอยู่ "ใต้" การ์ด ไม่ใช่เหนือ
+          ★★ คนที่เคยใช้แล้วกลับมาคือคนส่วนใหญ่ของหน้านี้ เขาต้องเจอทางเข้า
+             ก่อน ส่วนคนใหม่เลื่อนลงอ่านต่อได้ ซึ่งเป็นสิ่งที่คนใหม่ทำอยู่แล้ว */}
+      <HubFeatures />
 
       <footer className="mx-auto w-full max-w-[680px] px-4 pb-20 pt-16">
         {/**

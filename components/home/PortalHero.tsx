@@ -20,6 +20,17 @@ import { getT } from '@/lib/i18n/server'
  *   ★★ แต่เอาแผ่นเสียงกับโน้ตดนตรีออก — สองอย่างนั้นบอกว่า "ที่นี่เรื่องเพลง"
  *      ซึ่งเป็นข้อความที่เพิ่งตั้งใจเลิกพูดบนหน้านี้
  */
+const SPARKS = [
+  { left: 8, top: 22, size: 3, delay: 0, dur: 5 },
+  { left: 17, top: 68, size: 2, delay: 1.4, dur: 6.5 },
+  { left: 29, top: 14, size: 2, delay: 2.8, dur: 5.5 },
+  { left: 41, top: 78, size: 3, delay: 0.7, dur: 7 },
+  { left: 58, top: 20, size: 2, delay: 3.4, dur: 6 },
+  { left: 69, top: 62, size: 3, delay: 1.9, dur: 5.2 },
+  { left: 80, top: 30, size: 2, delay: 4.2, dur: 6.8 },
+  { left: 91, top: 72, size: 3, delay: 2.3, dur: 5.8 },
+]
+
 export async function PortalHero({ stats }: { stats: HomeStats }) {
   const { t } = await getT()
 
@@ -29,6 +40,45 @@ export async function PortalHero({ stats }: { stats: HomeStats }) {
         <div className="aurora-blob aurora-blob-1" />
         <div className="aurora-blob aurora-blob-2" />
         <div className="aurora-blob aurora-blob-3" />
+      </div>
+
+      {/*
+        * ★★ ร่างที่เดินผ่านหัวหน้า — ไม่ได้วาดผี แต่บิดแสงข้างหลัง
+        *    ★ อยู่หลังทุกอย่าง (-z-10) และ pointer-events ปิด จึงไม่บังการอ่าน
+        *      หรือขวางการกดปุ่มแม้แต่เฟรมเดียว
+        */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="phantom">
+          <div className="phantom-gait">
+            <span className="phantom-trail" />
+            <span className="phantom-form" />
+          </div>
+        </div>
+      </div>
+
+      {/*
+        * ★ ดาวกะพริบ — ตำแหน่ง/จังหวะคิดไว้ล่วงหน้าเป็นค่าคงที่
+        *   ★★ ห้ามสุ่มตอน render เด็ดขาด ค่าที่ server กับ client สุ่มได้
+        *      ไม่มีทางตรงกัน แล้ว React จะทิ้งต้นไม้ทั้งหน้าไปวาดใหม่
+        *      (บทเรียนเดียวกับ EQ_BARS ของหน้าห้องเพลง)
+        */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        {SPARKS.map((sp, i) => (
+          <span
+            key={i}
+            className="spark"
+            style={
+              {
+                left: `${sp.left}%`,
+                top: `${sp.top}%`,
+                width: sp.size,
+                height: sp.size,
+                '--d': `${sp.delay}s`,
+                '--dur': `${sp.dur}s`,
+              } as CSSProperties
+            }
+          />
+        ))}
       </div>
 
       <div className="relative mx-auto max-w-[720px] text-center">
@@ -84,7 +134,7 @@ export async function PortalHero({ stats }: { stats: HomeStats }) {
           <Link
             href="#systems"
             className={cn(
-              'group inline-flex h-12 items-center gap-2 rounded-full bg-accent px-7',
+              'pulse-ring group inline-flex h-12 items-center gap-2 rounded-full bg-accent px-7',
               'font-medium text-accent-ink transition-all',
               'hover:bg-accent-hover hover:shadow-[0_8px_30px_-8px] hover:shadow-accent/60',
               'active:scale-[0.98]',

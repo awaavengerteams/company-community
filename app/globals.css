@@ -1295,3 +1295,462 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   /* ★ แสงกวาดที่ไม่เคลื่อนคือแถบขาวพาดกลางปกค้างอยู่ — ต้องเอาออกทั้งชิ้น */
   .cover-sheen { display: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * เดโมเคลื่อนไหวของฟีเจอร์บนหน้าแรก
+ *
+ * ★★★ ภาพเคลื่อนไหวที่ "แสดงของจริง" ไม่ใช่ของประดับ
+ *
+ *     การ์ดฟีเจอร์ที่มีแต่ไอคอนกับตัวหนังสือบอกได้แค่ว่า "มีฟีเจอร์นี้"
+ *     ★ เดโมที่วิ่งอยู่บอกว่า "มันทำงานแบบนี้" ภายในหนึ่งวินาทีที่ตากวาดผ่าน
+ *       ซึ่งเร็วกว่าการอ่านสามบรรทัดมาก
+ *
+ * ★★ ทุกอันเป็น CSS ล้วน ไม่มี JS ไม่มีรูป — มาพร้อม HTML เลย
+ *    และหยุดสนิทเมื่อผู้ใช้ขอลดการเคลื่อนไหว (ดูท้ายบล็อก)
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.demo-box {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-page) 55%, transparent);
+}
+
+/* ── วงล้อสุ่มร้าน: แถบชื่อเลื่อนขึ้นวนไม่รู้จบ ─────────────────────────── */
+.demo-roll {
+  animation: demo-roll 5.5s cubic-bezier(0.35, 0, 0.2, 1) infinite;
+}
+
+/*
+ * ★ ใช้ steps ไม่ได้ เพราะต้องการให้ "ไหลแล้วหยุดค้าง" ไม่ใช่กระตุกทีละช่อง
+ *   ★★ ช่วง 0–55% คือช่วงไหล ส่วน 55–100% ค้างไว้ให้อ่านชื่อที่หยุด
+ *      ซึ่งเลียนจังหวะจริงของ planDraw() ที่หน่วงก่อนเฉลย
+ */
+/*
+ * ★★ ใช้พิกเซลตรง ๆ ไม่ใช่เปอร์เซ็นต์
+ *
+ *    เปอร์เซ็นต์ใน translateY อ้างอิง "ความสูงของตัวเอง" ไม่ใช่ของกล่อง —
+ *    ★ ตอนแรกเขียน -300% แล้วแถบเลื่อนไป 480px ซึ่งพ้นกล่องไปหมด
+ *      กล่องเลยว่างเปล่า (เห็นแต่เข็มชี้) โดยที่ไม่มี error อะไรเลย
+ *    ★★ แถวสูง 32px × 3 แถว = 96px คือระยะที่ทำให้แถวที่ 4 มาหยุดกลางกล่องพอดี
+ */
+@keyframes demo-roll {
+  0%   { transform: translate3d(0, 0, 0); }
+  55%  { transform: translate3d(0, -96px, 0); }
+  100% { transform: translate3d(0, -96px, 0); }
+}
+
+/* ── หารบิล: ยอดย่อยโผล่ทีละใบแล้ววนใหม่ ──────────────────────────────── */
+.demo-split > * {
+  animation: demo-fade-up 4.5s ease-in-out infinite both;
+}
+.demo-split > *:nth-child(2) { animation-delay: 0.35s; }
+.demo-split > *:nth-child(3) { animation-delay: 0.7s; }
+
+@keyframes demo-fade-up {
+  0%, 8%    { opacity: 0; transform: translate3d(0, 8px, 0); }
+  22%, 82%  { opacity: 1; transform: translate3d(0, 0, 0); }
+  96%, 100% { opacity: 0; transform: translate3d(0, 8px, 0); }
+}
+
+/* ── จับทีม: ชิปสองใบสลับฝั่งกันไปมา ──────────────────────────────────── */
+.demo-swap-a { animation: demo-swap-a 4s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+.demo-swap-b { animation: demo-swap-b 4s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+
+@keyframes demo-swap-a {
+  0%, 20%   { transform: translate3d(0, 0, 0); }
+  50%, 70%  { transform: translate3d(0, 130%, 0); }
+  100%      { transform: translate3d(0, 0, 0); }
+}
+@keyframes demo-swap-b {
+  0%, 20%   { transform: translate3d(0, 0, 0); }
+  50%, 70%  { transform: translate3d(0, -130%, 0); }
+  100%      { transform: translate3d(0, 0, 0); }
+}
+
+/* ── ตลาดนัด: ป้ายคิวเด้งเพิ่มเป็นระยะ ────────────────────────────────── */
+.demo-pulse { animation: demo-pulse 3.2s ease-in-out infinite; }
+
+@keyframes demo-pulse {
+  0%, 60%, 100% { transform: scale(1); }
+  70%           { transform: scale(1.18); }
+  80%           { transform: scale(1); }
+}
+
+/* ── เส้นแสงกวาดผ่านการ์ดตอนชี้ ───────────────────────────────────────── */
+/*
+ * ★ อยู่ใน @media (hover: hover) — บนมือถือไม่มีการชี้ ถ้าปล่อยไว้มันจะ
+ *   ค้างอยู่ที่เฟรมแรกตลอดเวลาโดยไม่มีใครเห็นว่ามันควรจะเคลื่อนไหว
+ */
+@media (hover: hover) {
+  .sheen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent 35%,
+      color-mix(in oklab, var(--color-ink) 7%, transparent) 50%,
+      transparent 65%
+    );
+    transform: translate3d(-100%, 0, 0);
+    opacity: 0;
+  }
+
+  .sheen:hover::after {
+    opacity: 1;
+    animation: sheen-pass 900ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes sheen-pass {
+  from { transform: translate3d(-100%, 0, 0); }
+  to   { transform: translate3d(100%, 0, 0); }
+}
+
+/*
+ * ★★ ปิดทั้งหมดเมื่อผู้ใช้ขอลดการเคลื่อนไหว
+ *    ★ ไม่ใช่แค่หยุด แต่ต้อง "หยุดที่เฟรมที่อ่านรู้เรื่อง" —
+ *      วงล้อที่หยุดกลางทางจะเห็นชื่อร้านครึ่งบรรทัด ซึ่งแย่กว่าไม่มีเดโมเลย
+ */
+@media (prefers-reduced-motion: reduce) {
+  .demo-roll,
+  .demo-split > *,
+  .demo-swap-a,
+  .demo-swap-b,
+  .demo-pulse,
+  .sheen:hover::after {
+    animation: none !important;
+  }
+  .demo-roll { transform: translate3d(0, -96px, 0); }
+  .demo-split > * { opacity: 1; transform: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * ชั้นอนิเมชันของหน้าแรก — "จัดเต็ม" แบบที่ยังอ่านออก
+ *
+ * ★★★ กติกาที่ใช้ตัดสินทุกอันในบล็อกนี้
+ *
+ *     1. ห้ามขยับสิ่งที่คนกำลังอ่าน — ขยับได้แต่พื้นหลัง ขอบ และของประดับ
+ *     2. ทุกอย่างเป็น transform/opacity เท่านั้น (ชั้น compositor)
+ *        ★ animate width/top/filter จะทำให้เบราว์เซอร์คำนวณเลย์เอาต์ใหม่ทุกเฟรม
+ *          แล้วหน้าจะกระตุกตอนเลื่อน ซึ่งพังกว่าไม่มีอนิเมชันเลย
+ *     3. ปิดทั้งหมดเมื่อผู้ใช้ขอลดการเคลื่อนไหว
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── แถบความคืบหน้าการเลื่อน ─────────────────────────────────────────────
+ * ★ ใช้ไทม์ไลน์การเลื่อนของ CSS ล้วน ไม่มี scroll listener ให้กระตุก
+ */
+.scroll-progress {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 60;
+  height: 2px;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: linear-gradient(
+    90deg,
+    rgb(var(--aurora-1)),
+    rgb(var(--aurora-2)),
+    rgb(var(--aurora-3))
+  );
+  pointer-events: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+@keyframes progress-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* ── ตัวอักษรไล่สีที่ไหลช้า ๆ ──────────────────────────────────────────── */
+.shimmer-text {
+  background-size: 220% 100%;
+  animation: shimmer-slide 9s ease-in-out infinite;
+}
+
+@keyframes shimmer-slide {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* ── ของประดับลอยขึ้นลงเบา ๆ ──────────────────────────────────────────── */
+.float-slow { animation: float-slow 6s ease-in-out infinite; }
+.float-slow:nth-child(even) { animation-delay: -3s; }
+
+@keyframes float-slow {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -6px, 0); }
+}
+
+/* ── วงแหวนเต้นรอบปุ่มหลัก ────────────────────────────────────────────── */
+.pulse-ring { position: relative; }
+
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 1px solid var(--color-accent);
+  opacity: 0;
+  animation: pulse-ring 3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-ring {
+  0%       { transform: scale(1); opacity: 0.55; }
+  55%, 100% { transform: scale(1.22); opacity: 0; }
+}
+
+/* ── ขอบไล่สีหมุนรอบการ์ดปิดท้าย ──────────────────────────────────────── */
+/*
+ * ★ วาดด้วย conic-gradient ที่หมุนตัวเอง แล้วเจาะกลางด้วยพื้นทึบ
+ *   ★★ ทำแบบนี้แทน border-image เพราะ border-image ไม่รับมุมโค้ง
+ *      และ mask ที่ซับซ้อนกว่านี้ทำให้ Safari รุ่นเก่าวาดไม่ออก
+ */
+.conic-ring { position: relative; }
+
+.conic-ring::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--ring-angle, 0deg),
+    transparent 0deg,
+    rgb(var(--aurora-2) / 0.9) 60deg,
+    rgb(var(--aurora-3) / 0.9) 120deg,
+    transparent 200deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: ring-spin 7s linear infinite;
+  pointer-events: none;
+}
+
+@property --ring-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes ring-spin {
+  to { --ring-angle: 360deg; }
+}
+
+/* ── แถบคำวิ่ง ────────────────────────────────────────────────────────── */
+/*
+ * ★★ ทำสองชุดต่อกันแล้วเลื่อน -50% — พอจบรอบภาพจึงต่อกันสนิท
+ *    ★ ถ้ามีชุดเดียวแล้วเลื่อน -100% จะเห็นช่องว่างวิ่งผ่านทุกครั้งที่วน
+ */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-slide 38s linear infinite;
+}
+
+@keyframes marquee-slide {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+/* ── เส้นใต้หัวข้อที่ยืดออกตอนเลื่อนมาถึง ─────────────────────────────── */
+.title-underline {
+  display: block;
+  height: 3px;
+  width: 72px;
+  border-radius: 9999px;
+  transform-origin: 50% 50%;
+  background: linear-gradient(90deg, rgb(var(--aurora-1)), rgb(var(--aurora-3)));
+}
+
+@supports (animation-timeline: view()) {
+  html[data-reveal='css'] .title-underline {
+    animation: underline-grow linear both;
+    animation-timeline: view();
+    animation-range: cover 10% cover 42%;
+  }
+}
+
+@keyframes underline-grow {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+/* ── ดาวเล็ก ๆ ที่กะพริบในหัวหน้า ─────────────────────────────────────── */
+.spark {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgb(var(--aurora-2));
+  animation: spark-blink var(--dur, 5s) ease-in-out var(--d, 0s) infinite;
+}
+
+@keyframes spark-blink {
+  0%, 100% { opacity: 0; transform: scale(0.6); }
+  50%      { opacity: 0.7; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-progress,
+  .shimmer-text,
+  .float-slow,
+  .pulse-ring::before,
+  .conic-ring::before,
+  .marquee-track,
+  .title-underline,
+  .spark {
+    animation: none !important;
+  }
+  .scroll-progress { display: none; }
+  .spark { opacity: 0.4; }
+  .title-underline { transform: none; opacity: 1; }
+}
+
+/* ── การ์ดที่มีสีประจำตัว ──────────────────────────────────────────────── */
+/*
+ * ★ สีมาจาก --tint ที่คอมโพเนนต์ส่งเข้ามา ไม่ใช่คลาสละสี
+ *   เพิ่มโมดูลใหม่จึงไม่ต้องแตะไฟล์นี้เลย
+ */
+.tint-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: radial-gradient(
+    120% 90% at 85% 0%,
+    rgb(var(--tint) / 0.16),
+    transparent 62%
+  );
+  opacity: 0;
+  transition: opacity 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: -1;
+}
+
+@media (hover: hover) {
+  .tint-card:hover .tint-glow { opacity: 1; }
+
+  .tint-card:hover {
+    border-color: rgb(var(--tint) / 0.5);
+    box-shadow: 0 26px 70px -34px rgb(var(--tint) / 0.75);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * ร่างที่เดินผ่าน
+ *
+ * ★★★ ไม่วาดผี — บิดแสงข้างหลังแทน
+ *
+ *     ผีที่วาดเป็นรูปทรงมีตามีปากคือการ์ตูน และพอวาดออกมาเป็นภาพนิ่ง
+ *     มันจะดู "ติด" อยู่บนหน้าจอตลอดเวลา
+ *     ★★ ของจริงที่ทำให้คนขนลุกคือ "มีบางอย่างผ่านไป" — พื้นหลังบิดตาม
+ *        ขอบมีแสงบาง ๆ แล้วก็หายไป ★ backdrop-filter ทำสิ่งนี้ได้ตรง ๆ
+ *        เพราะมันหักเหสิ่งที่อยู่ข้างหลังจริง ไม่ใช่รูปที่เราวาดทับ
+ *
+ *     ★ รูปร่างมาจาก mask สองชั้น (หัว-ไหล่ กับ ลำตัว) ที่เบลอจนไม่มีเส้นขอบ
+ *       ★★ จงใจไม่ให้คม — เส้นขอบคมเมื่อไหร่ สมองจะอ่านว่า "รูปที่วาดไว้"
+ *          ทันที และความรู้สึกว่ามันเป็นของจริงจะหายไปหมด
+ *
+ * ★ ต้นทุนของ backdrop-filter สูง จึงกว้างแค่ ~170px เดินรอบละ 26 วินาที
+ *   และปิดทิ้งบนจอเล็ก (มือถือเห็นไม่ชัดอยู่แล้วแต่จ่ายค่าวาดเต็ม ๆ)
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.phantom {
+  position: absolute;
+  top: -6%;
+  bottom: -6%;
+  left: 0;
+  width: 170px;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: phantom-cross 26s linear infinite;
+}
+
+/* ★ ชั้นในทำจังหวะย่ำเท้า แยกจากชั้นนอกที่เดินหน้า
+     ★★ รวมสอง transform ไว้ใน element เดียวไม่ได้ — อันหลังจะทับอันแรกเงียบ ๆ */
+.phantom-gait {
+  position: absolute;
+  inset: 0;
+  animation: phantom-gait 1.45s ease-in-out infinite;
+}
+
+.phantom-form {
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(7px) saturate(1.1) brightness(1.04);
+  -webkit-backdrop-filter: blur(7px) saturate(1.1) brightness(1.04);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-ink) 6%, transparent),
+      transparent 55%
+    );
+  /* หัว-ไหล่ + ลำตัว ซ้อนกันเป็นเงาคน ขอบละลายหายไปทั้งหมด */
+  -webkit-mask-image:
+    radial-gradient(26% 15% at 50% 20%, #000 45%, transparent 100%),
+    radial-gradient(44% 40% at 50% 64%, #000 35%, transparent 100%);
+  mask-image:
+    radial-gradient(26% 15% at 50% 20%, #000 45%, transparent 100%),
+    radial-gradient(44% 40% at 50% 64%, #000 35%, transparent 100%);
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+}
+
+/* ★ ไอที่ลากตามหลัง — ช่วยให้ "ทิศทาง" ของการเดินอ่านออก */
+.phantom-trail {
+  position: absolute;
+  inset-block: 18%;
+  inset-inline-start: -130%;
+  width: 260%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-ink) 3%, transparent)
+  );
+  filter: blur(14px);
+  opacity: 0.8;
+}
+
+@keyframes phantom-cross {
+  0%        { transform: translate3d(-18vw, 0, 0) scaleX(1); opacity: 0; }
+  12%       { opacity: 0.85; }
+  50%       { transform: translate3d(50vw, 0, 0) scaleX(1.04); opacity: 0.95; }
+  86%       { opacity: 0.7; }
+  100%      { transform: translate3d(118vw, 0, 0) scaleX(1); opacity: 0; }
+}
+
+/*
+ * ★ ย่ำเท้า: ขึ้นลงเล็กน้อย + เอียงสลับข้าง
+ *   ★★ คนเดินจริงหัวขยับขึ้นลงประมาณ 4-5 ซม. ต่อก้าว ไม่ใช่ลอยนิ่ง ๆ
+ *      การลอยนิ่งคือสิ่งที่ทำให้อนิเมชันดูเป็นของปลอมทันที
+ */
+@keyframes phantom-gait {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0.6deg); }
+  25%      { transform: translate3d(0, -7px, 0) rotate(0deg); }
+  50%      { transform: translate3d(0, 0, 0) rotate(-0.6deg); }
+  75%      { transform: translate3d(0, -6px, 0) rotate(0deg); }
+}
+
+@media (max-width: 640px) {
+  .phantom { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phantom { display: none; }
+  .tint-glow { opacity: 0 !important; }
+}
