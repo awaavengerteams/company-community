@@ -97,6 +97,7 @@ export const OFFICE_NAV: NavSection[] = [
     icon: ICONS.admin,
     adminOnly: true,
     children: [
+      { href: '/office/admin/dashboard', labelKey: 'dash.title' },
       { href: '/office/admin/codes', labelKey: 'nav.admin.codes' },
       { href: '/office/admin/users', labelKey: 'nav.admin.users' },
       { href: '/office/admin/settings', labelKey: 'nav.admin.settings' },

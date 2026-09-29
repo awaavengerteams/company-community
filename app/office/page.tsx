@@ -2,18 +2,20 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getOfficeViewer } from '@/lib/office/session'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { ot } from '@/lib/i18n/office'
 import { visibleNav } from '@/lib/office/nav'
+import { HomeSummary, type HomeSummaryData } from '@/components/office/HomeSummary'
+import { MusicRoomsCard } from '@/components/office/MusicRoomsCard'
 
 export const metadata: Metadata = { title: 'หน้าแรก' }
 
 /**
  * หน้าแรกรวมทุกโมดูล (FR-X07)
  *
- * ★ ตอนนี้เป็นหน้ารวมทางเข้าเปล่า ๆ — การ์ดสรุป 3 ใบตามหัวข้อ 8.1
- *   (ยอดค้าง · นับถอยหลังหวย · ประกาศล่าสุด) ต้องรอโมดูล B, C, D
- *   ★ ทำหน้าเปล่าไว้ก่อนดีกว่าทำการ์ดปลอมที่โชว์เลข 0 ค้างไว้
- *     เพราะการ์ดที่โชว์ข้อมูลผิดทำให้คนเลิกเชื่อหน้านี้ไปเลย
+ * ★ การ์ดสรุปอยู่บนสุด (หัวข้อ 8.1) ตามด้วยทางเข้าแต่ละโมดูล
+ *   ★★ การ์ดที่ไม่มีอะไรจะบอกจะไม่ถูกวาดเลย ไม่ใช่วาดแล้วโชว์ 0
+ *      เพราะการ์ดที่โชว์เลขไร้ความหมายทำให้คนเลิกอ่านหน้านี้ไปทั้งหน้า
  */
 export default async function OfficeHomePage() {
   const viewer = await getOfficeViewer()
@@ -32,6 +34,35 @@ export default async function OfficeHomePage() {
 
   const sections = visibleNav(viewer.isAdmin).filter((s) => s.href !== '/office')
 
+  /*
+   * ★★ ห่อ try/catch เพราะ RPC นี้มาจาก migration 0036
+   *
+   *    บทเรียนเดิมของโปรเจกต์นี้: โค้ดที่อ่านของใหม่ก่อน migration ขึ้น
+   *    ทำให้หน้าพังทั้งหน้า ★ หน้าแรกพังหมายถึงเข้าระบบออฟฟิศไม่ได้เลย
+   *    ★ การ์ดสรุปหายไปเงียบ ๆ ดีกว่าหน้าขาว
+   */
+  let summary: HomeSummaryData | null = null
+  try {
+    const { data } = await getSupabaseAdminClient().rpc('office_home_summary', {
+      p_actor: viewer.id,
+    })
+    if (data && typeof data === 'object') {
+      const d = data as Record<string, unknown>
+      summary = {
+        iOwe: Number(d.iOwe ?? 0),
+        owedToMe: Number(d.owedToMe ?? 0),
+        toConfirm: Number(d.toConfirm ?? 0),
+        stale: Number(d.stale ?? 0),
+        newListings: Number(d.newListings ?? 0),
+        topRestaurant: typeof d.topRestaurant === 'string' ? d.topRestaurant : null,
+        unread: Number(d.unread ?? 0),
+        unreadChat: Number(d.unreadChat ?? 0),
+      }
+    }
+  } catch {
+    summary = null
+  }
+
   return (
     <div className="py-2">
       <h1 className="text-xl font-bold text-ink">
@@ -41,6 +72,8 @@ export default async function OfficeHomePage() {
         {viewer.department ? `${viewer.department} · ` : ''}
         {viewer.employeeCode}
       </p>
+
+      {summary ? <HomeSummary data={summary} /> : null}
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {sections.map((section) => (
@@ -74,9 +107,12 @@ export default async function OfficeHomePage() {
         ))}
       </div>
 
+      {/* ★ ห้องเพลงของฉันกำลังเล่นอะไร (FR-X11) */}
+      <MusicRoomsCard />
+
       {/* ★ ทางกลับห้องเพลงต้องเห็นได้จากหน้าแรก ไม่ใช่ซ่อนอยู่ท้ายแถบเมนู
           คนส่วนใหญ่เข้ามาจากห้องเพลง และต้องกลับไปได้โดยไม่ต้องหา */}
-      <div className="mt-8 rounded-[var(--radius-card)] border border-line p-4">
+      <div className="mt-4 rounded-[var(--radius-card)] border border-line p-4">
         <p className="text-sm text-ink-soft">
           ระบบนี้เป็นส่วนเสริมของ Frame Room — ห้องฟังเพลงยังใช้งานได้เหมือนเดิมทุกอย่าง
         </p>

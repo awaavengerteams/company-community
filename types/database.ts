@@ -1353,6 +1353,11 @@ export type Database = {
       finish_draw_room: { Args: { p_actor: string; p_room: string }; Returns: void }
       delete_draw_room: { Args: { p_actor: string; p_room: string }; Returns: void }
 
+      /* ── FR-X10/X11 แดชบอร์ด + ห้องเพลง + การ์ดหน้าแรก (0036) ──── */
+      office_usage_stats: { Args: { p_actor: string; p_days?: number }; Returns: Json }
+      my_music_rooms: { Args: { p_actor: string; p_limit?: number }; Returns: Json }
+      office_home_summary: { Args: { p_actor: string }; Returns: Json }
+
       report_listing: {
         Args: { p_actor: string; p_id: string; p_reason?: string | null }
         Returns: { reports: number; threshold: number; hidden: boolean }
