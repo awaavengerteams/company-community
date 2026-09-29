@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { PhantomFace, type Variant } from './Phantom'
+import { FACES_PER_VARIANT } from '@/lib/home/phantom-face'
 
 /**
  * หน้าจู่โจมแบบสุ่ม
@@ -9,8 +10,13 @@ import { PhantomFace, type Variant } from './Phantom'
  * ★★★ สุ่มทั้ง "เมื่อไหร่" และ "ตนไหน" — ตายตัวเมื่อไหร่ก็เลิกน่ากลัวเมื่อนั้น
  *
  *     ถ้าตั้งเวลาคงที่ คนจะจับจังหวะได้ภายในสองสามครั้งแล้วรอรับมัน
- *     ★ ช่วงเวลาที่สุ่มกว้าง (25–95 วินาที) ทำให้ "รู้ว่าจะมา แต่ไม่รู้เมื่อไหร่"
- *       ซึ่งเป็นกลไกที่ทำให้หนังผีใช้ได้ผลมากกว่าตัวผีเอง
+ *     ★ สุ่มจากห้าค่า (10 วินาที · 30 วินาที · 1 นาที · 2 นาที · 3 นาที)
+ *       ทำให้ "รู้ว่าจะมา แต่ไม่รู้เมื่อไหร่" ซึ่งเป็นกลไกที่ทำให้หนังผี
+ *       ใช้ได้ผลมากกว่าตัวผีเอง
+ *
+ *     ★★★ และหน้าที่โผล่มาต้องไม่ซ้ำด้วย — 3 ตน × 30 แบบ = 90 หน้า
+ *          ★ ถ้าหน้าเดิมโผล่ครั้งที่สอง ความตกใจจะหายไปทันทีแม้เวลาจะสุ่ม
+ *            เพราะสมองจำรูปได้เร็วกว่าจำจังหวะมาก
  *
  * ★★★ สุ่มใน useEffect เท่านั้น ห้ามสุ่มตอน render
  *
@@ -23,20 +29,30 @@ import { PhantomFace, type Variant } from './Phantom'
  *     2. pointer-events ปิด และหายไปเองใน 1 วินาที ★ ไม่มีทางขวางการกดปุ่ม
  *     3. หยุดนับเวลาเมื่อแท็บถูกซ่อน — ไม่ไปโผล่ตอนคนสลับกลับมาพอดี
  *        ★★ อันนั้นไม่ใช่ความน่ากลัว แต่เป็นความรำคาญ
- *     4. ครั้งแรกอย่างน้อย 25 วินาที ★ คนต้องได้อ่านหน้าเว็บก่อน
+ *     4. ครั้งแรกเร็วสุด 10 วินาที ★ เร็วกว่านี้คนยังไม่ทันได้เห็นหน้าเว็บเลย
+ *        แล้วจะจำได้แต่ว่า "เว็บนี้มีอะไรตกใจ" ไม่ใช่ว่าเว็บนี้ทำอะไรได้
  */
 
 const VARIANTS: Variant[] = ['hooded', 'hair', 'gaunt']
 
-/** ช่วงเวลาสุ่มระหว่างครั้ง (มิลลิวินาที) */
-const MIN_GAP = 25_000
-const MAX_GAP = 95_000
+/**
+ * ช่วงเวลาที่เป็นไปได้ระหว่างครั้ง
+ *
+ * ★★ ห้าค่าที่ห่างกันมาก ไม่ใช่ช่วงต่อเนื่อง
+ *
+ *    ช่วงต่อเนื่อง 25–95 วินาทีให้ค่าเฉลี่ยราว ๆ หนึ่งนาทีเสมอ ★ คนจะเริ่ม
+ *    รู้สึกได้ว่า "ประมาณนี้แหละ" ภายในสามสี่ครั้ง
+ *    ★★ ค่าที่กระโดดจาก 10 วินาทีไปถึง 3 นาที ทำให้คาดเดาไม่ได้จริง —
+ *       บางทีมาติด ๆ กันสองครั้ง บางทีเงียบไปสามนาทีจนลืมไปแล้ว
+ *       ★ ซึ่งตอนลืมนั่นแหละคือตอนที่มันได้ผลที่สุด
+ */
+const GAPS = [10_000, 30_000, 60_000, 120_000, 180_000]
 
 /** ★ อยู่บนจอสั้นมาก — ยิ่งนานยิ่งกลายเป็นของประดับ ไม่ใช่การจู่โจม */
 const ON_SCREEN = 1_000
 
 export function JumpScare() {
-  const [shown, setShown] = useState<{ variant: Variant; at: number } | null>(null)
+  const [shown, setShown] = useState<{ variant: Variant; face: number; at: number } | null>(null)
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -45,7 +61,7 @@ export function JumpScare() {
     let nextTimer = 0
 
     const pick = () => VARIANTS[Math.floor(Math.random() * VARIANTS.length)]!
-    const gap = () => MIN_GAP + Math.random() * (MAX_GAP - MIN_GAP)
+    const gap = () => GAPS[Math.floor(Math.random() * GAPS.length)]!
 
     const schedule = () => {
       nextTimer = window.setTimeout(() => {
@@ -55,7 +71,12 @@ export function JumpScare() {
           return
         }
 
-        setShown({ variant: pick(), at: Date.now() })
+        /* ★ สุ่มทั้งตนและแบบหน้า — 3 × 30 = 90 หน้าที่เป็นไปได้ */
+        setShown({
+          variant: pick(),
+          face: Math.floor(Math.random() * FACES_PER_VARIANT),
+          at: Date.now(),
+        })
         playStinger()
 
         hideTimer = window.setTimeout(() => {
@@ -85,7 +106,7 @@ export function JumpScare() {
     >
       <div className="scare-veil" />
       <div className="scare-figure">
-        <PhantomFace variant={shown.variant} />
+        <PhantomFace variant={shown.variant} index={shown.face} />
       </div>
       <BloodSplatter />
     </div>
