@@ -620,6 +620,36 @@ export type Database = {
         Relationships: []
       }
 
+      /* ── โมดูล C · สุ่มและเกม (0028) ────────────────────────────── */
+
+      name_sets: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          /** [{id?, label, department?}] — ภาพถ่าย ณ ตอนบันทึก */
+          members: unknown
+          created_at: string
+          updated_at: string
+        }
+        Insert: { owner_id: string; name: string; members?: unknown }
+        Update: { name?: string; members?: unknown }
+        Relationships: []
+      }
+
+      lottery_picks: {
+        Row: {
+          id: string
+          user_id: string
+          number: string
+          draw_date: string | null
+          created_at: string
+        }
+        Insert: { user_id: string; number: string; draw_date?: string | null }
+        Update: Record<never, never>
+        Relationships: []
+      }
+
       audit_log: {
         Row: {
           id: number
@@ -1000,6 +1030,29 @@ export type Database = {
         Args: { p_actor: string }
         Returns: { iOwe: number; owedToMe: number; pendingConfirm: number }
       }
+
+      /* ── โมดูล C · สุ่มและเกม (0028) ────────────────────────────── */
+      save_name_set: {
+        Args: {
+          p_actor: string
+          p_id: string | null
+          p_name: string
+          p_members: { id?: string; label: string; department?: string | null }[]
+        }
+        Returns: Database['public']['Tables']['name_sets']['Row']
+      }
+      delete_name_set: {
+        Args: { p_actor: string; p_id: string }
+        Returns: string
+      }
+      save_lottery_pick: {
+        Args: { p_actor: string; p_number: string }
+        Returns: Database['public']['Tables']['lottery_picks']['Row']
+      }
+      delete_lottery_pick: {
+        Args: { p_actor: string; p_id: string }
+        Returns: string
+      }
     }
 
     Enums: {
@@ -1021,6 +1074,8 @@ export type RoomRow = Tables<'rooms'>
 export type EmployeeCodeRow = Tables<'employee_codes'>
 export type RestaurantRow = Tables<'restaurants'>
 export type DebtRow = Tables<'debts'>
+export type NameSetRow = Tables<'name_sets'>
+export type LotteryPickRow = Tables<'lottery_picks'>
 export type ExpenseBillRow = Tables<'expense_bills'>
 export type NotificationRow = Tables<'notifications'>
 export type AppSettingRow = Tables<'app_settings'>

@@ -94,6 +94,15 @@ export const LIMITS = {
   walletAction: { limit: 60, windowSeconds: 60 },
   /** อัป/อ่าน QR · ใบเสร็จ · สลิป */
   walletFile: { limit: 30, windowSeconds: 300 },
+
+  /* ── โมดูล C · สุ่มและเกม (0028) ─────────────────────────────────── */
+
+  /**
+   * บันทึกชุดรายชื่อ / เลข
+   * ★ การสุ่มเองไม่ผ่าน API เลย — ทำฝั่ง client ด้วย crypto ทั้งหมด
+   *   เพดานนี้จึงคุมแค่การเขียนลงฐานข้อมูล ไม่ได้คุมการเล่น
+   */
+  funAction: { limit: 60, windowSeconds: 300 },
 } as const
 
 export type RateLimitName = keyof typeof LIMITS

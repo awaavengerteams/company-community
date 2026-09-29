@@ -433,6 +433,8 @@ export const pt: Dict = {
   "valid.amountDecimals": "ยอดเงินใส่ทศนิยมได้ไม่เกิน 2 ตำแหน่ง",
   "valid.noPeople": "เลือกผู้ร่วมจ่ายอย่างน้อย 1 คน",
   "valid.needEachAmount": "โหมดระบุยอดรายคน ต้องกรอกยอดให้ครบทุกคน",
+  "valid.nameSetTaken": "มีชุดรายชื่อชื่อนี้อยู่แล้ว",
+  "valid.lotteryNumber": "เลขต้องเป็น 2, 3 หรือ 6 หลัก",
   "srvErr.needQuery": "Digite algo para buscar",
   "srvErr.badOrigin": "A requisição veio de uma origem não autorizada",
   "srvErr.notMember": "Você ainda não entrou nesta sala",
