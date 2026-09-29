@@ -38,7 +38,9 @@ export default async function OfficeLayout({ children }: LayoutProps<'/office'>)
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-page text-ink">
+    /* ★ overflow-x-clip ให้หน้าแรกกางแถบแสงเต็มจอได้โดยไม่เกิดแถบเลื่อนแนวนอน
+       ★ ใช้ clip ไม่ใช่ hidden เพราะ hidden จะทำให้ header ที่ sticky หลุด */
+    <div className="flex min-h-dvh flex-col overflow-x-clip bg-page text-ink">
       <OfficeHeader
         isAdmin={viewer.isAdmin}
         displayName={viewer.displayName}

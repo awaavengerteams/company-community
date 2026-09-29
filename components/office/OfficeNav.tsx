@@ -48,6 +48,18 @@ export function OfficeSidebar({ isAdmin }: { isAdmin: boolean }) {
   const sections = visibleNav(isAdmin)
   const active = activeHref(pathname, sections.map((s) => s.href))
 
+  /*
+   * ★★ หน้าแรกไม่มีแถบซ้าย — มันเป็นพอร์ทัล ไม่ใช่หน้าในระบบหลังบ้าน
+   *
+   *    แถบเมนูข้างซ้ายคือสัญญาณภาพที่บอกว่า "นี่คือหลังบ้าน" ชัดที่สุด
+   *    ★ หน้าแรกจึงเต็มความกว้างเหมือนหน้าแรกของห้องเพลง ส่วนหน้าย่อย
+   *      ยังมีแถบไว้ใช้งานจริง — คนที่เข้ามาทำงานต้องสลับหน้าได้เร็ว
+   *
+   *    ★ เช็กที่นี่ที่เดียว ไม่แยก layout ให้หน้าแรก เพราะ layout ที่ซ้ำกัน
+   *      สองอันคือที่ที่ด่านความปลอดภัยจะหลุดไปหนึ่งอันในวันใดวันหนึ่ง
+   */
+  if (pathname === '/office') return null
+
   return (
     <nav
       aria-label={navLabel('nav.home')}
