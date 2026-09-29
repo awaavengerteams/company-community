@@ -1,0 +1,112 @@
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { getOfficeViewer } from '@/lib/office/session'
+import { OfficeSidebar, OfficeTabBar } from '@/components/office/OfficeNav'
+import { NotificationBell } from '@/components/office/NotificationBell'
+import { ot } from '@/lib/i18n/office'
+import { Logo } from '@/components/Logo'
+import { ThemeToggle } from '@/components/ThemeToggle'
+
+/**
+ * โครงของทุกหน้าในระบบกิจกรรมออฟฟิศ (FR-X07)
+ *
+ * ★★★ อยู่ใต้ app/office/ ไม่ใช่ route group ที่ครอบ /
+ *
+ *     ถ้าใช้ route group แล้วเอา layout นี้ไปครอบหน้าแรก ห้องเพลงจะมีแถบเมนู
+ *     ออฟฟิศโผล่ขึ้นมาด้วย — ซึ่งผิดข้อกำหนดที่ว่า "ของเดิมเหมือนเดิมทุกอย่าง"
+ *
+ *     ★ แยก path กันชัด ๆ ทำให้พิสูจน์ได้ง่ายว่าไม่ได้แตะของเดิม:
+ *       / · /lobby · /room/* ไม่มีไฟล์ไหนในนี้เกี่ยวข้องเลยสักบรรทัด
+ *
+ * ★★ ด่านอยู่ที่ layout ไม่ใช่ที่แต่ละหน้า
+ *    หน้าใหม่ที่เพิ่มทีหลังจะได้ด่านนี้ฟรีโดยไม่ต้องจำว่าต้องใส่
+ *    ★ การให้แต่ละหน้าเช็คเองคือวิธีที่วันหนึ่งจะมีหน้าหนึ่งลืม แล้วไม่มีใครรู้
+ */
+export default async function OfficeLayout({ children }: LayoutProps<'/office'>) {
+  const viewer = await getOfficeViewer()
+
+  /*
+   * ★ ยังไม่ได้เข้าระบบ → ส่งไปหน้าแรกของห้องเพลงซึ่งมีฟอร์มตั้งชื่อผู้ใช้อยู่แล้ว
+   *   ไม่สร้างหน้า login ใหม่ เพราะตัวตนเป็นชุดเดียวกันทั้งสองระบบ
+   */
+  if (!viewer) redirect('/')
+
+  if (viewer.accountStatus === 'SUSPENDED') {
+    return (
+      <SuspendedScreen />
+    )
+  }
+
+  return (
+    <div className="flex min-h-dvh flex-col bg-page text-ink">
+      <OfficeHeader
+        isAdmin={viewer.isAdmin}
+        displayName={viewer.displayName}
+        userId={viewer.id}
+      />
+
+      <div className="mx-auto flex w-full max-w-[1400px] flex-1">
+        <OfficeSidebar isAdmin={viewer.isAdmin} />
+
+        {/* ★ pb-20 บนมือถือ เผื่อความสูงของแถบเมนูล่าง ไม่งั้นเนื้อหาท้ายหน้า
+            จะถูกแถบทับจนกดไม่ได้ */}
+        <main className="min-w-0 flex-1 px-4 pb-20 pt-4 md:px-6 md:pb-8">{children}</main>
+      </div>
+
+      <OfficeTabBar isAdmin={viewer.isAdmin} />
+    </div>
+  )
+}
+
+/**
+ * แถบบน — ใช้ Logo กับ ThemeToggle ตัวเดียวกับห้องเพลง
+ *
+ * ★ ไม่ทำ header ใหม่ทั้งอัน เพราะ AppHeader เดิมผูกกับ state ของห้องเพลง
+ *   (ช่องค้นหาเพลง · ปุ่มออกจากห้อง) ซึ่งไม่มีความหมายในหน้าออฟฟิศ
+ *   ★ หยิบเฉพาะชิ้นที่ใช้ร่วมกันได้จริงมาใช้ หน้าตาจึงยังเป็นชุดเดียวกัน
+ */
+function OfficeHeader({
+  isAdmin,
+  displayName,
+  userId,
+}: {
+  isAdmin: boolean
+  displayName: string
+  userId: string
+}) {
+  return (
+    <header className="sticky top-0 z-50 flex h-(--spacing-header) items-center gap-3 border-b border-line bg-page px-4">
+      <Link href="/office" className="flex items-center gap-2">
+        <Logo />
+      </Link>
+
+      <div className="ms-auto flex items-center gap-1">
+        <NotificationBell userId={userId} />
+        <ThemeToggle />
+        {/* ★ ชื่อผู้ใช้เป็นตัวยืนยันว่า "กำลังใช้ในนามใคร" ซึ่งสำคัญมากใน
+            ระบบที่มีเรื่องเงิน — คนต้องเห็นได้ทันทีว่าไม่ได้สวมบัญชีคนอื่นอยู่ */}
+        <span className="hidden max-w-40 truncate px-2 text-sm text-ink-soft sm:block">
+          {displayName}
+          {isAdmin ? <span className="ms-1 text-accent">·&nbsp;Admin</span> : null}
+        </span>
+      </div>
+    </header>
+  )
+}
+
+function SuspendedScreen() {
+  return (
+    <div className="grid min-h-dvh place-items-center bg-page px-6 text-center">
+      <div className="max-w-md">
+        <h1 className="text-xl font-bold text-ink">{ot('account.suspended')}</h1>
+        <p className="mt-2 text-sm text-ink-soft">{ot('account.suspendedBody')}</p>
+        <Link
+          href="/"
+          className="mt-6 inline-flex h-9 items-center rounded-full bg-surface px-4 text-sm font-medium text-ink hover:bg-surface-hover"
+        >
+          {ot('nav.music')}
+        </Link>
+      </div>
+    </div>
+  )
+}

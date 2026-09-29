@@ -422,6 +422,15 @@ export const en: Dict = {
   "apiErr.YOUTUBE_UNAVAILABLE": "Couldn’t reach YouTube — please try again",
   "apiErr.DATABASE_ERROR": "A temporary glitch",
   "apiErr.INTERNAL_ERROR": "Something unexpected happened",
+
+  /* ── Office activity system (0023) ─────────────────────── */
+  "apiErr.CODE_NOT_FOUND": "ไม่พบรหัสพนักงานนี้ในระบบ ตรวจสอบอีกครั้งหรือติดต่อผู้ดูแล",
+  "apiErr.CODE_TAKEN": "รหัสพนักงานนี้ถูกใช้สมัครไปแล้ว (1 รหัสต่อ 1 บัญชี)",
+  "apiErr.CODE_INACTIVE": "รหัสพนักงานนี้ถูกปิดการใช้งานแล้ว",
+  "apiErr.ALREADY_LINKED": "บัญชีนี้ผูกรหัสพนักงานไว้แล้ว",
+  "apiErr.ACCOUNT_SUSPENDED": "บัญชีนี้ถูกระงับ ติดต่อผู้ดูแลระบบ",
+  "apiErr.NEEDS_EMPLOYEE_CODE": "ต้องผูกรหัสพนักงานก่อนจึงจะใช้เมนูนี้ได้",
+  "valid.employeeCode": "รหัสพนักงานไม่ถูกต้อง (A-Z 0-9 . _ - ยาว 2–32 ตัว)",
   "srvErr.needQuery": "Please enter something to search for",
   "srvErr.badOrigin": "The request came from an unauthorised origin",
   "srvErr.notMember": "You haven’t joined this room yet",

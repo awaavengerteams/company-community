@@ -20,6 +20,21 @@ export type Json =
 
 export type MemberRole = 'OWNER' | 'MEMBER' | 'GUEST'
 
+/* ── ระบบกิจกรรมออฟฟิศ (0023) ─────────────────────────────────────────── */
+
+/** ACTIVE = ยังเป็นพนักงาน · RESIGNED = ลาออก (บัญชีที่ผูกถูกระงับอัตโนมัติ) */
+export type EmployeeCodeStatus = 'ACTIVE' | 'RESIGNED'
+export type AccountStatus = 'ACTIVE' | 'SUSPENDED'
+/** ชนิดเนื้อหาที่รายงานได้ — ตรงกับ check constraint ของ content_reports */
+export type ReportTargetType = 'restaurant' | 'listing'
+
+/* ── โมดูล A · กินอะไรดี (0025) ───────────────────────────────────────── */
+
+/** ช่วงราคา — ตรงกับ check constraint ของ restaurants.price_range */
+export type PriceRange = '฿' | '฿฿' | '฿฿฿'
+/** ระยะทาง: เดินได้ · ขับรถ · เดลิเวอรี */
+export type DistanceBand = 'WALK' | 'DRIVE' | 'DELIVERY'
+
 export type QueueStatus = 'WAITING' | 'PLAYING' | 'PLAYED' | 'SKIPPED' | 'REMOVED'
 
 export type Database = {
@@ -37,6 +52,18 @@ export type Database = {
           /** หน้าตาตัวละครในลอบบี้ (0019) — jsonb ดิบ sanitize ตอนใช้ */
           appearance: unknown
           is_guest: boolean
+          /* ── ระบบกิจกรรมออฟฟิศ (0023) ─────────────────────────────────
+           * ★ nullable ทั้งหมดโดยตั้งใจ — ผู้ใช้เดิมของห้องเพลงยังไม่มีค่าพวกนี้
+           *   และต้องใช้งานห้องเพลงต่อได้โดยไม่ต้องผูกรหัสพนักงาน
+           */
+          /** ฝ่าย/แผนก — พนักงานกรอกเองตอนสมัคร */
+          department: string | null
+          /** รหัสพนักงานที่ผูกไว้ — null = เข้าโมดูลออฟฟิศไม่ได้ */
+          employee_code: string | null
+          is_admin: boolean
+          account_status: 'ACTIVE' | 'SUSPENDED'
+          /** path ใน private bucket ไม่ใช่ URL สาธารณะ (NFR-07) */
+          payment_qr_path: string | null
           created_at: string
           updated_at: string
         }
@@ -47,6 +74,11 @@ export type Database = {
           nickname?: string | null
           username?: string | null
           is_guest?: boolean
+          department?: string | null
+          employee_code?: string | null
+          is_admin?: boolean
+          account_status?: 'ACTIVE' | 'SUSPENDED'
+          payment_qr_path?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -56,6 +88,11 @@ export type Database = {
           nickname?: string | null
           username?: string | null
           is_guest?: boolean
+          department?: string | null
+          employee_code?: string | null
+          is_admin?: boolean
+          account_status?: 'ACTIVE' | 'SUSPENDED'
+          payment_qr_path?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -362,6 +399,176 @@ export type Database = {
         }
         Relationships: []
       }
+
+      /* ── ระบบกิจกรรมออฟฟิศ (0023) ───────────────────────────────────── */
+
+      employee_codes: {
+        Row: {
+          /** ตัวพิมพ์ใหญ่เสมอ — normalize ที่ RPC */
+          code: string
+          status: EmployeeCodeStatus
+          claimed_by: string | null
+          claimed_at: string | null
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          code: string
+          status?: EmployeeCodeStatus
+          claimed_by?: string | null
+          claimed_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          status?: EmployeeCodeStatus
+          claimed_by?: string | null
+          claimed_at?: string | null
+        }
+        Relationships: []
+      }
+
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          /** ★ คีย์แปล ไม่ใช่ข้อความ — สลับภาษาแล้วเปลี่ยนย้อนหลังทั้งหมด */
+          title_key: string
+          params: unknown
+          link: string | null
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          type: string
+          title_key: string
+          params?: unknown
+          link?: string | null
+        }
+        Update: { read_at?: string | null }
+        Relationships: []
+      }
+
+      notification_prefs: {
+        Row: { user_id: string; type: string; enabled: boolean }
+        Insert: { user_id: string; type: string; enabled?: boolean }
+        Update: { enabled?: boolean }
+        Relationships: []
+      }
+
+      content_reports: {
+        Row: {
+          target_type: ReportTargetType
+          target_id: string
+          reporter_id: string
+          reason: string | null
+          created_at: string
+        }
+        Insert: {
+          target_type: ReportTargetType
+          target_id: string
+          reporter_id: string
+          reason?: string | null
+        }
+        Update: Record<never, never>
+        Relationships: []
+      }
+
+      app_settings: {
+        Row: {
+          key: string
+          value: unknown
+          updated_at: string
+          updated_by: string | null
+        }
+        /* ★ updated_at เขียนเองได้ — ตารางนี้ไม่มี trigger touch_updated_at
+           (มีแค่ default now() ตอน insert ซึ่งไม่ทำงานตอน upsert-update) */
+        Insert: { key: string; value: unknown; updated_by?: string | null; updated_at?: string }
+        Update: { value?: unknown; updated_by?: string | null; updated_at?: string }
+        Relationships: []
+      }
+
+      /* ── โมดูล A · กินอะไรดี (0025) ─────────────────────────────── */
+
+      restaurants: {
+        Row: {
+          id: string
+          name: string
+          /** เมนูเด็ด — บังคับตาม FR-A01 */
+          signature_dish: string
+          image_path: string | null
+          cuisine: string | null
+          price_range: PriceRange | null
+          distance: DistanceBand | null
+          map_url: string | null
+          note: string | null
+          added_by: string | null
+          /** ★ ตัวนับที่ RPC เขียนเท่านั้น — อย่าเขียนจากที่อื่น */
+          vote_count: number
+          maybe_closed: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          name: string
+          signature_dish: string
+          image_path?: string | null
+          cuisine?: string | null
+          price_range?: PriceRange | null
+          distance?: DistanceBand | null
+          map_url?: string | null
+          note?: string | null
+          added_by?: string | null
+        }
+        Update: {
+          name?: string
+          signature_dish?: string
+          image_path?: string | null
+          cuisine?: string | null
+          price_range?: PriceRange | null
+          distance?: DistanceBand | null
+          map_url?: string | null
+          note?: string | null
+          maybe_closed?: boolean
+        }
+        Relationships: []
+      }
+
+      restaurant_votes: {
+        Row: { restaurant_id: string; user_id: string; created_at: string }
+        Insert: { restaurant_id: string; user_id: string }
+        Update: Record<never, never>
+        Relationships: []
+      }
+
+      restaurant_visits: {
+        Row: { id: string; restaurant_id: string; user_id: string; visited_at: string }
+        Insert: { restaurant_id: string; user_id: string }
+        Update: Record<never, never>
+        Relationships: []
+      }
+
+      audit_log: {
+        Row: {
+          id: number
+          actor_id: string | null
+          action: string
+          target_type: string | null
+          target_id: string | null
+          detail: unknown
+          created_at: string
+        }
+        Insert: {
+          actor_id?: string | null
+          action: string
+          target_type?: string | null
+          target_id?: string | null
+          detail?: unknown
+        }
+        Update: Record<never, never>
+        Relationships: []
+      }
     }
 
     Views: Record<never, never>
@@ -565,6 +772,122 @@ export type Database = {
         Args: { p_actor: string; p_appearance: Record<string, unknown> }
         Returns: void
       }
+
+      /* ── ระบบกิจกรรมออฟฟิศ (0023) ───────────────────────────────────── */
+      claim_employee_code: {
+        Args: {
+          p_actor: string
+          p_code: string
+          p_display_name: string
+          p_nickname?: string | null
+          p_department?: string | null
+        }
+        Returns: Database['public']['Tables']['profiles']['Row']
+      }
+      set_employee_code_status: {
+        Args: { p_actor: string; p_code: string; p_status: EmployeeCodeStatus }
+        Returns: Database['public']['Tables']['employee_codes']['Row']
+      }
+      set_account_status: {
+        Args: { p_actor: string; p_target: string; p_status: AccountStatus }
+        Returns: Database['public']['Tables']['profiles']['Row']
+      }
+      set_admin_role: {
+        Args: { p_actor: string; p_target: string; p_admin: boolean }
+        Returns: Database['public']['Tables']['profiles']['Row']
+      }
+      notify: {
+        Args: {
+          p_user: string
+          p_type: string
+          p_title_key: string
+          p_params?: Record<string, unknown>
+          p_link?: string | null
+        }
+        Returns: string | null
+      }
+      mark_notifications_read: {
+        Args: { p_actor: string; p_ids?: string[] | null }
+        Returns: number
+      }
+      set_notification_pref: {
+        Args: { p_actor: string; p_type: string; p_enabled: boolean }
+        Returns: void
+      }
+      report_content: {
+        Args: {
+          p_actor: string
+          p_target_type: ReportTargetType
+          p_target_id: string
+          p_reason?: string | null
+        }
+        Returns: { reports: number; threshold: number; hidden: boolean }
+      }
+      is_admin: {
+        Args: { p_user: string }
+        Returns: boolean
+      }
+
+      /* ── โมดูล A · กินอะไรดี (0025) ─────────────────────────────── */
+      similar_restaurants: {
+        Args: { p_name: string; p_limit?: number }
+        Returns: { id: string; name: string; signature_dish: string; similarity: number }[]
+      }
+      add_restaurant: {
+        Args: {
+          p_actor: string
+          p_name: string
+          p_dish: string
+          p_image?: string | null
+          p_cuisine?: string | null
+          p_price?: PriceRange | null
+          p_distance?: DistanceBand | null
+          p_map_url?: string | null
+          p_note?: string | null
+        }
+        Returns: Database['public']['Tables']['restaurants']['Row']
+      }
+      update_restaurant: {
+        Args: {
+          p_actor: string
+          p_id: string
+          p_name: string
+          p_dish: string
+          p_image?: string | null
+          p_cuisine?: string | null
+          p_price?: PriceRange | null
+          p_distance?: DistanceBand | null
+          p_map_url?: string | null
+          p_note?: string | null
+          p_clear_closed?: boolean
+        }
+        Returns: Database['public']['Tables']['restaurants']['Row']
+      }
+      delete_restaurant: {
+        Args: { p_actor: string; p_id: string }
+        Returns: string
+      }
+      toggle_restaurant_vote: {
+        Args: { p_actor: string; p_id: string }
+        Returns: Database['public']['Tables']['restaurants']['Row']
+      }
+      report_restaurant_closed: {
+        Args: { p_actor: string; p_id: string }
+        Returns: {
+          reports: number
+          threshold: number
+          hidden: boolean
+          maybeClosed: boolean
+        }
+      }
+      log_restaurant_visit: {
+        Args: { p_actor: string; p_id: string }
+        Returns: string
+      }
+      employee_code_is_valid: {
+        Args: { p_user: string }
+        Returns: boolean
+      }
     }
 
     Enums: {
@@ -583,6 +906,10 @@ export type Tables<T extends keyof Database['public']['Tables']> =
 
 export type ProfileRow = Tables<'profiles'>
 export type RoomRow = Tables<'rooms'>
+export type EmployeeCodeRow = Tables<'employee_codes'>
+export type RestaurantRow = Tables<'restaurants'>
+export type NotificationRow = Tables<'notifications'>
+export type AppSettingRow = Tables<'app_settings'>
 export type ChatMessageRow = Tables<'chat_messages'>
 export type RoomStickerRow = Tables<'room_stickers'>
 export type RoomMemberRow = Tables<'room_members'>

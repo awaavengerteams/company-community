@@ -1,0 +1,155 @@
+import type { NextRequest } from 'next/server'
+import { z } from 'zod'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { AppError, fromPostgresError } from '@/lib/http/errors'
+import { assertSameOrigin, parseJsonBody } from '@/lib/http/guard'
+import { ok, withErrorHandling } from '@/lib/http/respond'
+import { enforceRateLimit } from '@/lib/ratelimit'
+import { requireAdmin } from '@/lib/office/guard'
+
+export const dynamic = 'force-dynamic'
+
+/** GET /api/office/admin/users — รายชื่อผู้ใช้ (FR-X09) */
+export const GET = withErrorHandling(async () => {
+  const actor = await requireAdmin()
+  await enforceRateLimit('adminAction', actor.id)
+
+  const admin = getSupabaseAdminClient()
+
+  /*
+   * ★★★ ไม่ดึงข้อมูลการเงินของผู้ใช้มาแม้แต่คอลัมน์เดียว
+   *
+   *     เอกสารระบุชัดท้ายหัวข้อ 8.6: "ข้อมูลการเงินส่วนตัวของผู้ใช้
+   *     (ยอดค้าง สลิป QR รับเงิน) Admin ไม่เห็นในหน้า Admin"
+   *
+   *     ★ payment_qr_path ไม่อยู่ใน select นี้โดยตั้งใจ ไม่ใช่เพราะลืม
+   *       — ใครที่มาเพิ่มทีหลังต้องรู้ว่ามันถูกเว้นไว้ด้วยเหตุผล
+   */
+  const { data, error } = await admin
+    .from('profiles')
+    .select('id, display_name, nickname, username, department, employee_code, is_admin, account_status, created_at')
+    .not('employee_code', 'is', null)
+    .order('created_at', { ascending: false })
+
+  if (error) throw fromPostgresError(error)
+
+  return ok({
+    items: (data ?? []).map((p) => ({
+      id: p.id,
+      displayName: p.display_name,
+      nickname: p.nickname,
+      username: p.username,
+      department: p.department,
+      employeeCode: p.employee_code,
+      isAdmin: p.is_admin,
+      accountStatus: p.account_status,
+      createdAt: p.created_at,
+    })),
+  })
+})
+
+const actionSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('status'),
+    userId: z.uuid(),
+    status: z.enum(['ACTIVE', 'SUSPENDED']),
+  }),
+  z.object({
+    action: z.literal('admin'),
+    userId: z.uuid(),
+    isAdmin: z.boolean(),
+  }),
+  z.object({
+    action: z.literal('resetPassword'),
+    userId: z.uuid(),
+  }),
+])
+
+/** POST /api/office/admin/users — ระงับ/คืนสถานะ · สิทธิ์ Admin · รีเซ็ตรหัสผ่าน */
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  assertSameOrigin(request)
+
+  const body = await parseJsonBody(request, actionSchema)
+  const actor = await requireAdmin()
+  await enforceRateLimit('adminAction', actor.id)
+
+  const admin = getSupabaseAdminClient()
+
+  if (body.action === 'status') {
+    const { data, error } = await admin.rpc('set_account_status', {
+      p_actor: actor.id,
+      p_target: body.userId,
+      p_status: body.status,
+    })
+    if (error) throw fromPostgresError(error)
+    return ok({ accountStatus: data?.account_status ?? body.status })
+  }
+
+  if (body.action === 'admin') {
+    const { data, error } = await admin.rpc('set_admin_role', {
+      p_actor: actor.id,
+      p_target: body.userId,
+      p_admin: body.isAdmin,
+    })
+    if (error) throw fromPostgresError(error)
+    return ok({ isAdmin: data?.is_admin ?? body.isAdmin })
+  }
+
+  /* ── รีเซ็ตรหัสผ่าน (FR-X03) ────────────────────────────────────── */
+
+  /*
+   * ★★★ เรียก Supabase Admin API ฝั่งเซิร์ฟเวอร์เท่านั้น ตามที่ FR-X03 กำหนด
+   *
+   *     service role key อยู่ใน getSupabaseAdminClient() ซึ่งมี 'server-only'
+   *     กำกับไว้ — ถ้าวันหนึ่งมีใคร import ไฟล์นี้เข้าคอมโพเนนต์ client
+   *     การ build จะพังทันที แทนที่จะหลุดคีย์ขึ้นเว็บเงียบ ๆ
+   *
+   * ★★ รหัสชั่วคราวถูกส่งกลับไปให้ Admin "ครั้งเดียว" แล้วไม่เก็บไว้ที่ไหนเลย
+   *    ไม่บันทึกลง audit_log ด้วย (log เก็บแค่ว่า "มีการรีเซ็ต" ไม่เก็บรหัส)
+   *    ★ รหัสผ่านที่อยู่ในฐานข้อมูลเป็นข้อความธรรมดาคือช่องโหว่ที่ร้ายที่สุด
+   *      ที่ระบบแบบนี้จะมีได้ — ต่อให้เป็นรหัสชั่วคราวก็ตาม
+   */
+  const temp = generateTempPassword()
+
+  const { data: target, error: readError } = await admin
+    .from('profiles')
+    .select('id, employee_code')
+    .eq('id', body.userId)
+    .maybeSingle()
+
+  if (readError) throw fromPostgresError(readError)
+  if (!target) throw new AppError('MEMBER_NOT_FOUND')
+
+  const { error: updateError } = await admin.auth.admin.updateUserById(body.userId, {
+    password: temp,
+  })
+
+  if (updateError) {
+    throw new AppError('DATABASE_ERROR', { cause: updateError })
+  }
+
+  await admin.from('audit_log').insert({
+    actor_id: actor.id,
+    action: 'account.resetPassword',
+    target_type: 'profile',
+    target_id: body.userId,
+    /* ★ ไม่มีรหัสผ่านใน detail — เก็บแค่ว่าใครรีเซ็ตให้ใครเมื่อไหร่ */
+    detail: {},
+  })
+
+  return ok({ tempPassword: temp })
+})
+
+/**
+ * รหัสชั่วคราวที่อ่านออกทางโทรศัพท์ได้
+ *
+ * ★ ตัด 0/O และ 1/I/l ออก — Admin ต้องอ่านรหัสนี้ให้ผู้ใช้ฟัง
+ *   ตัวอักษรที่ฟังแล้วแยกไม่ออกทำให้ต้องอ่านซ้ำหลายรอบ
+ *   (เหตุผลเดียวกับชุดอักษรของรหัสห้องใน migration 0001)
+ */
+function generateTempPassword(): string {
+  const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
+  const bytes = new Uint32Array(12)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (n) => alphabet[n % alphabet.length]).join('')
+}
