@@ -640,4 +640,20 @@ export const pt: Dict = {
   "listeners.onlyOnline": "Mostra só quem está na sala agora",
   "auth.what": "Abra uma sala, mande o código para os amigos, e apertem play juntos — cada aparelho fica sincronizado no segundo",
   "auth.free": "Grátis · nada para instalar · sem anúncios",
+
+  /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.title": "Tudo do escritório, num só lugar",
+  "hub.detail": "Escolha o que quer fazer — sem links para decorar",
+  "hub.music": "Sala de música",
+  "hub.musicDetail": "Abra uma sala, ouçam juntos, montem a fila a várias mãos",
+  "hub.food": "O que almoçar",
+  "hub.foodDetail": "Sorteie um restaurante e vote nos melhores",
+  "hub.wallet": "Carteira",
+  "hub.walletDetail": "Divida a conta e acompanhe quem ainda deve",
+  "hub.fun": "Sorteios e jogos",
+  "hub.funDetail": "Roleta de nomes, divisão de times, chave de torneio",
+  "hub.market": "Feira do escritório",
+  "hub.marketDetail": "Passe adiante o que não usa, ache usados",
+  "hub.more": "Ver tudo",
+  "hub.moreDetail": "A página com todas as atividades do escritório",
 }

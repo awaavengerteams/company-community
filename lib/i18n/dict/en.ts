@@ -641,4 +641,20 @@ export const en: Dict = {
   "listeners.onlyOnline": "Showing only people in the room right now",
   "auth.what": "Open a room, send the code to friends, press play together — every device stays in sync to the second",
   "auth.free": "Free · nothing to install · no ads",
+
+  /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.title": "Everything your office needs, in one place",
+  "hub.detail": "Pick what you want to do — no links to remember",
+  "hub.music": "Music room",
+  "hub.musicDetail": "Open a room, listen together, queue songs as a group",
+  "hub.food": "What's for lunch",
+  "hub.foodDetail": "Spin for a restaurant, vote for the good ones",
+  "hub.wallet": "Wallet",
+  "hub.walletDetail": "Split bills and track who owes what",
+  "hub.fun": "Draws & games",
+  "hub.funDetail": "Name wheel, team picker, tournament brackets",
+  "hub.market": "Marketplace",
+  "hub.marketDetail": "Pass on what you don't use, find second-hand deals",
+  "hub.more": "See everything",
+  "hub.moreDetail": "The full office activity hub",
 }

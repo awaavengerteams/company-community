@@ -640,4 +640,20 @@ export const id: Dict = {
   "listeners.onlyOnline": "Hanya menampilkan orang yang sedang ada di ruang",
   "auth.what": "Buka ruang, kirim kodenya ke teman, lalu tekan putar bersama — semua perangkat selaras sampai ke detiknya",
   "auth.free": "Gratis · tanpa instal · tanpa iklan",
+
+  /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.title": "Semua kebutuhan kantor, dalam satu tempat",
+  "hub.detail": "Pilih yang ingin kamu lakukan — tak perlu hafal tautan",
+  "hub.music": "Ruang musik",
+  "hub.musicDetail": "Buka ruang, dengar bareng, antre lagu bersama",
+  "hub.food": "Makan siang apa",
+  "hub.foodDetail": "Acak restoran, pilih yang paling enak",
+  "hub.wallet": "Dompet",
+  "hub.walletDetail": "Bagi tagihan dan pantau siapa berutang",
+  "hub.fun": "Undian & permainan",
+  "hub.funDetail": "Roda nama, bagi tim, bagan turnamen",
+  "hub.market": "Pasar kantor",
+  "hub.marketDetail": "Lepas barang tak terpakai, cari barang bekas",
+  "hub.more": "Lihat semua",
+  "hub.moreDetail": "Halaman kumpulan aktivitas kantor",
 }

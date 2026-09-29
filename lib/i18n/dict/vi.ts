@@ -640,4 +640,20 @@ export const vi: Dict = {
   "listeners.onlyOnline": "Chỉ hiện người đang ở trong phòng lúc này",
   "auth.what": "Mở phòng, gửi mã cho bạn bè, rồi cùng bấm phát — mọi thiết bị khớp nhau đến từng giây",
   "auth.free": "Miễn phí · không cần cài · không quảng cáo",
+
+  /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.title": "Mọi thứ của văn phòng, ở cùng một nơi",
+  "hub.detail": "Chọn điều bạn muốn làm — không cần nhớ đường dẫn",
+  "hub.music": "Phòng nghe nhạc",
+  "hub.musicDetail": "Mở phòng, nghe cùng nhau, xếp hàng bài chung",
+  "hub.food": "Trưa nay ăn gì",
+  "hub.foodDetail": "Quay ngẫu nhiên quán ăn, bình chọn quán ngon",
+  "hub.wallet": "Ví tiền",
+  "hub.walletDetail": "Chia hoá đơn, theo dõi ai còn nợ ai",
+  "hub.fun": "Quay số & trò chơi",
+  "hub.funDetail": "Vòng quay tên, chia đội, nhánh thi đấu",
+  "hub.market": "Chợ phiên",
+  "hub.marketDetail": "Nhượng lại đồ không dùng, tìm đồ cũ",
+  "hub.more": "Xem tất cả",
+  "hub.moreDetail": "Trang tổng hợp hoạt động văn phòng",
 }

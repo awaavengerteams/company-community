@@ -640,4 +640,20 @@ export const ko: Dict = {
   "listeners.onlyOnline": "지금 방에 있는 사람만 표시",
   "auth.what": "방을 열고 친구에게 코드를 보낸 뒤 함께 재생 — 모든 기기가 1초까지 맞춰집니다",
   "auth.free": "무료 · 설치 불필요 · 광고 없음",
+
+  /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.title": "사무실의 모든 것을 한곳에",
+  "hub.detail": "하고 싶은 것을 고르세요. 링크를 외울 필요 없어요",
+  "hub.music": "음악 방",
+  "hub.musicDetail": "방을 열고 함께 듣고 같이 곡을 담아요",
+  "hub.food": "점심 뭐 먹지",
+  "hub.foodDetail": "식당 랜덤 뽑기, 맛집 투표",
+  "hub.wallet": "지갑",
+  "hub.walletDetail": "더치페이와 미정산 관리",
+  "hub.fun": "뽑기와 게임",
+  "hub.funDetail": "이름 룰렛, 팀 나누기, 토너먼트 대진표",
+  "hub.market": "벼룩시장",
+  "hub.marketDetail": "안 쓰는 물건 나눔, 중고 찾기",
+  "hub.more": "전체 보기",
+  "hub.moreDetail": "사무실 활동 모아보기",
 }

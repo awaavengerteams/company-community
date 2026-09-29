@@ -5,6 +5,7 @@ import { JoinRoomForm } from '@/components/home/JoinRoomForm'
 import { SetupNotice } from '@/components/home/SetupNotice'
 import { RoomList } from '@/components/home/RoomList'
 import { Hero } from '@/components/home/Hero'
+import { SystemHub } from '@/components/home/SystemHub'
 import { Showcase } from '@/components/home/Showcase'
 import { Steps, LobbyBand } from '@/components/home/Steps'
 import { Faq, FinalCta } from '@/components/home/Faq'
@@ -39,6 +40,11 @@ export default async function HomePage() {
       <AppHeader center={<span />} />
 
       <Hero stats={stats} />
+
+      {/* ★ พอร์ทัลรวมระบบอยู่ใต้หัวหน้าทันที — เป็นสารบัญของทั้งเว็บ
+          ★★ วางก่อนกล่องเปิดห้อง เพราะคนที่มาทำอย่างอื่นจะได้ไม่ต้องเลื่อนผ่าน
+             ส่วนคนที่มาเปิดห้องเพลงกดการ์ดใบแรกแล้วเลื่อนลงไปที่กล่องเดิมได้เลย */}
+      <SystemHub />
 
       {/**
         * ★★ กล่องลงมือทำอยู่ก่อนเนื้อหาโฆษณา ไม่ใช่หลัง

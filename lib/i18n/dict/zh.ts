@@ -640,4 +640,20 @@ export const zh: Dict = {
   "listeners.onlyOnline": "只显示现在在房间里的人",
   "auth.what": "开个房间，把房间号发给朋友，然后一起按播放 — 每台设备都精确同步到秒",
   "auth.free": "免费 · 无需安装 · 没有广告",
+
+  /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.title": "办公室的一切，都在这里",
+  "hub.detail": "想做什么直接选，不用记网址",
+  "hub.music": "音乐房间",
+  "hub.musicDetail": "开房间、一起听、一起排歌",
+  "hub.food": "今天吃什么",
+  "hub.foodDetail": "随机选餐厅，为好店投票",
+  "hub.wallet": "钱包",
+  "hub.walletDetail": "分摊账单，记录谁还欠谁",
+  "hub.fun": "抽签与游戏",
+  "hub.funDetail": "名字转盘、分队、比赛对阵表",
+  "hub.market": "跳蚤市场",
+  "hub.marketDetail": "转让闲置，淘二手好物",
+  "hub.more": "查看全部",
+  "hub.moreDetail": "办公室活动总览",
 }

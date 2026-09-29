@@ -640,4 +640,20 @@ export const ms: Dict = {
   "listeners.onlyOnline": "Hanya memaparkan orang yang sedang ada di bilik",
   "auth.what": "Buka bilik, hantar kodenya ke kawan, lalu tekan main bersama — semua peranti selaras hingga ke saatnya",
   "auth.free": "Gratis · tanpa pasang · tanpa iklan",
+
+  /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.title": "Segala keperluan pejabat, di satu tempat",
+  "hub.detail": "Pilih apa yang anda mahu buat — tak perlu ingat pautan",
+  "hub.music": "Bilik muzik",
+  "hub.musicDetail": "Buka bilik, dengar bersama, beratur lagu sekali",
+  "hub.food": "Makan apa hari ini",
+  "hub.foodDetail": "Cabut restoran secara rawak, undi yang sedap",
+  "hub.wallet": "Dompet",
+  "hub.walletDetail": "Kongsi bil dan jejak siapa berhutang",
+  "hub.fun": "Cabutan & permainan",
+  "hub.funDetail": "Roda nama, bahagi pasukan, carta kejohanan",
+  "hub.market": "Pasar pejabat",
+  "hub.marketDetail": "Lepaskan barang tak guna, cari barang terpakai",
+  "hub.more": "Lihat semua",
+  "hub.moreDetail": "Halaman himpunan aktiviti pejabat",
 }

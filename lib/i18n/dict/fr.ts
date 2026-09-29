@@ -640,4 +640,20 @@ export const fr: Dict = {
   "listeners.onlyOnline": "N’affiche que les personnes actuellement dans le salon",
   "auth.what": "Ouvrez un salon, envoyez le code à vos amis, et lancez la lecture ensemble — chaque appareil reste synchronisé à la seconde",
   "auth.free": "Gratuit · rien à installer · sans pub",
+
+  /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.title": "Tout le bureau, au même endroit",
+  "hub.detail": "Choisissez ce que vous voulez faire — aucun lien à retenir",
+  "hub.music": "Salle d'écoute",
+  "hub.musicDetail": "Ouvrez une salle, écoutez ensemble, remplissez la file à plusieurs",
+  "hub.food": "On mange quoi",
+  "hub.foodDetail": "Tirez un restaurant au sort, votez pour les meilleurs",
+  "hub.wallet": "Portefeuille",
+  "hub.walletDetail": "Partagez l'addition et suivez qui doit quoi",
+  "hub.fun": "Tirages et jeux",
+  "hub.funDetail": "Roue des noms, tirage d'équipes, tableau de tournoi",
+  "hub.market": "Petites annonces",
+  "hub.marketDetail": "Cédez ce qui ne sert plus, trouvez de l'occasion",
+  "hub.more": "Tout voir",
+  "hub.moreDetail": "La page complète des activités du bureau",
 }
