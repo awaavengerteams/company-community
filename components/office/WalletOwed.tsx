@@ -187,9 +187,15 @@ function Row({
       <div className="flex w-full flex-wrap gap-1.5 border-t border-line pt-3 sm:w-auto sm:border-0 sm:pt-0">
         {side === 'iOwe' ? (
           <>
-            {/* ★ FR-B03: ถ้าผู้รับยังไม่อัปโหลด QR ต้องบอกให้ติดต่อโดยตรง
-                (หน้าจ่ายเงินที่แสดง QR จริงยังทำไม่เสร็จ — จงใจไม่ใส่ลิงก์ไว้
-                 ดีกว่าปล่อยลิงก์ที่กดแล้วเจอ 404) */}
+            {/* ★ FR-B03: ไปหน้าจ่ายเงินได้เสมอ (มีสลิป/ใบเสร็จให้ดูด้วย)
+                แต่ถ้าผู้รับยังไม่อัปโหลด QR ต้องบอกให้ติดต่อโดยตรงตั้งแต่ตรงนี้
+                ไม่ใช่ให้กดเข้าไปแล้วเจอกล่องเปล่า */}
+            <Link
+              href={`/office/wallet/pay/${debt.id}`}
+              className="inline-flex h-8 items-center rounded-full bg-surface px-3 text-[13px] font-medium text-ink hover:bg-surface-hover"
+            >
+              {ot('wallet.action.pay')}
+            </Link>
             {!debt.otherHasQr ? (
               <span className="self-center text-xs text-ink-faint">{ot('wallet.action.noQr')}</span>
             ) : null}

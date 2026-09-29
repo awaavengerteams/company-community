@@ -65,6 +65,7 @@ export const OFFICE_NAV: NavSection[] = [
       { href: '/office/wallet/owed', labelKey: 'nav.wallet.owed' },
       { href: '/office/wallet/create', labelKey: 'nav.wallet.create' },
       { href: '/office/wallet/summary', labelKey: 'nav.wallet.summary' },
+      { href: '/office/wallet/qr', labelKey: 'top.qr' },
     ],
   },
   {
