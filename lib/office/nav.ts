@@ -87,6 +87,7 @@ export const OFFICE_NAV: NavSection[] = [
       { href: '/office/market', labelKey: 'nav.market.all' },
       { href: '/office/market/post', labelKey: 'nav.market.post' },
       { href: '/office/market/mine', labelKey: 'nav.market.mine' },
+      { href: '/office/market/chat', labelKey: 'market.chat.title' },
     ],
   },
   {

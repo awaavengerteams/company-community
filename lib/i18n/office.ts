@@ -88,6 +88,8 @@ export const OFFICE_TH = {
   'notify.type.contentHidden': 'เนื้อหาของคุณถูกซ่อนจากการรายงาน',
   'notify.type.drawInvite': 'คุณถูกเชิญเข้าห้องสุ่ม',
   'notify.type.debtNetted': 'มีการหักลบยอดค้างกับคุณ ({closed} รายการถูกปิด)',
+  'notify.type.marketAlert': 'มีประกาศตรงคำที่คุณตามหา: {title}',
+  'notify.type.marketMessage': 'มีข้อความใหม่เรื่อง {title}',
 
   /* ── รายงานเนื้อหา (FR-X08) ──────────────────────────────────── */
   'report.action': 'รายงาน',
@@ -394,6 +396,28 @@ export const OFFICE_TH = {
   'fun.stats.useSkillHint': 'แบ่งทีมให้คะแนนรวมใกล้เคียงกันจากสถิติชนะ-แพ้',
   'fun.stats.spread': 'ความต่างระหว่างทีม {n}',
   'fun.stats.balanced': 'ทีมสูสี',
+
+  /* ── เฟส 2 · แชทตลาดนัด + คำค้น (FR-D08/D09) ────────────────── */
+  'market.chat.title': 'ข้อความ',
+  'market.chat.open': 'แชทกับผู้ขาย',
+  'market.chat.openSeller': 'ดูข้อความ',
+  'market.chat.empty': 'ยังไม่มีข้อความ — ทักไปได้เลย',
+  'market.chat.placeholder': 'พิมพ์ข้อความ…',
+  'market.chat.send': 'ส่ง',
+  'market.chat.threads': 'กล่องข้อความ',
+  'market.chat.noThreads': 'ยังไม่มีใครทักมา',
+  'market.chat.unread': '{n} ใหม่',
+  'market.chat.back': 'กลับ',
+  'market.chat.fromBuyer': 'ผู้ซื้อ: {name}',
+  'market.chat.toSeller': 'ผู้ขาย: {name}',
+
+  'market.alert.title': 'ของที่ตามหา',
+  'market.alert.hint': 'ตั้งคำค้นไว้ ระบบจะแจ้งเตือนเมื่อมีประกาศตรงคำนั้น',
+  'market.alert.add': 'เพิ่มคำค้น',
+  'market.alert.placeholder': 'เช่น จอ, คีย์บอร์ด, เก้าอี้',
+  'market.alert.empty': 'ยังไม่ได้ตั้งคำค้น',
+  'market.alert.max': 'ตั้งได้สูงสุด 20 คำ',
+  'market.alert.remove': 'ลบคำค้นนี้',
 
   /* ── ทั่วไป ──────────────────────────────────────────────────── */
   'common.save': 'บันทึก',

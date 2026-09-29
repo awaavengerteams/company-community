@@ -437,6 +437,7 @@ export const zh: Dict = {
   "valid.lotteryNumber": "เลขต้องเป็น 2, 3 หรือ 6 หลัก",
   "valid.needImage": "ต้องมีรูปสินค้าอย่างน้อย 1 รูป",
   "valid.needTwoTeams": "ต้องมีอย่างน้อย 2 ทีมถึงจะสร้างสายได้",
+  "valid.keywordLen": "คำค้นต้องยาว 2–40 ตัวอักษร",
   "valid.noPriceForBill": "ประกาศนี้ไม่มีราคา จึงสร้างรายการค้างจ่ายไม่ได้",
   "srvErr.needQuery": "请输入搜索关键词",
   "srvErr.badOrigin": "请求来自未授权的来源",

@@ -278,6 +278,14 @@ function Card({
                 </span>
               ) : null}
 
+              {/* ★ FR-D08: ทักผู้ขายได้โดยไม่ต้องรู้ว่าเป็นใคร */}
+              <Link
+                href={`/office/market/chat?listing=${l.id}`}
+                className="inline-flex h-8 items-center rounded-full bg-surface px-3 text-sm text-ink transition-colors hover:bg-elevated"
+              >
+                {ot('market.chat.open')}
+              </Link>
+
               <Button
                 size="sm"
                 variant="ghost"

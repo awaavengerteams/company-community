@@ -761,6 +761,42 @@ export type Database = {
         Relationships: []
       }
 
+      /* ── FR-D08/D09 แชทตลาดนัด + คำค้น (0033) ──────────────────── */
+
+      listing_threads: {
+        Row: {
+          id: string
+          listing_id: string
+          buyer_id: string
+          last_message_at: string
+          created_at: string
+        }
+        Insert: { listing_id: string; buyer_id: string }
+        Update: { last_message_at?: string }
+        Relationships: []
+      }
+
+      listing_messages: {
+        Row: {
+          id: string
+          thread_id: string
+          sender_id: string
+          text: string
+          read_at: string | null
+          created_at: string
+        }
+        Insert: { thread_id: string; sender_id: string; text: string }
+        Update: { read_at?: string | null }
+        Relationships: []
+      }
+
+      search_alerts: {
+        Row: { id: string; user_id: string; keyword: string; created_at: string }
+        Insert: { user_id: string; keyword: string }
+        Update: Record<never, never>
+        Relationships: []
+      }
+
       audit_log: {
         Row: {
           id: number
@@ -1258,6 +1294,19 @@ export type Database = {
       player_skill: {
         Args: Record<string, never>
         Returns: { user_id: string; skill: number; matches: number }[]
+      }
+
+      send_listing_message: {
+        Args: { p_actor: string; p_listing: string; p_buyer: string; p_text: string }
+        Returns: string
+      }
+      read_listing_thread: {
+        Args: { p_actor: string; p_thread: string }
+        Returns: number
+      }
+      set_search_alert: {
+        Args: { p_actor: string; p_keyword: string; p_on: boolean }
+        Returns: void
       }
 
       report_listing: {
