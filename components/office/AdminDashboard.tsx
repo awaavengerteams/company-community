@@ -270,9 +270,14 @@ function DailyChart({ data, days }: { data: { day: string; n: number }[]; days: 
           <div
             key={s.day}
             title={`${s.day} · ${s.n}`}
-            className="min-w-0 flex-1 rounded-t-sm bg-accent/70"
-            /* ★ ขั้นต่ำ 2px เพื่อให้วันที่มี 1 อีเวนต์ยังเห็นว่ามี ไม่ใช่หายไปเลย */
-            style={{ height: s.n === 0 ? 1 : `${Math.max(2, (s.n / max) * 100)}%` }}
+            className={cn(
+              'min-w-0 flex-1 rounded-t-sm',
+              /* ★ วันเงียบใช้สีเส้น ไม่ใช่สีเน้น — ไม่งั้นเส้นฐานจะดูเหมือน
+                 มีกิจกรรมทุกวันเท่า ๆ กัน ซึ่งตรงข้ามกับความจริง */
+              s.n === 0 ? 'bg-line' : 'bg-accent/70',
+            )}
+            /* ★ ขั้นต่ำ 3% เพื่อให้วันที่มี 1 อีเวนต์ยังสูงกว่าวันเงียบชัดเจน */
+            style={{ height: s.n === 0 ? 2 : `${Math.max(3, (s.n / max) * 100)}%` }}
           />
         ))}
       </div>
