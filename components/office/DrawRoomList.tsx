@@ -89,7 +89,7 @@ export function DrawRoomList() {
         <label className="block text-sm font-medium text-ink" htmlFor="room-title">
           {ot('room.nameLabel')}
         </label>
-        <Input
+        <Input radius="round"
           id="room-title"
           className="mt-1.5"
           value={title}
@@ -128,7 +128,7 @@ export function DrawRoomList() {
             rows={4}
             placeholder={ot('room.typedPlaceholder')}
             className={cn(
-              'mt-2 w-full rounded-(--radius-box) border border-line bg-elevated px-3 py-2',
+              'mt-2 w-full rounded-xl border border-line bg-elevated px-3 py-2',
               'text-sm text-ink outline-none focus-visible:border-accent',
             )}
           />

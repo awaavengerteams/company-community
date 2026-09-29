@@ -89,13 +89,13 @@ export function AddRestaurantForm({ onDone }: { onDone: () => void }) {
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
       <Field label={ot('food.form.name')} required>
-        <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} required />
+        <Input radius="round" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} required />
       </Field>
 
       {/* ★ คำเตือนอยู่ติดใต้ช่องชื่อ ไม่ใช่บนสุดของฟอร์ม —
           คนต้องเห็นมันตอนสายตายังอยู่ที่ช่องที่เพิ่งพิมพ์ */}
       {similar.length > 0 ? (
-        <div className="-mt-2 rounded-(--radius-box) border border-warn/40 bg-warn/10 p-3">
+        <div className="-mt-2 rounded-xl border border-warn/40 bg-warn/10 p-3">
           <p className="text-xs font-medium text-ink">{ot('food.form.similarWarning')}</p>
           <ul className="mt-1.5 flex flex-col gap-0.5">
             {similar.map((s) => (
@@ -108,12 +108,12 @@ export function AddRestaurantForm({ onDone }: { onDone: () => void }) {
       ) : null}
 
       <Field label={ot('food.form.dish')} required>
-        <Input value={dish} onChange={(e) => setDish(e.target.value)} maxLength={120} required />
+        <Input radius="round" value={dish} onChange={(e) => setDish(e.target.value)} maxLength={120} required />
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={ot('food.form.cuisine')} hint={ot('link.optional')}>
-          <Input
+          <Input radius="round"
             value={cuisine}
             onChange={(e) => setCuisine(e.target.value)}
             maxLength={40}
@@ -141,7 +141,7 @@ export function AddRestaurantForm({ onDone }: { onDone: () => void }) {
       </Field>
 
       <Field label={ot('food.form.mapUrl')} hint={ot('link.optional')}>
-        <Input
+        <Input radius="round"
           value={mapUrl}
           onChange={(e) => setMapUrl(e.target.value)}
           placeholder="https://maps.app.goo.gl/…"

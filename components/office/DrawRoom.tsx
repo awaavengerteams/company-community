@@ -77,7 +77,39 @@ export function DrawRoom({ roomId }: { roomId: string }) {
     })()
   }, [roomId, load])
 
-  /* ── Realtime: ผลและรายชื่อคนในห้อง ────────────────────────── */
+  /*
+   * ── ถามซ้ำเป็นจังหวะ — หลักประกันว่าทุกคนได้ผลแน่ ๆ ───────────
+   *
+   * ★★★ Realtime เป็น "ทางเร็ว" ไม่ใช่ "ทางเดียว"
+   *
+   *     ตอนทดสอบสามเบราว์เซอร์พบว่าเจ้าของห้องได้ผลถูก แต่อีกสองเครื่อง
+   *     ค้างอยู่ที่ "รอกดสุ่ม" เพราะตารางไม่ได้อยู่ใน publication จริง —
+   *     subscribe สำเร็จแต่ไม่มี event เข้ามาสักตัว
+   *
+   *     ★ ฟีเจอร์ที่พังทั้งอันเมื่อ Realtime ไม่มา = ฟีเจอร์ที่ผูกชีวิตไว้กับ
+   *       สิ่งที่อยู่นอกโค้ดเรา (publication · websocket · เน็ตของผู้ใช้)
+   *     ★★ ถามซ้ำทุก 2.5 วินาทีจึงไม่ใช่ของซ้ำซ้อน แต่เป็นพื้นที่รับประกัน
+   *        ผลลัพธ์ยังตัดสินที่ฐานข้อมูลเหมือนเดิม ทุกเครื่องจึงได้ผลเดียวกัน
+   *        ต่างกันแค่ "รู้ช้ากว่ากันไม่เกิน 2.5 วินาที" ซึ่งมองไม่ออกด้วยตา
+   *
+   * ★ หยุดถามเมื่อห้องจบแล้ว หรือแท็บถูกซ่อน — ไม่ยิงทิ้งไว้ข้ามคืน
+   */
+  useEffect(() => {
+    if (room?.status === 'DONE') return
+
+    const tick = () => {
+      if (document.visibilityState === 'visible') void load()
+    }
+    const id = window.setInterval(tick, 2500)
+    document.addEventListener('visibilitychange', tick)
+
+    return () => {
+      window.clearInterval(id)
+      document.removeEventListener('visibilitychange', tick)
+    }
+  }, [room?.status, load])
+
+  /* ── Realtime: ทางเร็วเมื่อใช้ได้ ───────────────────────────── */
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
     const channel = supabase

@@ -156,7 +156,7 @@ function NumberRow({
 
   return (
     <Card label={label} hint={hint} saved={saved}>
-      <Input
+      <Input radius="round"
         type="number"
         min={min}
         max={max}
@@ -202,7 +202,7 @@ function ListRow({
 
   return (
     <Card label={label} hint={hint} saved={saved}>
-      <Input
+      <Input radius="round"
         value={draft}
         invalid={!valid}
         onChange={(e) => setDraft(e.target.value)}
@@ -240,7 +240,7 @@ function DateRow({
 
   return (
     <Card label={label} hint={hint} saved={saved}>
-      <Input
+      <Input radius="round"
         type="date"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}

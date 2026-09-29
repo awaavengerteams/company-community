@@ -261,7 +261,7 @@ export function FunTeams() {
             </div>
 
             <div className="mt-3 flex items-center gap-2">
-              <Input
+              <Input radius="round"
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => {
@@ -307,7 +307,7 @@ export function FunTeams() {
               </Chip>
             </div>
 
-            <Input
+            <Input radius="round"
               type="number"
               min={1}
               max={50}
@@ -495,7 +495,7 @@ export function FunTeams() {
                       <li
                         key={m.id}
                         className={cn(
-                          'rounded-(--radius-box) px-2 py-1 text-sm transition-all duration-300',
+                          'rounded-xl px-2 py-1 text-sm transition-all duration-300',
                           show
                             ? 'bg-surface text-ink opacity-100'
                             : 'bg-surface/40 text-transparent opacity-40',

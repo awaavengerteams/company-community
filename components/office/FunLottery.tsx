@@ -176,7 +176,7 @@ export function FunLottery() {
             <span
               key={i}
               className={cn(
-                'grid h-16 w-12 place-items-center rounded-(--radius-box)',
+                'grid h-16 w-12 place-items-center rounded-xl',
                 'bg-surface font-mono text-3xl font-bold tabular-nums text-ink',
                 spinning && 'text-ink-soft',
               )}
@@ -233,7 +233,7 @@ export function FunLottery() {
 
       {/* ★★ ข้อความกำกับตามกฎข้อ 2 หัวข้อ 7 — ต้องอยู่บนหน้าจอเสมอ
              ไม่ใช่ซ่อนใน tooltip หรือหน้าเงื่อนไขการใช้งาน */}
-      <p className="mt-3 rounded-(--radius-box) border border-warn/40 bg-warn/10 p-3 text-center text-xs text-ink-soft">
+      <p className="mt-3 rounded-xl border border-warn/40 bg-warn/10 p-3 text-center text-xs text-ink-soft">
         {ot('fun.lottery.disclaimer')}
       </p>
 

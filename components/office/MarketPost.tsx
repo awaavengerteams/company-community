@@ -111,7 +111,7 @@ export function MarketPost() {
                 <img
                   src={url}
                   alt={`รูปที่ ${i + 1}`}
-                  className="size-20 rounded-(--radius-box) object-cover"
+                  className="size-20 rounded-xl object-cover"
                 />
                 <button
                   type="button"
@@ -129,7 +129,7 @@ export function MarketPost() {
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={busy}
-                className="grid size-20 place-items-center rounded-(--radius-box) border border-dashed border-line-strong text-ink-faint hover:bg-surface disabled:opacity-40"
+                className="grid size-20 place-items-center rounded-xl border border-dashed border-line-strong text-ink-faint hover:bg-surface disabled:opacity-40"
               >
                 +
               </button>
@@ -149,7 +149,7 @@ export function MarketPost() {
         </div>
 
         <Field label={ot('market.form.title')} required>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required />
+          <Input radius="round" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required />
         </Field>
 
         <Field label={ot('market.form.kind')}>
@@ -164,7 +164,7 @@ export function MarketPost() {
 
         {needsPrice ? (
           <Field label={ot('market.form.price')} required>
-            <Input
+            <Input radius="round"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               type="number"
@@ -224,19 +224,19 @@ export function MarketPost() {
             </span>
           </p>
           <div className="mt-2 grid gap-2 sm:grid-cols-3">
-            <Input
+            <Input radius="round"
               value={building}
               onChange={(e) => setBuilding(e.target.value)}
               placeholder={ot('market.form.building')}
               maxLength={40}
             />
-            <Input
+            <Input radius="round"
               value={floor}
               onChange={(e) => setFloor(e.target.value)}
               placeholder={ot('market.form.floor')}
               maxLength={20}
             />
-            <Input
+            <Input radius="round"
               value={desk}
               onChange={(e) => setDesk(e.target.value)}
               placeholder={ot('market.form.desk')}
@@ -247,7 +247,7 @@ export function MarketPost() {
 
         {/* ★★ FR-D10: ข้อความเตือนสินค้าต้องห้ามต้องขึ้นตอนลงประกาศ
                ไม่ใช่ซ่อนในหน้าเงื่อนไข — และต้องติ๊กยืนยันก่อนส่ง */}
-        <div className="rounded-(--radius-box) border border-warn/40 bg-warn/10 p-3">
+        <div className="rounded-xl border border-warn/40 bg-warn/10 p-3">
           <p className="text-xs leading-relaxed text-ink-soft">{ot('market.form.banned')}</p>
           <label className="mt-2 flex cursor-pointer items-start gap-2">
             <input

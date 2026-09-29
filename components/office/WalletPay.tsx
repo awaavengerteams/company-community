@@ -107,7 +107,7 @@ export function WalletPay({
             <img
               src={files.qrUrl}
               alt="QR รับเงิน"
-              className="mx-auto block w-full max-w-64 rounded-(--radius-box)"
+              className="mx-auto block w-full max-w-64 rounded-xl"
             />
             <p className="mt-3 text-center text-xs text-ink-faint">
               สแกนด้วยแอปธนาคารแล้วโอน ฿{formatBaht(amount)}
@@ -128,7 +128,7 @@ export function WalletPay({
             <img
               src={files.slipUrl}
               alt="สลิปที่แนบไว้"
-              className="mt-2 block w-full max-w-48 rounded-(--radius-box)"
+              className="mt-2 block w-full max-w-48 rounded-xl"
             />
           ) : (
             <p className="mt-1 text-xs text-ink-faint">ยังไม่ได้แนบ (ไม่บังคับ)</p>
@@ -158,7 +158,7 @@ export function WalletPay({
           <img
             src={files.receiptUrl}
             alt="ใบเสร็จ"
-            className="mt-2 block w-full max-w-48 rounded-(--radius-box)"
+            className="mt-2 block w-full max-w-48 rounded-xl"
           />
         </div>
       ) : null}

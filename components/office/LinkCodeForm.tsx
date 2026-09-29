@@ -80,7 +80,7 @@ export function LinkCodeForm({ defaultDisplayName, defaultNickname, defaultDepar
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
       <Field label={ot('link.code')} hint={ot('link.codeHint')} required>
-        <Input
+        <Input radius="round"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="EMP001"
@@ -95,7 +95,7 @@ export function LinkCodeForm({ defaultDisplayName, defaultNickname, defaultDepar
       </Field>
 
       <Field label={ot('link.displayName')} required>
-        <Input
+        <Input radius="round"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           maxLength={40}
@@ -105,10 +105,10 @@ export function LinkCodeForm({ defaultDisplayName, defaultNickname, defaultDepar
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={ot('link.nickname')} hint={ot('link.optional')}>
-          <Input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={30} />
+          <Input radius="round" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={30} />
         </Field>
         <Field label={ot('link.department')} hint={ot('link.optional')}>
-          <Input
+          <Input radius="round"
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
             maxLength={60}

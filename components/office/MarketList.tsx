@@ -99,7 +99,7 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
 
       {/* ── ตัวกรอง ─────────────────────────────────────────────── */}
       <div className="mt-5 flex flex-col gap-3">
-        <Input
+        <Input radius="round"
           value={filters.query}
           onChange={(e) => setFilters((f) => ({ ...f, query: e.target.value }))}
           placeholder={ot('market.searchPlaceholder')}
@@ -194,7 +194,7 @@ function Card({
 
       <div className="flex flex-1 flex-col p-4">
         {l.hidden ? (
-          <p className="mb-2 rounded-(--radius-box) bg-danger/15 px-2 py-1 text-xs text-danger">
+          <p className="mb-2 rounded-xl bg-danger/15 px-2 py-1 text-xs text-danger">
             {ot('market.hidden')}
           </p>
         ) : null}

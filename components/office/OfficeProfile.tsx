@@ -137,7 +137,7 @@ export function OfficeProfile() {
         </label>
         <p className="mt-0.5 text-xs text-ink-faint">{ot('profile.departmentHint')}</p>
         <div className="mt-2 flex items-center gap-2">
-          <Input
+          <Input radius="round"
             id="dept"
             value={department}
             onChange={(e) => {
@@ -169,7 +169,7 @@ export function OfficeProfile() {
                 role="switch"
                 aria-checked={on}
                 onClick={() => void toggle(n.type)}
-                className="flex items-center gap-3 rounded-(--radius-box) p-2 text-start transition-colors hover:bg-surface"
+                className="flex items-center gap-3 rounded-xl p-2 text-start transition-colors hover:bg-surface"
               >
                 <span className="min-w-0 flex-1 text-sm text-ink">{ot(n.labelKey)}</span>
                 <span

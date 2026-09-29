@@ -93,7 +93,7 @@ export function FunNameWheel() {
       <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_20rem]">
         {/* ── วงล้อ ───────────────────────────────────────────────── */}
         <div>
-          <Input
+          <Input radius="round"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder={ot('fun.name.topicPlaceholder')}
@@ -146,7 +146,7 @@ export function FunNameWheel() {
         <aside className="flex flex-col gap-4">
           <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
             <div className="flex items-center gap-2">
-              <Input
+              <Input radius="round"
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => {

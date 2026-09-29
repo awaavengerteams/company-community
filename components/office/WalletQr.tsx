@@ -67,7 +67,7 @@ export function WalletQr() {
           <img
             src={url}
             alt={ot('wallet.qr.title')}
-            className="mx-auto block w-full max-w-64 rounded-(--radius-box)"
+            className="mx-auto block w-full max-w-64 rounded-xl"
           />
         ) : (
           <p className="py-10 text-center text-sm text-ink-faint">{ot('wallet.qr.none')}</p>
@@ -104,7 +104,7 @@ export function WalletQr() {
 
       {/* ★ บอกขอบเขตการมองเห็นให้ชัด — เป็นข้อมูลที่ PDPA กำหนดให้แจ้ง
           และเป็นสิ่งที่คนลังเลจะอัปโหลดอยากรู้ก่อนกดปุ่ม */}
-      <p className="mt-4 rounded-(--radius-box) border border-line p-3 text-xs leading-relaxed text-ink-soft">
+      <p className="mt-4 rounded-xl border border-line p-3 text-xs leading-relaxed text-ink-soft">
         {ot('wallet.qr.privacy')} — เก็บในที่เก็บส่วนตัว
         ไม่เปิดเป็นลิงก์สาธารณะ และแสดงผ่านลิงก์ชั่วคราวอายุ 5 นาทีเท่านั้น
       </p>

@@ -114,7 +114,7 @@ export function AdminCodes() {
           <span className="mb-1.5 block text-sm font-medium text-ink">
             {ot('admin.codes.add')}
           </span>
-          <Input
+          <Input radius="round"
             value={newCode}
             onChange={(e) => setNewCode(e.target.value.toUpperCase())}
             placeholder="EMP001"
@@ -162,7 +162,7 @@ export function AdminCodes() {
 
       {/* ── ตาราง ────────────────────────────────────────────────── */}
       <div className="mt-5">
-        <Input
+        <Input radius="round"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={ot('common.search')}

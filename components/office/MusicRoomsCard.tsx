@@ -42,17 +42,17 @@ export function MusicRoomsCard() {
           <Link
             key={r.code}
             href={`/room/${r.code}`}
-            className="flex items-center gap-3 rounded-(--radius-box) p-2 transition-colors hover:bg-surface"
+            className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-surface"
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- รูปจาก YouTube ผ่าน next/image ต้องตั้ง remotePatterns ของห้องเพลง ซึ่งไม่ควรแตะ */}
             {r.thumb ? (
               <img
                 src={r.thumb}
                 alt=""
-                className="size-9 shrink-0 rounded-(--radius-box) object-cover"
+                className="size-9 shrink-0 rounded-xl object-cover"
               />
             ) : (
-              <span className="size-9 shrink-0 rounded-(--radius-box) bg-surface" />
+              <span className="size-9 shrink-0 rounded-xl bg-surface" />
             )}
 
             <span className="min-w-0 flex-1">

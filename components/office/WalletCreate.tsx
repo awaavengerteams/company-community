@@ -94,12 +94,12 @@ export function WalletCreate({ selfId }: { selfId: string }) {
 
       <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
         <Field label={ot('wallet.create.billTitle')} required>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required />
+          <Input radius="round" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required />
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={ot('wallet.create.total')} required>
-            <Input
+            <Input radius="round"
               value={total}
               onChange={(e) => setTotal(e.target.value)}
               type="number"
@@ -180,7 +180,7 @@ export function WalletCreate({ selfId }: { selfId: string }) {
 
         {/* ── ตัวอย่างยอด ───────────────────────────────────────── */}
         {split === 'EQUAL' && preview && picked.length > 0 ? (
-          <div className="rounded-(--radius-box) border border-line p-3">
+          <div className="rounded-xl border border-line p-3">
             <p className="text-xs text-ink-faint">{ot('wallet.create.preview')}</p>
             <div className="mt-1.5 flex flex-col gap-0.5">
               {picked.map((id, i) => (
@@ -208,7 +208,7 @@ export function WalletCreate({ selfId }: { selfId: string }) {
                 <span className="flex-1 truncate text-sm text-ink">
                   {people.find((p) => p.id === id)?.name ?? '—'}
                 </span>
-                <Input
+                <Input radius="round"
                   value={custom[id] ?? ''}
                   onChange={(e) => setCustom((c) => ({ ...c, [id]: e.target.value }))}
                   type="number"

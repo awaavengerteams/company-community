@@ -162,7 +162,7 @@ export function FoodPicks() {
 
       {/* ── ตัวกรอง (FR-A03) ─────────────────────────────────────── */}
       <div className="mt-5 flex flex-col gap-3">
-        <Input
+        <Input radius="round"
           value={filters.query}
           onChange={(e) => setFilters((f) => ({ ...f, query: e.target.value }))}
           placeholder={ot('food.picks.searchPlaceholder')}

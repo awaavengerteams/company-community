@@ -180,7 +180,7 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
         ) : null}
 
         <div className="mt-3 flex items-center gap-2">
-          <Input
+          <Input radius="round"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
@@ -281,7 +281,7 @@ function SearchAlerts() {
       <p className="mt-0.5 text-xs text-ink-faint">{ot('market.alert.hint')}</p>
 
       <div className="mt-3 flex items-center gap-2">
-        <Input
+        <Input radius="round"
           value={typed}
           onChange={(e) => setTyped(e.target.value)}
           onKeyDown={(e) => {

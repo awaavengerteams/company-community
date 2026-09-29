@@ -97,7 +97,7 @@ export function AdminUsers({ selfId }: { selfId: string }) {
       ) : null}
 
       <div className="mt-5">
-        <Input
+        <Input radius="round"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={ot('common.search')}
