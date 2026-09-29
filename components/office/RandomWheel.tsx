@@ -45,11 +45,27 @@ type Props = {
    *   เจ้าของห้องสุ่มผลแล้วส่งผ่าน Realtime ให้ทุกเครื่องหมุนไปหยุดที่เดียวกัน
    */
   forcedWinnerId?: string | null
+  /**
+   * ★ สั่งหมุนจากภายนอก — ใช้ในห้องสุ่มกลุ่ม (FR-A09)
+   *   ค่าเปลี่ยนเป็นค่าใหม่ที่ไม่ใช่ null = เริ่มหมุน (ใช้ id ของรอบสุ่ม)
+   *   ★ เป็น token ไม่ใช่ boolean เพราะ boolean ที่กลับมา true อีกครั้ง
+   *     แยกไม่ออกว่าเป็นรอบใหม่หรือ re-render เดิม
+   */
+  autoSpinToken?: string | null
+  /** ซ่อนปุ่มหมุน — ในห้องกลุ่มมีแค่เจ้าของห้องที่กดได้ */
+  hideSpinButton?: boolean
 }
 
 type Phase = 'idle' | 'spinning' | 'done'
 
-export function RandomWheel({ items, onResult, spinLabel, forcedWinnerId }: Props) {
+export function RandomWheel({
+  items,
+  onResult,
+  spinLabel,
+  forcedWinnerId,
+  autoSpinToken,
+  hideSpinButton = false,
+}: Props) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [offset, setOffset] = useState(0)
   const [winner, setWinner] = useState<WheelItem | null>(null)
@@ -149,6 +165,14 @@ export function RandomWheel({ items, onResult, spinLabel, forcedWinnerId }: Prop
     frameRef.current = requestAnimationFrame(frame)
   }, [items, phase, forcedWinnerId, finish])
 
+  /* ★ หมุนตามคำสั่งจากภายนอก — หมุน token เดิมซ้ำไม่ได้ */
+  const spunTokenRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!autoSpinToken || spunTokenRef.current === autoSpinToken) return
+    spunTokenRef.current = autoSpinToken
+    spin()
+  }, [autoSpinToken, spin])
+
   useEffect(() => {
     if (phase !== 'done') return
     const id = window.setTimeout(() => setWinnerVisible(true), prefersReducedMotion() ? 200 : 900)
@@ -204,18 +228,20 @@ export function RandomWheel({ items, onResult, spinLabel, forcedWinnerId }: Prop
 
       {/* ── ปุ่ม ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={spin}
-          disabled={phase === 'spinning'}
-          className={cn(
-            'h-10 rounded-full px-6 text-sm font-medium',
-            'bg-accent text-accent-ink transition-colors hover:bg-accent-hover',
-            'disabled:pointer-events-none disabled:opacity-40',
-          )}
-        >
-          {phase === 'done' ? 'สุ่มใหม่' : (spinLabel ?? 'หมุนเลย')}
-        </button>
+        {hideSpinButton ? null : (
+          <button
+            type="button"
+            onClick={spin}
+            disabled={phase === 'spinning'}
+            className={cn(
+              'h-10 rounded-full px-6 text-sm font-medium',
+              'bg-accent text-accent-ink transition-colors hover:bg-accent-hover',
+              'disabled:pointer-events-none disabled:opacity-40',
+            )}
+          >
+            {phase === 'done' ? 'สุ่มใหม่' : (spinLabel ?? 'หมุนเลย')}
+          </button>
+        )}
 
         {/* ★ ปุ่มข้ามโผล่หลังเริ่ม 1 วินาที — สำหรับคนที่รีบ (หัวข้อ 4.1) */}
         {phase === 'spinning' && canSkip ? (

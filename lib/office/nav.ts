@@ -77,6 +77,7 @@ export const OFFICE_NAV: NavSection[] = [
       { href: '/office/fun/team', labelKey: 'nav.fun.team' },
       { href: '/office/fun/lottery', labelKey: 'nav.fun.lottery' },
       { href: '/office/fun/cup', labelKey: 'fun.cup.title' },
+      { href: '/office/fun/room', labelKey: 'room.title' },
     ],
   },
   {

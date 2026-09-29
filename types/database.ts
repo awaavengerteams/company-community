@@ -797,6 +797,37 @@ export type Database = {
         Relationships: []
       }
 
+      /* ── FR-A09 ห้องสุ่มกลุ่ม (0035) ────────────────────────────── */
+
+      draw_rooms: {
+        Row: {
+          id: string
+          host_id: string
+          title: string
+          options: { id: string; label: string }[]
+          status: 'OPEN' | 'SPINNING' | 'DONE'
+          winner_id: string | null
+          winner_label: string | null
+          spun_at: string | null
+          created_at: string
+        }
+        Insert: { host_id: string; title: string; options: { id: string; label: string }[] }
+        Update: {
+          status?: 'OPEN' | 'SPINNING' | 'DONE'
+          winner_id?: string | null
+          winner_label?: string | null
+          spun_at?: string | null
+        }
+        Relationships: []
+      }
+
+      draw_room_members: {
+        Row: { room_id: string; user_id: string; joined_at: string }
+        Insert: { room_id: string; user_id: string }
+        Update: Record<never, never>
+        Relationships: []
+      }
+
       audit_log: {
         Row: {
           id: number
@@ -1308,6 +1339,19 @@ export type Database = {
         Args: { p_actor: string; p_keyword: string; p_on: boolean }
         Returns: void
       }
+
+      create_draw_room: {
+        Args: { p_actor: string; p_title: string; p_options: { id: string; label: string }[] }
+        Returns: Database['public']['Tables']['draw_rooms']['Row']
+      }
+      join_draw_room: { Args: { p_actor: string; p_room: string }; Returns: void }
+      leave_draw_room: { Args: { p_actor: string; p_room: string }; Returns: void }
+      spin_draw_room: {
+        Args: { p_actor: string; p_room: string }
+        Returns: Database['public']['Tables']['draw_rooms']['Row']
+      }
+      finish_draw_room: { Args: { p_actor: string; p_room: string }; Returns: void }
+      delete_draw_room: { Args: { p_actor: string; p_room: string }; Returns: void }
 
       report_listing: {
         Args: { p_actor: string; p_id: string; p_reason?: string | null }

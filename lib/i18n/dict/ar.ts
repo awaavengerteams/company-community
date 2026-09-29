@@ -438,6 +438,7 @@ export const ar: Dict = {
   "valid.needImage": "ต้องมีรูปสินค้าอย่างน้อย 1 รูป",
   "valid.needTwoTeams": "ต้องมีอย่างน้อย 2 ทีมถึงจะสร้างสายได้",
   "valid.keywordLen": "คำค้นต้องยาว 2–40 ตัวอักษร",
+  "valid.needTwoOptions": "ต้องมีตัวเลือกอย่างน้อย 2 อย่าง",
   "valid.noPriceForBill": "ประกาศนี้ไม่มีราคา จึงสร้างรายการค้างจ่ายไม่ได้",
   "srvErr.needQuery": "اكتب شيئًا للبحث عنه من فضلك",
   "srvErr.badOrigin": "جاء الطلب من مصدر غير مصرّح به",

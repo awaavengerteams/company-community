@@ -111,6 +111,16 @@ export const LIMITS = {
   /** จอง / รายงาน / เปลี่ยนสถานะ */
   marketAction: { limit: 60, windowSeconds: 60 },
   marketUpload: { limit: 40, windowSeconds: 600 },
+
+  /* ── ห้องสุ่มกลุ่ม (0035) ─────────────────────────────────────────── */
+
+  /**
+   * สร้างห้องสุ่ม
+   * ★ เพดานต่ำเพราะห้องเป็นของถาวรที่คนอื่นเห็นในรายการ —
+   *   ห้องขยะ 50 ห้องทำให้ฟีเจอร์ใช้ไม่ได้ ต่างจากการกดสุ่มที่ไม่เหลืออะไรไว้
+   *   (SQL จำกัดห้องที่ยังไม่สุ่มไว้ 3 ห้องต่อคนอีกชั้นหนึ่ง)
+   */
+  drawRoom: { limit: 10, windowSeconds: 600 },
 } as const
 
 export type RateLimitName = keyof typeof LIMITS

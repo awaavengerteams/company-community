@@ -438,6 +438,7 @@ export const vi: Dict = {
   "valid.needImage": "ต้องมีรูปสินค้าอย่างน้อย 1 รูป",
   "valid.needTwoTeams": "ต้องมีอย่างน้อย 2 ทีมถึงจะสร้างสายได้",
   "valid.keywordLen": "คำค้นต้องยาว 2–40 ตัวอักษร",
+  "valid.needTwoOptions": "ต้องมีตัวเลือกอย่างน้อย 2 อย่าง",
   "valid.noPriceForBill": "ประกาศนี้ไม่มีราคา จึงสร้างรายการค้างจ่ายไม่ได้",
   "srvErr.needQuery": "Vui lòng nhập từ khoá tìm kiếm",
   "srvErr.badOrigin": "Yêu cầu đến từ nguồn không được phép",

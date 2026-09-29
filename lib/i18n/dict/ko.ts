@@ -438,6 +438,7 @@ export const ko: Dict = {
   "valid.needImage": "ต้องมีรูปสินค้าอย่างน้อย 1 รูป",
   "valid.needTwoTeams": "ต้องมีอย่างน้อย 2 ทีมถึงจะสร้างสายได้",
   "valid.keywordLen": "คำค้นต้องยาว 2–40 ตัวอักษร",
+  "valid.needTwoOptions": "ต้องมีตัวเลือกอย่างน้อย 2 อย่าง",
   "valid.noPriceForBill": "ประกาศนี้ไม่มีราคา จึงสร้างรายการค้างจ่ายไม่ได้",
   "srvErr.needQuery": "검색어를 입력해 주세요",
   "srvErr.badOrigin": "허용되지 않은 출처의 요청입니다",
