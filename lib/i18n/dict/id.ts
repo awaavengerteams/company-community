@@ -642,6 +642,14 @@ export const id: Dict = {
   "auth.free": "Gratis · tanpa instal · tanpa iklan",
 
   /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.badge.rooms": "{rooms} ruang musik sedang terbuka",
+  "hub.badge.live": "{listeners} orang mendengarkan di {rooms} ruang",
+  "hub.hero1": "Semua urusan ",
+  "hub.hero2": "kantor kita",
+  "hub.hero3": "dalam satu tempat",
+  "hub.heroDetail": "Makan siang, patungan, permainan, barang bekas, dan ruang musik — cukup satu halaman",
+  "hub.heroCta": "Pilih yang mau dilakukan",
+  "hub.badge.idle": "Siap dipakai",
   "hub.title": "Semua kebutuhan kantor, dalam satu tempat",
   "hub.detail": "Pilih yang ingin kamu lakukan — tak perlu hafal tautan",
   "hub.music": "Ruang musik",

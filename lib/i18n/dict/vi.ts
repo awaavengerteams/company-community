@@ -642,6 +642,14 @@ export const vi: Dict = {
   "auth.free": "Miễn phí · không cần cài · không quảng cáo",
 
   /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.badge.rooms": "Đang mở {rooms} phòng nghe nhạc",
+  "hub.badge.live": "{listeners} người đang nghe trong {rooms} phòng",
+  "hub.hero1": "Mọi việc của ",
+  "hub.hero2": "văn phòng",
+  "hub.hero3": "ở cùng một nơi",
+  "hub.heroDetail": "Bữa trưa, chia chi phí, trò chơi, đồ cũ và phòng nghe nhạc — chỉ một trang",
+  "hub.heroCta": "Chọn việc muốn làm",
+  "hub.badge.idle": "Sẵn sàng khi bạn cần",
   "hub.title": "Mọi thứ của văn phòng, ở cùng một nơi",
   "hub.detail": "Chọn điều bạn muốn làm — không cần nhớ đường dẫn",
   "hub.music": "Phòng nghe nhạc",

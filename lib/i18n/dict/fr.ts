@@ -642,6 +642,14 @@ export const fr: Dict = {
   "auth.free": "Gratuit · rien à installer · sans pub",
 
   /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.badge.rooms": "{rooms} salles d'écoute ouvertes",
+  "hub.badge.live": "{listeners} personnes écoutent dans {rooms} salles",
+  "hub.hero1": "Toute la vie ",
+  "hub.hero2": "du bureau",
+  "hub.hero3": "au même endroit",
+  "hub.heroDetail": "Déjeuner, dépenses partagées, jeux, occasions et salle d'écoute — un seul onglet",
+  "hub.heroCta": "Choisir une activité",
+  "hub.badge.idle": "Prêt quand vous l'êtes",
   "hub.title": "Tout le bureau, au même endroit",
   "hub.detail": "Choisissez ce que vous voulez faire — aucun lien à retenir",
   "hub.music": "Salle d'écoute",

@@ -642,6 +642,14 @@ export const ko: Dict = {
   "auth.free": "무료 · 설치 불필요 · 광고 없음",
 
   /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.badge.rooms": "음악 방 {rooms}개가 열려 있어요",
+  "hub.badge.live": "{rooms}개 방에서 {listeners}명이 듣는 중",
+  "hub.hero1": "사무실의 ",
+  "hub.hero2": "모든 일",
+  "hub.hero3": "이 한곳에",
+  "hub.heroDetail": "점심, 정산, 게임, 중고 거래 그리고 음악 방까지 — 한 페이지에서 전부",
+  "hub.heroCta": "할 일 고르기",
+  "hub.badge.idle": "언제든 사용하세요",
   "hub.title": "사무실의 모든 것을 한곳에",
   "hub.detail": "하고 싶은 것을 고르세요. 링크를 외울 필요 없어요",
   "hub.music": "음악 방",

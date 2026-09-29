@@ -643,6 +643,14 @@ export const en: Dict = {
   "auth.free": "Free · nothing to install · no ads",
 
   /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.badge.rooms": "{rooms} music rooms open right now",
+  "hub.badge.live": "{listeners} people listening in {rooms} rooms",
+  "hub.hero1": "Everything our ",
+  "hub.hero2": "office does",
+  "hub.hero3": "in one place",
+  "hub.heroDetail": "Lunch, shared costs, games, second-hand finds and the music room — one tab for all of it",
+  "hub.heroCta": "Pick what to do",
+  "hub.badge.idle": "Ready when you are",
   "hub.title": "Everything your office needs, in one place",
   "hub.detail": "Pick what you want to do — no links to remember",
   "hub.music": "Music room",

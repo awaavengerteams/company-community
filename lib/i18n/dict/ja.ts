@@ -642,6 +642,14 @@ export const ja: Dict = {
   "auth.free": "無料 · インストール不要 · 広告なし",
 
   /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.badge.rooms": "音楽ルームが {rooms} 部屋オープン中",
+  "hub.badge.live": "{rooms} 部屋で {listeners} 人が試聴中",
+  "hub.hero1": "オフィスの",
+  "hub.hero2": "すべて",
+  "hub.hero3": "がここに",
+  "hub.heroDetail": "ランチ、割り勘、ゲーム、フリマ、そして音楽ルーム — このページだけで完結",
+  "hub.heroCta": "やることを選ぶ",
+  "hub.badge.idle": "いつでもどうぞ",
   "hub.title": "オフィスのすべてが、ここに",
   "hub.detail": "やりたいことを選ぶだけ。リンクを覚える必要はありません",
   "hub.music": "音楽ルーム",

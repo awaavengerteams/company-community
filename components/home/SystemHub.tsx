@@ -5,13 +5,11 @@ import { getT } from '@/lib/i18n/server'
 /**
  * พอร์ทัลรวมทุกระบบบนหน้าแรก
  *
- * ★★★ ห้องฟังเพลงเป็นการ์ดใบแรก ไม่ใช่ถูกดันลงไปข้างล่าง
+ * ★★★ ห้องฟังเพลงเป็นการ์ดใบแรก — เป็นฟีเจอร์ที่คนใช้บ่อยที่สุด
  *
- *     หน้านี้เป็นหน้าแรกของ "ห้องฟังเพลง" มาก่อน และคนส่วนใหญ่ที่เปิดมา
- *     ยังมาเพื่อเปิดห้องเพลง ★ ถ้าเอากิจกรรมออฟฟิศขึ้นก่อน คนกลุ่มเดิม
- *     จะต้องมองหาสิ่งที่เคยอยู่ตรงหน้าทุกครั้งที่เข้าเว็บ
- *     ★★ การ์ดห้องเพลงจึงพาเลื่อนลงไปที่กล่องเปิดห้องที่อยู่ข้างล่างเหมือนเดิม
- *        ไม่ได้ย้ายหรือแทนที่อะไร — ของเดิมยังอยู่ครบทุกชิ้น
+ *     แต่เป็นการ์ดใบหนึ่งเท่าๆ กับใบอื่น ไม่ใช่เจ้าของหน้า
+ *     ★ กดแล้วไป /music ซึ่งมีหน้าเดิมครบทุกชิ้น — กล่องเปิดห้อง ·
+ *       เข้าด้วยรหัส · รายชื่อห้อง · วิธีใช้ · คำถามที่พบบ่อย
  *
  * ★★ ทุกข้อความแปลครบ 16 ภาษา ไม่ใช่ไทยอย่างเดียวเหมือนในโมดูลออฟฟิศ
  *    เพราะหน้านี้เป็นหน้าสาธารณะที่มีคนเปิดจากภาษาอื่นจริง
@@ -33,7 +31,7 @@ export async function SystemHub() {
 
   const cards: Card[] = [
     {
-      href: '#create',
+      href: '/music',
       title: t('hub.music'),
       detail: t('hub.musicDetail'),
       icon: 'M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
@@ -72,11 +70,11 @@ export async function SystemHub() {
   ]
 
   return (
-    <section className="mx-auto w-full max-w-[1120px] px-4 pt-4">
-      <div className="reveal text-center">
-        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">{t('hub.title')}</h2>
-        <p className="mt-1.5 text-sm text-ink-soft">{t('hub.detail')}</p>
-      </div>
+    <section id="systems" className="mx-auto w-full max-w-[1120px] scroll-mt-20 px-4 pt-4">
+      {/* ★ ไม่ใส่พาดหัวซ้ำกับหัวหน้า — หัวหน้าพูดไปแล้วว่าที่นี่รวมทุกอย่าง
+          ★★ พาดหัวสองอันที่พูดเรื่องเดียวกันห่างกัน 300px อ่านแล้วสะดุด
+             และทำให้คนสงสัยว่าเลื่อนมาถึงส่วนใหม่หรือยัง */}
+      <h2 className="reveal text-center text-sm text-ink-soft">{t('hub.detail')}</h2>
 
       <div className="reveal-stagger mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (

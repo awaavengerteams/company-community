@@ -642,6 +642,14 @@ export const zh: Dict = {
   "auth.free": "免费 · 无需安装 · 没有广告",
 
   /* ── พอร์ทัลรวมระบบบนหน้าแรก ───────────────────────────── */
+  "hub.badge.rooms": "现在有 {rooms} 个音乐房间开着",
+  "hub.badge.live": "{rooms} 个房间里有 {listeners} 人在听",
+  "hub.hero1": "办公室的",
+  "hub.hero2": "每一件事",
+  "hub.hero3": "都在这里",
+  "hub.heroDetail": "午餐、分摊费用、游戏、二手好物，还有音乐房间——一个页面全搞定",
+  "hub.heroCta": "选择要做的事",
+  "hub.badge.idle": "随时可用",
   "hub.title": "办公室的一切，都在这里",
   "hub.detail": "想做什么直接选，不用记网址",
   "hub.music": "音乐房间",
