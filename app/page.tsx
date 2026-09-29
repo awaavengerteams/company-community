@@ -3,6 +3,7 @@ import { AppHeader } from '@/components/AppHeader'
 import { PortalHero } from '@/components/home/PortalHero'
 import { SystemHub } from '@/components/home/SystemHub'
 import { HubFeatures } from '@/components/home/HubFeatures'
+import { JumpScare } from '@/components/home/JumpScare'
 import { SetupNotice } from '@/components/home/SetupNotice'
 import { getHomeStats } from '@/lib/home/stats'
 import { SignInScreen } from '@/components/SignInScreen'
@@ -51,6 +52,9 @@ export default async function HomePage() {
       <AppHeader center={<span />} />
 
       <PortalHero stats={stats} />
+
+      {/* ★ หน้าจู่โจมแบบสุ่ม — อยู่นอกหัวหน้าเพราะมันคลุมทั้งจอ ไม่ใช่แค่ส่วนบน */}
+      <JumpScare />
 
       <main className="mx-auto w-full max-w-[1120px] px-4">
         <SetupNotice />

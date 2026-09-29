@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/cn'
 import type { HomeStats } from '@/lib/home/stats'
 import { getT } from '@/lib/i18n/server'
+import { Phantoms } from './Phantom'
 
 /**
  * หัวหน้าแรก — พอร์ทัลของทั้งบริษัท
@@ -42,19 +43,9 @@ export async function PortalHero({ stats }: { stats: HomeStats }) {
         <div className="aurora-blob aurora-blob-3" />
       </div>
 
-      {/*
-        * ★★ ร่างที่เดินผ่านหัวหน้า — ไม่ได้วาดผี แต่บิดแสงข้างหลัง
-        *    ★ อยู่หลังทุกอย่าง (-z-10) และ pointer-events ปิด จึงไม่บังการอ่าน
-        *      หรือขวางการกดปุ่มแม้แต่เฟรมเดียว
-        */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="phantom">
-          <div className="phantom-gait">
-            <span className="phantom-trail" />
-            <span className="phantom-form" />
-          </div>
-        </div>
-      </div>
+      {/* ★ ร่างที่เดินผ่าน — อยู่หลังทุกอย่างและปิด pointer-events
+          จึงไม่บังการอ่านหรือขวางการกดปุ่มแม้แต่เฟรมเดียว */}
+      <Phantoms />
 
       {/*
         * ★ ดาวกะพริบ — ตำแหน่ง/จังหวะคิดไว้ล่วงหน้าเป็นค่าคงที่

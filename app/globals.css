@@ -1671,14 +1671,14 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
 
 .phantom {
   position: absolute;
-  top: -6%;
-  bottom: -6%;
+  top: 2%;
   left: 0;
-  width: 170px;
+  width: 220px;
+  height: 420px;
   pointer-events: none;
   opacity: 0;
   will-change: transform, opacity;
-  animation: phantom-cross 26s linear infinite;
+  animation: phantom-cross 30s linear infinite;
 }
 
 /* ★ ชั้นในทำจังหวะย่ำเท้า แยกจากชั้นนอกที่เดินหน้า
@@ -1689,61 +1689,48 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   animation: phantom-gait 1.45s ease-in-out infinite;
 }
 
-.phantom-form {
+.phantom-svg {
   position: absolute;
   inset: 0;
-  backdrop-filter: blur(7px) saturate(1.1) brightness(1.04);
-  -webkit-backdrop-filter: blur(7px) saturate(1.1) brightness(1.04);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-ink) 6%, transparent),
-      transparent 55%
-    );
-  /* หัว-ไหล่ + ลำตัว ซ้อนกันเป็นเงาคน ขอบละลายหายไปทั้งหมด */
-  -webkit-mask-image:
-    radial-gradient(26% 15% at 50% 20%, #000 45%, transparent 100%),
-    radial-gradient(44% 40% at 50% 64%, #000 35%, transparent 100%);
-  mask-image:
-    radial-gradient(26% 15% at 50% 20%, #000 45%, transparent 100%),
-    radial-gradient(44% 40% at 50% 64%, #000 35%, transparent 100%);
-  -webkit-mask-composite: source-over;
-  mask-composite: add;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  /*
+   * ★ เรืองแสงรอบตัวเล็กน้อย — ของที่สว่างกว่าพื้นหลังต้องมีแสงรั่วออกมา
+   *   ★★ ไม่มีแสงนี้ ตัวร่างจะดูเหมือนสติกเกอร์ที่แปะทับพื้นหลัง
+   */
+  filter: drop-shadow(0 0 26px rgb(210 226 255 / 0.20));
 }
 
-/* ★ ไอที่ลากตามหลัง — ช่วยให้ "ทิศทาง" ของการเดินอ่านออก */
-.phantom-trail {
+/* ★ พื้นหลังหักเหตามตัวที่เดินผ่าน — ทำให้ "มีมวล" ไม่ใช่ภาพโปร่งใสลอย ๆ */
+.phantom-warp {
   position: absolute;
-  inset-block: 18%;
-  inset-inline-start: -130%;
-  width: 260%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in oklab, var(--color-ink) 3%, transparent)
-  );
-  filter: blur(14px);
-  opacity: 0.8;
+  inset: 4% 12% 0 12%;
+  border-radius: 50% 50% 46% 46% / 34% 34% 66% 66%;
+  backdrop-filter: blur(5px) saturate(1.08) brightness(1.03);
+  -webkit-backdrop-filter: blur(5px) saturate(1.08) brightness(1.03);
+  -webkit-mask-image: radial-gradient(60% 60% at 50% 42%, #000 40%, transparent 78%);
+  mask-image: radial-gradient(60% 60% at 50% 42%, #000 40%, transparent 78%);
 }
 
 @keyframes phantom-cross {
-  0%        { transform: translate3d(-18vw, 0, 0) scaleX(1); opacity: 0; }
-  12%       { opacity: 0.85; }
-  50%       { transform: translate3d(50vw, 0, 0) scaleX(1.04); opacity: 0.95; }
-  86%       { opacity: 0.7; }
-  100%      { transform: translate3d(118vw, 0, 0) scaleX(1); opacity: 0; }
+  0%   { transform: translate3d(-16vw, 0, 0) scaleX(1); opacity: 0; }
+  10%  { opacity: 0.62; }
+  50%  { transform: translate3d(48vw, 0, 0) scaleX(1.03); opacity: 0.72; }
+  88%  { opacity: 0.45; }
+  100% { transform: translate3d(115vw, 0, 0) scaleX(1); opacity: 0; }
 }
 
 /*
  * ★ ย่ำเท้า: ขึ้นลงเล็กน้อย + เอียงสลับข้าง
- *   ★★ คนเดินจริงหัวขยับขึ้นลงประมาณ 4-5 ซม. ต่อก้าว ไม่ใช่ลอยนิ่ง ๆ
+ *   ★★ คนเดินจริงหัวขยับขึ้นลงทุกก้าว ไม่ใช่ลอยนิ่ง ๆ
  *      การลอยนิ่งคือสิ่งที่ทำให้อนิเมชันดูเป็นของปลอมทันที
  */
 @keyframes phantom-gait {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(0.6deg); }
-  25%      { transform: translate3d(0, -7px, 0) rotate(0deg); }
-  50%      { transform: translate3d(0, 0, 0) rotate(-0.6deg); }
-  75%      { transform: translate3d(0, -6px, 0) rotate(0deg); }
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0.7deg); }
+  25%      { transform: translate3d(0, -8px, 0) rotate(0deg); }
+  50%      { transform: translate3d(0, 0, 0) rotate(-0.7deg); }
+  75%      { transform: translate3d(0, -7px, 0) rotate(0deg); }
 }
 
 @media (max-width: 640px) {
@@ -1753,4 +1740,135 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
 @media (prefers-reduced-motion: reduce) {
   .phantom { display: none; }
   .tint-glow { opacity: 0 !important; }
+}
+
+/* ── สามตนเดินคนละจังหวะ คนละทาง ───────────────────────────────────────── */
+/*
+ * ★★ ถ้าทุกตนใช้คาบเท่ากัน มันจะเดินเรียงหน้ากระดานเหมือนขบวนพาเหรด
+ *    ★ คาบที่เป็นเลขเฉพาะต่อกัน (30/41/26) ทำให้จังหวะไม่บรรจบกันง่าย ๆ
+ *      สามตนจึงแทบไม่เคยอยู่บนจอพร้อมกันในตำแหน่งเดิมซ้ำ
+ */
+.phantom--hooded {
+  top: 2%;
+  width: 220px;
+  height: 420px;
+  animation-duration: 30s;
+  animation-delay: -6s;
+}
+
+/* ★ ตนนี้เดินสวนทาง จึงกลับด้านทั้งตัวให้หันหน้าไปทางที่เดิน */
+.phantom--hair {
+  top: 14%;
+  width: 190px;
+  height: 370px;
+  animation-name: phantom-cross-rev;
+  animation-duration: 41s;
+  animation-delay: -22s;
+}
+
+.phantom--gaunt {
+  top: 26%;
+  width: 160px;
+  height: 320px;
+  animation-duration: 26s;
+  animation-delay: -13s;
+}
+
+@keyframes phantom-cross-rev {
+  0%   { transform: translate3d(112vw, 0, 0) scaleX(-1); opacity: 0; }
+  10%  { opacity: 0.55; }
+  50%  { transform: translate3d(44vw, 0, 0) scaleX(-1.03); opacity: 0.66; }
+  88%  { opacity: 0.4; }
+  100% { transform: translate3d(-18vw, 0, 0) scaleX(-1); opacity: 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * หน้าจู่โจม
+ *
+ * ★★★ สามส่วนที่ทำให้มัน "ตกใจ" ไม่ใช่แค่ "มีรูปโผล่มา"
+ *
+ *     1. เข้าเร็วมาก (90ms) แล้วค้าง — ของที่ค่อย ๆ โผล่ไม่ทำให้ใครสะดุ้ง
+ *     2. สั่นแบบไม่เป็นจังหวะระหว่างค้างอยู่ ★ การสั่นที่เป็นจังหวะสม่ำเสมอ
+ *        อ่านเป็นอนิเมชัน ส่วนการสั่นที่ไม่เท่ากันอ่านเป็นของมีชีวิต
+ *     3. จอมืดลงรอบตัว ทำให้ตาถูกบังคับให้มองตรงกลาง
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.scare-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+
+/*
+ * ★★ ม่านมืดต้องมืดทั้งจอ ไม่ใช่มืดแค่ขอบ
+ *
+ *    รอบแรกเว้นกลางจอให้โปร่ง ★ ผลคือหน้าผีที่ซีดอยู่แล้วไปทับพื้นหลังสว่าง
+ *    แล้วแทบมองไม่เห็น — ของที่มองไม่เห็นไม่ทำให้ใครตกใจ
+ *    ★ รอบนี้กลางจอมืด 55% ขอบมืดสนิท หน้าผีจึงเป็นสิ่งเดียวที่สว่างบนจอ
+ */
+.scare-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(58% 52% at 50% 45%, rgb(0 0 0 / 0.55) 0%, #000 82%);
+  animation: scare-veil 1s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+.scare-figure {
+  position: relative;
+  width: min(78vh, 78vw);
+  height: min(78vh, 78vw);
+  /* ★ ดันคอนทราสต์ขึ้น — หน้าที่ออกแบบมาให้ "ลอยอยู่ไกล" ต้องคมขึ้นเมื่อมาประชิด */
+  filter: contrast(1.25) brightness(1.18) drop-shadow(0 0 80px rgb(190 212 255 / 0.4));
+  animation: scare-pop 1s cubic-bezier(0.14, 1.2, 0.3, 1) both;
+}
+
+@keyframes scare-veil {
+  0%        { opacity: 0; }
+  9%        { opacity: 1; }
+  70%       { opacity: 1; }
+  100%      { opacity: 0; }
+}
+
+/*
+ * ★★★ ต้องกำหนด opacity ไว้ทุกคีย์เฟรม ไม่ใช่แค่ต้นกับท้าย
+ *
+ *     ตอนแรกเขียน opacity ไว้แค่ที่ 0% · 9% · 100% แล้วปล่อยให้มันไล่เอง
+ *     ★ ผลคือหน้าผีจางเหลือ 6% ตั้งแต่วินาทีที่ 0.25 — วัดได้จาก
+ *       getComputedStyle ไม่ใช่เดา
+ *     ★★ เพราะ cubic-bezier ที่ใช้มี overshoot (y = 1.2) ซึ่งดีกับ "ขนาด"
+ *        แต่พอเอาไปคุม "ความทึบ" มันพุ่งไปจบเร็วมาก
+ *        ★ บทเรียน: easing ตัวเดียวคุมทุกคุณสมบัติในคีย์เฟรมเดียวกันเสมอ
+ *          คุณสมบัติไหนไม่ควรถูกคุมด้วยมัน ต้องตรึงค่าไว้เอง
+ */
+@keyframes scare-pop {
+  0%   { opacity: 0; transform: scale(2.1) translate3d(0, 0, 0); }
+  9%   { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
+  22%  { opacity: 1; transform: scale(1.02) translate3d(-9px, 4px, 0); }
+  34%  { opacity: 1; transform: scale(1) translate3d(7px, -6px, 0); }
+  46%  { opacity: 1; transform: scale(1.03) translate3d(-5px, -3px, 0); }
+  58%  { opacity: 1; transform: scale(1) translate3d(8px, 5px, 0); }
+  70%  { opacity: 1; transform: scale(1.01) translate3d(-3px, 2px, 0); }
+  84%  { opacity: 1; transform: scale(1.02) translate3d(4px, -2px, 0); }
+  100% { opacity: 0; transform: scale(1.12) translate3d(0, 0, 0); }
+}
+
+/* ── เลือดที่สาดบนจอตอนโดนจู่โจม ─────────────────────────────────────── */
+.scare-blood {
+  position: absolute;
+  inset: 0;
+  animation: scare-blood 1s ease-out both;
+}
+
+@keyframes scare-blood {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scare-layer { display: none; }
 }
