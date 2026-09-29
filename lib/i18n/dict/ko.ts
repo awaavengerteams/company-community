@@ -435,6 +435,8 @@ export const ko: Dict = {
   "valid.needEachAmount": "โหมดระบุยอดรายคน ต้องกรอกยอดให้ครบทุกคน",
   "valid.nameSetTaken": "มีชุดรายชื่อชื่อนี้อยู่แล้ว",
   "valid.lotteryNumber": "เลขต้องเป็น 2, 3 หรือ 6 หลัก",
+  "valid.needImage": "ต้องมีรูปสินค้าอย่างน้อย 1 รูป",
+  "valid.noPriceForBill": "ประกาศนี้ไม่มีราคา จึงสร้างรายการค้างจ่ายไม่ได้",
   "srvErr.needQuery": "검색어를 입력해 주세요",
   "srvErr.badOrigin": "허용되지 않은 출처의 요청입니다",
   "srvErr.notMember": "아직 이 방에 참여하지 않았어요",

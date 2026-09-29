@@ -103,6 +103,14 @@ export const LIMITS = {
    *   เพดานนี้จึงคุมแค่การเขียนลงฐานข้อมูล ไม่ได้คุมการเล่น
    */
   funAction: { limit: 60, windowSeconds: 300 },
+
+  /* ── โมดูล D · ตลาดนัด (0029) ────────────────────────────────────── */
+
+  /** ลงประกาศ — หนึ่งประกาศมีรูปได้ 5 รูป จึงกินพื้นที่มากกว่าที่อื่น */
+  createListing: { limit: 20, windowSeconds: 3600 },
+  /** จอง / รายงาน / เปลี่ยนสถานะ */
+  marketAction: { limit: 60, windowSeconds: 60 },
+  marketUpload: { limit: 40, windowSeconds: 600 },
 } as const
 
 export type RateLimitName = keyof typeof LIMITS

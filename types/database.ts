@@ -42,6 +42,17 @@ export type SplitMode = 'EQUAL' | 'CUSTOM'
 /** โทนข้อความทวง (FR-B06) */
 export type ReminderTone = 'POLITE' | 'FUNNY'
 
+/* ── โมดูล D · ตลาดนัด (0029) ─────────────────────────────────────────── */
+
+/** ขาย · แจกฟรี · แลกเปลี่ยน · หาซื้อ */
+export type ListingKind = 'SELL' | 'FREE' | 'TRADE' | 'WANTED'
+export type ListingStatus = 'AVAILABLE' | 'RESERVED' | 'SOLD'
+export type ListingCondition = 'NEW' | 'GOOD' | 'FLAWED'
+/** ★ ชุดคงที่ตาม FR-D03 — ตรงกับ check constraint ของ listings.category */
+export type ListingCategory =
+  | 'ELECTRONICS' | 'FURNITURE' | 'CLOTHES' | 'BOOKS'
+  | 'SPORTS' | 'FOOD' | 'PLANT' | 'OTHER'
+
 /* ── โมดูล A · กินอะไรดี (0025) ───────────────────────────────────────── */
 
 /** ช่วงราคา — ตรงกับ check constraint ของ restaurants.price_range */
@@ -650,6 +661,51 @@ export type Database = {
         Relationships: []
       }
 
+      /* ── โมดูล D · ตลาดนัด (0029) ───────────────────────────────── */
+
+      listings: {
+        Row: {
+          id: string
+          seller_id: string
+          title: string
+          price: number
+          kind: ListingKind
+          category: ListingCategory
+          condition: ListingCondition | null
+          description: string | null
+          meet_building: string | null
+          meet_floor: string | null
+          meet_desk: string | null
+          status: ListingStatus
+          hidden: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: { seller_id: string; title: string; price?: number }
+        Update: { status?: ListingStatus; hidden?: boolean }
+        Relationships: []
+      }
+
+      listing_images: {
+        Row: { id: string; listing_id: string; url: string; sort: number; created_at: string }
+        Insert: { listing_id: string; url: string; sort?: number }
+        Update: Record<never, never>
+        Relationships: []
+      }
+
+      listing_reservations: {
+        Row: {
+          listing_id: string
+          user_id: string
+          position: number
+          status: 'ACTIVE' | 'CANCELLED' | 'CHOSEN'
+          created_at: string
+        }
+        Insert: { listing_id: string; user_id: string; position: number }
+        Update: { status?: 'ACTIVE' | 'CANCELLED' | 'CHOSEN' }
+        Relationships: []
+      }
+
       audit_log: {
         Row: {
           id: number
@@ -1053,6 +1109,44 @@ export type Database = {
         Args: { p_actor: string; p_id: string }
         Returns: string
       }
+
+      /* ── โมดูล D · ตลาดนัด (0029) ───────────────────────────────── */
+      create_listing: {
+        Args: {
+          p_actor: string
+          p_title: string
+          p_price: number
+          p_kind: ListingKind
+          p_category: ListingCategory
+          p_condition: ListingCondition | null
+          p_description: string | null
+          p_building: string | null
+          p_floor: string | null
+          p_desk: string | null
+          p_images: string[]
+        }
+        Returns: Database['public']['Tables']['listings']['Row']
+      }
+      toggle_reservation: {
+        Args: { p_actor: string; p_id: string }
+        Returns: { reserved: boolean; queue: number }
+      }
+      reservation_count: {
+        Args: { p_id: string }
+        Returns: number
+      }
+      set_listing_status: {
+        Args: { p_actor: string; p_id: string; p_status: ListingStatus; p_buyer?: string | null }
+        Returns: Database['public']['Tables']['listings']['Row']
+      }
+      delete_listing: {
+        Args: { p_actor: string; p_id: string }
+        Returns: string
+      }
+      report_listing: {
+        Args: { p_actor: string; p_id: string; p_reason?: string | null }
+        Returns: { reports: number; threshold: number; hidden: boolean }
+      }
     }
 
     Enums: {
@@ -1075,6 +1169,7 @@ export type EmployeeCodeRow = Tables<'employee_codes'>
 export type RestaurantRow = Tables<'restaurants'>
 export type DebtRow = Tables<'debts'>
 export type NameSetRow = Tables<'name_sets'>
+export type ListingRow = Tables<'listings'>
 export type LotteryPickRow = Tables<'lottery_picks'>
 export type ExpenseBillRow = Tables<'expense_bills'>
 export type NotificationRow = Tables<'notifications'>

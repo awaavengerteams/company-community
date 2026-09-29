@@ -435,6 +435,8 @@ export const de: Dict = {
   "valid.needEachAmount": "โหมดระบุยอดรายคน ต้องกรอกยอดให้ครบทุกคน",
   "valid.nameSetTaken": "มีชุดรายชื่อชื่อนี้อยู่แล้ว",
   "valid.lotteryNumber": "เลขต้องเป็น 2, 3 หรือ 6 หลัก",
+  "valid.needImage": "ต้องมีรูปสินค้าอย่างน้อย 1 รูป",
+  "valid.noPriceForBill": "ประกาศนี้ไม่มีราคา จึงสร้างรายการค้างจ่ายไม่ได้",
   "srvErr.needQuery": "Bitte gib einen Suchbegriff ein",
   "srvErr.badOrigin": "Die Anfrage kam von einer nicht erlaubten Herkunft",
   "srvErr.notMember": "Du bist diesem Raum noch nicht beigetreten",
