@@ -70,7 +70,6 @@ export function AdminDashboard() {
   return (
     <div className="py-2">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-bold text-ink">{ot('dash.title')}</h1>
         <div className="ms-auto flex gap-1.5">
           {RANGES.map((d) => (
             <button
@@ -210,7 +209,7 @@ function Big({
   tone?: 'warn'
 }) {
   return (
-    <div className="rounded-(--radius-card) border border-line bg-elevated p-4">
+    <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
       <p className="text-xs text-ink-soft">{label}</p>
       <p className={cn('mt-1 text-2xl font-bold tabular-nums', tone === 'warn' ? 'text-warn' : 'text-ink')}>
         {value}
@@ -222,7 +221,7 @@ function Big({
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-(--radius-card) border border-line p-4">
+    <div className="rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
       <p className="text-sm font-medium text-ink">{title}</p>
       <div className="mt-2">{children}</div>
     </div>

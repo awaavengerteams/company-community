@@ -103,10 +103,9 @@ export function OfficeProfile() {
 
   return (
     <div className="mx-auto max-w-xl py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('profile.title')}</h1>
 
       {/* ── ข้อมูลพนักงาน ────────────────────────────────────── */}
-      <div className="mt-4 rounded-(--radius-card) border border-line p-4">
+      <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
         <dl className="flex flex-col gap-2 text-sm">
           <div className="flex items-center gap-3">
             <dt className="flex-1 text-ink-soft">{ot('profile.name')}</dt>
@@ -132,7 +131,7 @@ export function OfficeProfile() {
       </div>
 
       {/* ── ฝ่าย/แผนก ────────────────────────────────────────── */}
-      <div className="mt-4 rounded-(--radius-card) border border-line p-4">
+      <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
         <label htmlFor="dept" className="block text-sm font-medium text-ink">
           {ot('profile.department')}
         </label>
@@ -156,7 +155,7 @@ export function OfficeProfile() {
       </div>
 
       {/* ── สวิตช์แจ้งเตือน ──────────────────────────────────── */}
-      <div className="mt-4 rounded-(--radius-card) border border-line p-4">
+      <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
         <p className="text-sm font-medium text-ink">{ot('profile.notify')}</p>
         <p className="mt-0.5 text-xs text-ink-faint">{ot('profile.notifyHint')}</p>
 

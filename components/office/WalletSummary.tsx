@@ -118,7 +118,6 @@ export function WalletSummary() {
 
   return (
     <div className="mx-auto max-w-3xl py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('wallet.summary.title')}</h1>
       <p className="mt-1 text-xs text-ink-faint">{ot('wallet.summary.explain')}</p>
 
       {/* ── เลือกช่วง ────────────────────────────────────────────── */}
@@ -162,7 +161,7 @@ export function WalletSummary() {
 
           {/* ── กราฟรายวัน ───────────────────────────────────────── */}
           {data.byDay.length > 0 ? (
-            <div className="mt-5 rounded-(--radius-card) border border-line p-4">
+            <div className="mt-5 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
               <p className="text-sm font-medium text-ink">{ot('wallet.summary.byDay')}</p>
               {/*
                 ★ กราฟแท่งด้วย div ธรรมดา ไม่ใช้ไลบรารีกราฟ
@@ -204,7 +203,7 @@ export function WalletSummary() {
 
 function Stat({ label, value, big }: { label: string; value: number; big?: boolean }) {
   return (
-    <div className="rounded-(--radius-card) border border-line bg-elevated p-4">
+    <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
       <p className="text-xs text-ink-soft">{label}</p>
       <p
         className={cn(
@@ -220,7 +219,7 @@ function Stat({ label, value, big }: { label: string; value: number; big?: boole
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-(--radius-card) border border-line p-4">
+    <div className="rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
       <p className="text-sm font-medium text-ink">{title}</p>
       <div className="mt-2 flex flex-col gap-1">{children}</div>
     </div>

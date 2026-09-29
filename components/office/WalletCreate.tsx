@@ -91,9 +91,8 @@ export function WalletCreate({ selfId }: { selfId: string }) {
 
   return (
     <form onSubmit={submit} className="mx-auto max-w-2xl py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('wallet.create.title')}</h1>
 
-      <div className="mt-5 flex flex-col gap-4 rounded-(--radius-card) border border-line bg-elevated p-5">
+      <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
         <Field label={ot('wallet.create.billTitle')} required>
           <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required />
         </Field>

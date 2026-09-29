@@ -87,10 +87,7 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
     <div className="py-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-ink">
-            {mineOnly ? ot('market.mine') : ot('market.title')}
-          </h1>
-          <p className="mt-1 text-sm text-ink-soft">{ot('market.count', { n: shown.length })}</p>
+          <p className="text-sm text-ink-soft">{ot('market.count', { n: shown.length })}</p>
         </div>
         <Link
           href="/office/market/post"
@@ -184,7 +181,7 @@ function Card({
   return (
     <article
       className={cn(
-        'flex flex-col overflow-hidden rounded-(--radius-card) border border-line bg-elevated',
+        'flex flex-col overflow-hidden rounded-2xl border border-line bg-elevated/60 backdrop-blur-md',
         l.status === 'SOLD' && 'opacity-60',
         /* ★ ประกาศที่ถูกซ่อนมีขอบแดง — เจ้าของเห็นแต่คนอื่นไม่เห็น (FR-X08) */
         l.hidden && 'border-danger',

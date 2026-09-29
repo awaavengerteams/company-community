@@ -151,7 +151,7 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
           <p className="min-w-0 flex-1 truncate font-medium text-ink">{room.title}</p>
         </div>
 
-        <div className="mt-3 flex-1 overflow-y-auto rounded-(--radius-card) border border-line bg-elevated p-3">
+        <div className="mt-3 flex-1 overflow-y-auto rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-3">
           {room.messages.length === 0 ? (
             <p className="py-10 text-center text-sm text-ink-faint">{ot('market.chat.empty')}</p>
           ) : (
@@ -160,7 +160,7 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
                 <div key={m.id} className={cn('flex', m.mine ? 'justify-end' : 'justify-start')}>
                   <div
                     className={cn(
-                      'max-w-[75%] rounded-(--radius-card) px-3 py-2 text-sm whitespace-pre-wrap',
+                      'max-w-[75%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap',
                       m.mine ? 'bg-accent text-accent-ink' : 'bg-surface text-ink',
                     )}
                   >
@@ -204,7 +204,6 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
   /* ── กล่องข้อความ ──────────────────────────────────────────── */
   return (
     <div className="mx-auto max-w-2xl py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('market.chat.threads')}</h1>
 
       <div className="mt-4 flex flex-col gap-2">
         {threads.length === 0 ? (
@@ -215,7 +214,7 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
               key={t.id}
               type="button"
               onClick={() => void openThread(t.id)}
-              className="flex items-center gap-3 rounded-(--radius-card) border border-line bg-elevated p-4 text-start transition-colors hover:bg-surface"
+              className="flex items-center gap-3 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4 text-start transition-colors hover:bg-surface"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-ink">{t.title}</p>
@@ -277,7 +276,7 @@ function SearchAlerts() {
   }
 
   return (
-    <div className="mt-6 rounded-(--radius-card) border border-line p-4">
+    <div className="mt-6 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
       <p className="text-sm font-medium text-ink">{ot('market.alert.title')}</p>
       <p className="mt-0.5 text-xs text-ink-faint">{ot('market.alert.hint')}</p>
 

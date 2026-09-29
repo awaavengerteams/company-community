@@ -34,7 +34,7 @@ export function MusicRoomsCard() {
   if (!rooms || rooms.length === 0) return null
 
   return (
-    <div className="mt-4 rounded-(--radius-card) border border-line p-4">
+    <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
       <p className="text-sm font-medium text-ink">{ot('music.myRooms')}</p>
 
       <div className="mt-2 flex flex-col gap-1.5">

@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOfficeViewer } from '@/lib/office/session'
-import { OfficeSidebar, OfficeTabBar } from '@/components/office/OfficeNav'
 import { NotificationBell } from '@/components/office/NotificationBell'
 import { ot } from '@/lib/i18n/office'
 import { Logo } from '@/components/Logo'
@@ -38,8 +37,17 @@ export default async function OfficeLayout({ children }: LayoutProps<'/office'>)
   }
 
   return (
-    /* ★ overflow-x-clip ให้หน้าแรกกางแถบแสงเต็มจอได้โดยไม่เกิดแถบเลื่อนแนวนอน
-       ★ ใช้ clip ไม่ใช่ hidden เพราะ hidden จะทำให้ header ที่ sticky หลุด */
+    /*
+     * ★★ ไม่มีแถบเมนูซ้ายและไม่มีแถบล่างแล้ว
+     *
+     *    ทุกหน้าเต็มความกว้าง เข้ามาจากพอร์ทัลหน้าแรก แล้วกลับด้วยปุ่ม
+     *    "หน้ารวม" ที่หัวหน้า (ดู OfficePageChrome)
+     *    ★ แถบเมนูตายตัวกิน 240px ตลอดเวลาเพื่อลิงก์ที่คนกดวันละอันเดียว
+     *      และเป็นรูปทรงที่ทำให้ระบบดูเหมือนหลังบ้านมากกว่าเว็บที่คนอยากใช้
+     *
+     * ★ overflow-x-clip ให้แถบแสงกางเต็มจอได้โดยไม่เกิดแถบเลื่อนแนวนอน
+     *   ★★ ใช้ clip ไม่ใช่ hidden เพราะ hidden จะทำให้ header ที่ sticky หลุด
+     */
     <div className="flex min-h-dvh flex-col overflow-x-clip bg-page text-ink">
       <OfficeHeader
         isAdmin={viewer.isAdmin}
@@ -47,15 +55,7 @@ export default async function OfficeLayout({ children }: LayoutProps<'/office'>)
         userId={viewer.id}
       />
 
-      <div className="mx-auto flex w-full max-w-[1400px] flex-1">
-        <OfficeSidebar isAdmin={viewer.isAdmin} />
-
-        {/* ★ pb-20 บนมือถือ เผื่อความสูงของแถบเมนูล่าง ไม่งั้นเนื้อหาท้ายหน้า
-            จะถูกแถบทับจนกดไม่ได้ */}
-        <main className="min-w-0 flex-1 px-4 pb-20 pt-4 md:px-6 md:pb-8">{children}</main>
-      </div>
-
-      <OfficeTabBar isAdmin={viewer.isAdmin} />
+      <main className="flex-1">{children}</main>
     </div>
   )
 }
@@ -78,19 +78,29 @@ function OfficeHeader({
 }) {
   return (
     <header className="sticky top-0 z-50 flex h-(--spacing-header) items-center gap-3 border-b border-line bg-page px-4">
-      <Link href="/office" className="flex items-center gap-2">
+      {/* ★ โลโก้กลับหน้ารวมของทั้งเว็บ ไม่ใช่หน้าแรกของโมดูล
+          คนคาดหวังว่าโลโก้พากลับจุดเริ่มต้นเสมอ */}
+      <Link href="/" className="flex items-center gap-2">
         <Logo />
       </Link>
 
       <div className="ms-auto flex items-center gap-1">
         <NotificationBell userId={userId} />
         <ThemeToggle />
-        {/* ★ ชื่อผู้ใช้เป็นตัวยืนยันว่า "กำลังใช้ในนามใคร" ซึ่งสำคัญมากใน
-            ระบบที่มีเรื่องเงิน — คนต้องเห็นได้ทันทีว่าไม่ได้สวมบัญชีคนอื่นอยู่ */}
-        <span className="hidden max-w-40 truncate px-2 text-sm text-ink-soft sm:block">
+        {/*
+          * ★ ชื่อผู้ใช้เป็นตัวยืนยันว่า "กำลังใช้ในนามใคร" ซึ่งสำคัญมากใน
+          *   ระบบที่มีเรื่องเงิน — คนต้องเห็นได้ทันทีว่าไม่ได้สวมบัญชีคนอื่นอยู่
+          * ★★ และเป็นทางเข้าหน้าโปรไฟล์ด้วย เพราะพอถอดแถบเมนูซ้ายออกแล้ว
+          *    หน้าโปรไฟล์จะไม่มีทางเข้าเลยถ้าไม่ผูกไว้ตรงนี้ — ชื่อตัวเอง
+          *    เป็นที่ที่คนไปกดหาการตั้งค่าของตัวเองอยู่แล้วเป็นปกติ
+          */}
+        <Link
+          href="/office/profile"
+          className="hidden max-w-40 truncate rounded-full px-3 py-1.5 text-sm text-ink-soft transition-colors hover:bg-surface hover:text-ink sm:block"
+        >
           {displayName}
           {isAdmin ? <span className="ms-1 text-accent">·&nbsp;Admin</span> : null}
-        </span>
+        </Link>
       </div>
     </header>
   )

@@ -1,4 +1,4 @@
-import { ot, type OfficeKey } from '@/lib/i18n/office'
+import type { OfficeKey } from '@/lib/i18n/office'
 
 /**
  * โครงเมนูของระบบกิจกรรมออฟฟิศ (FR-X07 · หัวข้อ 8 ของเอกสาร)
@@ -106,24 +106,6 @@ export const OFFICE_NAV: NavSection[] = [
   },
 ]
 
-/**
- * ★ ลิงก์กลับห้องเพลง — แยกจาก OFFICE_NAV เพราะมันไม่ใช่เมนูของระบบนี้
- *   แต่ต้องมีทางกลับไปให้เห็นชัด ไม่งั้นคนที่เข้ามาหน้าออฟฟิศจะหาทางกลับไม่เจอ
- *   (FR-X11 จะเชื่อมสองระบบลึกกว่านี้ในเฟส 2 — ตอนนี้แค่ลิงก์ก็พอ)
- */
-export const MUSIC_LINK = { href: '/', labelKey: 'nav.music' as OfficeKey, icon: ICONS.music }
-
-/**
- * ★ โปรไฟล์อยู่ท้ายแถบ ไม่ใช่ในเมนูหลัก
- *   เมนูหลักคือ "กิจกรรม" ส่วนโปรไฟล์คือ "ตั้งค่าของฉัน" — คนละหมวด
- *   ★ ถ้าเอาไปปนกัน แถบล่างบนมือถือจะมี 6 ปุ่มซึ่งแคบเกินกดถูก
- */
-export const PROFILE_LINK = {
-  href: '/office/profile',
-  labelKey: 'profile.title' as OfficeKey,
-  icon: ICONS.profile,
-}
-
 /** เมนูที่ผู้ใช้คนนี้เห็นจริง — กรอง adminOnly ออกถ้าไม่ใช่ Admin */
 export function visibleNav(isAdmin: boolean): NavSection[] {
   return OFFICE_NAV.filter((s) => !s.adminOnly || isAdmin)
@@ -145,5 +127,79 @@ export function activeHref(pathname: string, candidates: string[]): string | nul
   return best
 }
 
-/** ป้ายของเมนู — ห่อ ot() ไว้ให้คอมโพเนนต์เรียกสั้น ๆ */
-export const navLabel = (key: OfficeKey): string => ot(key)
+
+
+/* ═══════════════════════════════════════════════════════════════════
+ * หัวหน้าของแต่ละหน้า
+ *
+ * ★★★ ประกาศเป็นตาราง ไม่ให้แต่ละหน้าเขียน <h1> ของตัวเอง
+ *
+ *     เดิมทุกคอมโพเนนต์มี h1 ของตัวเอง ★ ผลคือขนาด/ระยะห่าง/น้ำหนัก
+ *     ของหัวเรื่องเพี้ยนกันทีละนิดทั่วทั้งระบบ และเวลาจะเปลี่ยนดีไซน์
+ *     ของหัวหน้าต้องแก้ 20 ไฟล์
+ *
+ *     ★★ ตารางนี้ทำให้หัวหน้าทุกหน้าเป็นของสิ่งเดียวกัน แก้ที่เดียวเปลี่ยนหมด
+ *        และได้ "คำอธิบายใต้หัวข้อ" ฟรีทุกหน้าโดยไม่ต้องไล่เติมทีละไฟล์
+ * ═══════════════════════════════════════════════════════════════════ */
+
+export type PageMeta = {
+  titleKey: OfficeKey
+  descKey: OfficeKey
+  /** เมนูพี่น้องในหมวดเดียวกัน — แทนแถบเมนูซ้ายที่ถอดออกไป */
+  section?: string
+}
+
+const PAGE_META: Record<string, PageMeta> = {
+  '/office': { titleKey: 'nav.home', descKey: 'pdesc.home' },
+  '/office/profile': { titleKey: 'profile.title', descKey: 'pdesc.profile' },
+
+  '/office/food/random': { titleKey: 'food.random.title', descKey: 'pdesc.foodRandom', section: '/office/food' },
+  '/office/food/picks': { titleKey: 'food.picks.title', descKey: 'pdesc.foodPicks', section: '/office/food' },
+
+  '/office/wallet/owed': { titleKey: 'wallet.owed.title', descKey: 'pdesc.walletOwed', section: '/office/wallet' },
+  '/office/wallet/create': { titleKey: 'wallet.create.title', descKey: 'pdesc.walletCreate', section: '/office/wallet' },
+  '/office/wallet/summary': { titleKey: 'wallet.summary.title', descKey: 'pdesc.walletSummary', section: '/office/wallet' },
+  '/office/wallet/qr': { titleKey: 'wallet.qr.title', descKey: 'pdesc.walletQr', section: '/office/wallet' },
+  '/office/wallet/pay': { titleKey: 'wallet.action.pay', descKey: 'pdesc.walletPay', section: '/office/wallet' },
+
+  '/office/fun/name': { titleKey: 'fun.name.title', descKey: 'pdesc.funName', section: '/office/fun' },
+  '/office/fun/team': { titleKey: 'fun.team.title', descKey: 'pdesc.funTeam', section: '/office/fun' },
+  '/office/fun/lottery': { titleKey: 'fun.lottery.title', descKey: 'pdesc.funLottery', section: '/office/fun' },
+  '/office/fun/cup': { titleKey: 'fun.cup.title', descKey: 'pdesc.funCup', section: '/office/fun' },
+  '/office/fun/room': { titleKey: 'room.title', descKey: 'pdesc.funRoom', section: '/office/fun' },
+
+  '/office/market': { titleKey: 'market.title', descKey: 'pdesc.market', section: '/office/market' },
+  '/office/market/post': { titleKey: 'market.post', descKey: 'pdesc.marketPost', section: '/office/market' },
+  '/office/market/mine': { titleKey: 'market.mine', descKey: 'pdesc.marketMine', section: '/office/market' },
+  '/office/market/chat': { titleKey: 'market.chat.threads', descKey: 'pdesc.marketChat', section: '/office/market' },
+
+  '/office/admin/dashboard': { titleKey: 'dash.title', descKey: 'pdesc.adminDash', section: '/office/admin' },
+  '/office/admin/codes': { titleKey: 'admin.codes.title', descKey: 'pdesc.adminCodes', section: '/office/admin' },
+  '/office/admin/users': { titleKey: 'admin.users.title', descKey: 'pdesc.adminUsers', section: '/office/admin' },
+  '/office/admin/settings': { titleKey: 'admin.settings.title', descKey: 'pdesc.adminSettings', section: '/office/admin' },
+}
+
+/**
+ * หัวหน้าของ path นี้
+ *
+ * ★ เทียบแบบยาวสุดชนะเหมือน activeHref — หน้าที่มีพารามิเตอร์
+ *   (/office/wallet/pay/<id> · /office/fun/room/<id>) จึงได้หัวของหน้าแม่
+ *   ★★ ไม่ใช่ไม่มีหัวเลย ซึ่งเป็นสิ่งที่ startsWith แบบหยาบ ๆ จะให้ผล
+ */
+export function pageMetaOf(pathname: string): PageMeta | null {
+  let best: string | null = null
+  for (const href of Object.keys(PAGE_META)) {
+    const hit = pathname === href || pathname.startsWith(`${href}/`)
+    if (hit && (best === null || href.length > best.length)) best = href
+  }
+  return best ? PAGE_META[best]! : null
+}
+
+/** เมนูพี่น้องของหมวดนี้ — ใช้วาดชิปใต้หัวหน้า */
+export function siblingsOf(pathname: string, isAdmin: boolean): NavChild[] {
+  const meta = pageMetaOf(pathname)
+  if (!meta?.section) return []
+  const section = visibleNav(isAdmin).find((s) => s.href === meta.section)
+  return section?.children ?? []
+}
+

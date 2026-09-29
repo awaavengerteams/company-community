@@ -159,7 +159,6 @@ export function FunLottery() {
 
   return (
     <div className="mx-auto max-w-2xl py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('fun.lottery.title')}</h1>
 
       {/* ── นับถอยหลัง (FR-C11) ─────────────────────────────────── */}
       <p className="mt-1 text-sm text-ink-soft">
@@ -171,7 +170,7 @@ export function FunLottery() {
       </p>
 
       {/* ── สล็อต ───────────────────────────────────────────────── */}
-      <div className="relative mt-5 rounded-(--radius-card) border border-line bg-elevated p-6">
+      <div className="relative mt-5 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-6">
         <div className="flex justify-center gap-2">
           {display.map((d, i) => (
             <span
@@ -239,7 +238,7 @@ export function FunLottery() {
       </p>
 
       {/* ── กระดานเลขยอดฮิต (FR-C12) ────────────────────────────── */}
-      <div className="mt-5 rounded-(--radius-card) border border-line p-4">
+      <div className="mt-5 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
         <p className="text-sm font-medium text-ink">{ot('fun.lottery.board')}</p>
         {board.length === 0 ? (
           <p className="mt-1.5 text-xs text-ink-faint">{ot('fun.lottery.boardEmpty')}</p>
@@ -267,7 +266,7 @@ export function FunLottery() {
       </div>
 
       {/* ── เลขของฉัน ───────────────────────────────────────────── */}
-      <div className="mt-5 rounded-(--radius-card) border border-line p-4">
+      <div className="mt-5 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
         <p className="text-sm font-medium text-ink">{ot('fun.lottery.mine')}</p>
         {picks.length === 0 ? (
           <p className="mt-1.5 text-xs text-ink-faint">{ot('fun.lottery.empty')}</p>

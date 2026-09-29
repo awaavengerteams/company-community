@@ -92,9 +92,8 @@ export function MarketPost() {
 
   return (
     <form onSubmit={submit} className="mx-auto max-w-2xl py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('market.post')}</h1>
 
-      <div className="mt-5 flex flex-col gap-4 rounded-(--radius-card) border border-line bg-elevated p-5">
+      <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
         {/* ── รูป (บังคับ) ──────────────────────────────────────── */}
         <div>
           <p className="text-sm font-medium text-ink">

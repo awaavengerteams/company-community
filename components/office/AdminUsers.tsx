@@ -72,7 +72,6 @@ export function AdminUsers({ selfId }: { selfId: string }) {
 
   return (
     <div className="py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('admin.users.title')}</h1>
       <p className="mt-1 text-sm text-ink-soft">{rows.length} คน</p>
 
       {error ? (

@@ -57,10 +57,9 @@ export function WalletQr() {
 
   return (
     <div className="mx-auto max-w-md py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('wallet.qr.title')}</h1>
       <p className="mt-1 text-sm text-ink-soft">{ot('wallet.qr.hint')}</p>
 
-      <div className="mt-5 rounded-(--radius-card) border border-line bg-elevated p-5">
+      <div className="mt-5 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
         {!loaded ? (
           <p className="py-10 text-center text-sm text-ink-faint">{ot('common.loading')}</p>
         ) : url ? (

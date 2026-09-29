@@ -94,8 +94,7 @@ export function WalletOwed() {
 
   return (
     <div className="py-2">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-ink">{ot('wallet.owed.title')}</h1>
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <Link
           href="/office/wallet/create"
           className="inline-flex h-9 items-center rounded-full bg-accent px-4 text-sm font-medium text-accent-ink transition-colors hover:bg-accent-hover"
@@ -129,7 +128,7 @@ export function WalletOwed() {
 
       {/* ── หักลบยอด (FR-B08) ────────────────────────────────────── */}
       {nettable.length > 0 ? (
-        <div className="mt-4 rounded-(--radius-card) border border-line p-4">
+        <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
           <p className="text-sm font-medium text-ink">{ot('wallet.net.title')}</p>
           <p className="mt-0.5 text-xs text-ink-faint">{ot('wallet.net.hint')}</p>
           <div className="mt-3 flex flex-col gap-2">
@@ -248,7 +247,7 @@ function Row({
     new Date(debt.lastRemindedAt).toDateString() === new Date().toDateString()
 
   return (
-    <article className="flex flex-wrap items-center gap-3 rounded-(--radius-card) border border-line bg-elevated p-4">
+    <article className="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="font-medium text-ink">{debt.otherName}</p>

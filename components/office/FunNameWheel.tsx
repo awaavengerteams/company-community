@@ -89,7 +89,6 @@ export function FunNameWheel() {
 
   return (
     <div className="py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('fun.name.title')}</h1>
 
       <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_20rem]">
         {/* ── วงล้อ ───────────────────────────────────────────────── */}
@@ -104,7 +103,7 @@ export function FunNameWheel() {
 
           <div className="mt-5">
             {wheelItems.length < 2 ? (
-              <p className="rounded-(--radius-card) border border-line p-6 text-center text-sm text-ink-faint">
+              <p className="rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-6 text-center text-sm text-ink-faint">
                 {ot('fun.name.empty')}
               </p>
             ) : (
@@ -125,7 +124,7 @@ export function FunNameWheel() {
 
           {/* ผลที่สุ่มไปแล้วในรอบนี้ */}
           {drawn.length > 0 ? (
-            <div className="mt-5 rounded-(--radius-card) border border-line p-4">
+            <div className="mt-5 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-ink">{ot('fun.name.drawn')}</p>
                 <Button size="sm" variant="ghost" onClick={() => setDrawn([])}>
@@ -145,7 +144,7 @@ export function FunNameWheel() {
 
         {/* ── รายชื่อ ─────────────────────────────────────────────── */}
         <aside className="flex flex-col gap-4">
-          <div className="rounded-(--radius-card) border border-line bg-elevated p-4">
+          <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
             <div className="flex items-center gap-2">
               <Input
                 value={typed}
@@ -227,7 +226,7 @@ export function FunNameWheel() {
           </div>
 
           {/* ชุดที่บันทึกไว้ */}
-          <div className="rounded-(--radius-card) border border-line p-4">
+          <div className="rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
             <p className="text-sm font-medium text-ink">{ot('fun.sets.title')}</p>
             {sets.length === 0 ? (
               <p className="mt-1.5 text-xs text-ink-faint">{ot('fun.sets.empty')}</p>

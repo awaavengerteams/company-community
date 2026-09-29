@@ -227,11 +227,10 @@ export function FunTeams() {
 
   return (
     <div className="py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('fun.team.title')}</h1>
 
       {!teams ? (
         <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_20rem]">
-          <div className="rounded-(--radius-card) border border-line bg-elevated p-4">
+          <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
             <p className="text-sm font-medium text-ink">
               {ot('fun.team.players')} ({total})
             </p>
@@ -298,7 +297,7 @@ export function FunTeams() {
             ) : null}
           </div>
 
-          <aside className="flex flex-col gap-3 rounded-(--radius-card) border border-line p-4">
+          <aside className="flex flex-col gap-3 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
             <div className="flex gap-1.5">
               <Chip active={mode === 'BY_TEAMS'} onClick={() => setMode('BY_TEAMS')}>
                 {ot('fun.team.byTeams')}
@@ -471,7 +470,7 @@ export function FunTeams() {
               <div
                 key={t.name}
                 className={cn(
-                  'rounded-(--radius-card) border-2 p-4 transition-shadow',
+                  'rounded-2xl border-2 p-4 transition-shadow',
                   /* ★ ทีมที่ครบแล้วเรืองแสง ตามหัวข้อ 4.1 */
                   done && 'shadow-lg',
                 )}

@@ -130,12 +130,12 @@ export function FoodPicks() {
     return (
       <div className="mx-auto max-w-lg py-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-ink">{ot('food.picks.add')}</h1>
+          <h2 className="text-lg font-semibold text-ink">{ot('food.picks.add')}</h2>
           <Button variant="ghost" onClick={() => setAdding(false)}>
             {ot('common.cancel')}
           </Button>
         </div>
-        <div className="mt-5 rounded-(--radius-card) border border-line bg-elevated p-5">
+        <div className="mt-5 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
           <AddRestaurantForm
             onDone={() => {
               setAdding(false)
@@ -151,7 +151,6 @@ export function FoodPicks() {
     <div className="py-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-ink">{ot('food.picks.title')}</h1>
           <p className="mt-1 text-sm text-ink-soft">
             {ot('food.picks.count', { n: data.items.length })}
           </p>
@@ -267,7 +266,7 @@ function Card({
   return (
     <article
       className={cn(
-        'flex flex-col rounded-(--radius-card) border border-line bg-elevated p-4',
+        'flex flex-col rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4',
         /* ★ ร้านที่อาจปิดจางลงแต่ยังอ่านได้ — ไม่ซ่อน เพราะคนที่รู้ว่ายังเปิด
              ต้องเห็นมันเพื่อกดยืนยัน (FR-A05) */
         r.maybeClosed && 'opacity-60',

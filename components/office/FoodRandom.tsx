@@ -93,7 +93,6 @@ export function FoodRandom() {
 
   return (
     <div className="py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('food.random.title')}</h1>
       <p className="mt-1 text-sm text-ink-soft">
         {ot('food.random.inWheel', { n: pool.length })}
       </p>
@@ -152,7 +151,7 @@ export function FoodRandom() {
         {loading ? (
           <p className="py-10 text-center text-sm text-ink-faint">{ot('common.loading')}</p>
         ) : wheelItems.length < 2 ? (
-          <div className="rounded-(--radius-card) border border-line p-6 text-center">
+          <div className="rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-6 text-center">
             <p className="text-sm text-ink-soft">{ot('food.random.needMore')}</p>
             <Link
               href="/office/food/picks"
@@ -176,7 +175,7 @@ export function FoodRandom() {
 
       {/* ── ผลการสุ่ม ────────────────────────────────────────────── */}
       {winner ? (
-        <div className="mx-auto mt-6 max-w-md rounded-(--radius-card) border border-line bg-elevated p-5">
+        <div className="mx-auto mt-6 max-w-md rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
           <h2 className="text-lg font-bold text-ink">{winner.name}</h2>
           <p className="mt-0.5 text-sm text-ink-soft">{winner.signatureDish}</p>
 

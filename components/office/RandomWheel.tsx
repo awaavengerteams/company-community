@@ -194,25 +194,47 @@ export function RandomWheel({
   return (
     <div className="relative flex flex-col items-center gap-5">
       {/* ── หน้าต่างวงล้อ ─────────────────────────────────────────── */}
+      {/*
+        * ★★ ใหญ่ · เป็นกระจก · มีแสงเรืองตอนหมุน
+        *
+        *    นี่คือสิ่งเดียวที่คนมองตอนใช้ฟีเจอร์นี้ ★ กล่องเล็กสูง 112px
+        *    ที่มีตัวหนังสือขนาดปกติทำให้ "จังหวะลุ้น" ที่ออกแบบไว้ทั้งหมด
+        *    (หลอก · หน่วง · เฉลยช้า) เสียของ เพราะตาไม่ได้จดจ่อกับมัน
+        *
+        *    ★ ขอบเรืองแสงเฉพาะตอนหมุน ไม่ใช่ตลอดเวลา — แสงที่ติดค้าง
+        *      กลายเป็นของประดับ ส่วนแสงที่มาตอนหมุนคือสัญญาณว่า "เริ่มแล้ว"
+        */}
       <div
         className={cn(
-          'relative h-28 w-full max-w-md overflow-hidden',
-          'rounded-(--radius-card) border border-line bg-elevated',
+          'relative w-full max-w-lg overflow-hidden transition-shadow duration-500',
+          'rounded-3xl border bg-elevated/60 backdrop-blur-md',
+          phase === 'spinning'
+            ? 'border-accent/60 shadow-[0_0_60px_-12px] shadow-accent/50'
+            : 'border-line',
         )}
         aria-live="polite"
         aria-atomic="true"
       >
+        {/* ★ ไล่สีจาง ๆ ในกล่อง ให้พื้นไม่แบน */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-accent/[0.07] to-transparent"
+        />
+
         {/* เข็มชี้ */}
         <div
           className="absolute inset-x-0 top-0 z-10 mx-auto h-0 w-0 border-x-8 border-t-12 border-x-transparent border-t-accent"
           aria-hidden="true"
         />
 
-        <div className="grid h-full place-items-center px-4">
+        <div className="relative grid h-36 place-items-center px-6 sm:h-44">
           <span
             className={cn(
-              'w-full truncate text-center text-lg font-medium text-ink',
-              phase === 'spinning' && 'blur-[0.3px]',
+              'w-full truncate text-center font-bold tracking-tight transition-all duration-300',
+              phase === 'done' && winnerVisible
+                ? 'text-[28px] text-ink sm:text-[34px]'
+                : 'text-xl text-ink sm:text-2xl',
+              phase === 'spinning' && 'blur-[0.4px]',
             )}
           >
             {phase === 'done' && winnerVisible ? winner?.label : current.label}
@@ -220,7 +242,7 @@ export function RandomWheel({
         </div>
 
         {phase === 'done' && !winnerVisible ? (
-          <p className="absolute inset-x-0 bottom-2 text-center text-xs text-ink-faint">
+          <p className="absolute inset-x-0 bottom-3 text-center text-xs text-ink-faint">
             และคนนั้นก็คือ…
           </p>
         ) : null}
@@ -234,9 +256,10 @@ export function RandomWheel({
             onClick={spin}
             disabled={phase === 'spinning'}
             className={cn(
-              'h-10 rounded-full px-6 text-sm font-medium',
-              'bg-accent text-accent-ink transition-colors hover:bg-accent-hover',
-              'disabled:pointer-events-none disabled:opacity-40',
+              'h-12 rounded-full px-8 font-medium',
+              'bg-accent text-accent-ink transition-all',
+              'hover:bg-accent-hover hover:shadow-[0_8px_30px_-8px] hover:shadow-accent/60',
+              'active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40',
             )}
           >
             {phase === 'done' ? 'สุ่มใหม่' : (spinLabel ?? 'หมุนเลย')}

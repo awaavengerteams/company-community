@@ -50,7 +50,6 @@ export function AdminSettings() {
 
   return (
     <div className="max-w-2xl py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('admin.settings.title')}</h1>
 
       {error ? (
         <p role="alert" className="mt-3 text-sm text-danger">
@@ -115,7 +114,7 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-(--radius-card) border border-line bg-elevated p-4">
+    <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-ink">{label}</p>

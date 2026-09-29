@@ -83,7 +83,6 @@ export function WalletPay({
 
   return (
     <div className="mx-auto max-w-md py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('wallet.action.pay')}</h1>
       <p className="mt-1 text-sm text-ink-soft">
         {description ?? '—'}
         {files?.creditorName ? ` · ${files.creditorName}` : ''}
@@ -92,7 +91,7 @@ export function WalletPay({
       <p className="mt-4 text-3xl font-bold tabular-nums text-ink">฿{formatBaht(amount)}</p>
 
       {/* ── QR รับเงิน ───────────────────────────────────────────── */}
-      <div className="mt-5 rounded-(--radius-card) border border-line bg-elevated p-5">
+      <div className="mt-5 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
         {!files ? (
           <p className="py-10 text-center text-sm text-ink-faint">{ot('common.loading')}</p>
         ) : files.qrUrl ? (
@@ -121,7 +120,7 @@ export function WalletPay({
 
       {/* ── สลิป ─────────────────────────────────────────────────── */}
       {isDebtor ? (
-        <div className="mt-4 rounded-(--radius-card) border border-line p-4">
+        <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
           <p className="text-sm font-medium text-ink">สลิปโอนเงิน</p>
 
           {files?.slipUrl ? (
@@ -153,7 +152,7 @@ export function WalletPay({
 
       {/* ── ใบเสร็จของบิล ────────────────────────────────────────── */}
       {files?.receiptUrl ? (
-        <div className="mt-4 rounded-(--radius-card) border border-line p-4">
+        <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
           <p className="text-sm font-medium text-ink">ใบเสร็จ</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

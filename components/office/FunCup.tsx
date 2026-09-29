@@ -113,7 +113,6 @@ export function FunCup() {
   if (!open) {
     return (
       <div className="mx-auto max-w-3xl py-2">
-        <h1 className="text-xl font-bold text-ink">{ot('fun.cup.title')}</h1>
 
         {error ? (
           <p role="alert" className="mt-3 text-sm text-danger">
@@ -130,7 +129,7 @@ export function FunCup() {
                 key={t.id}
                 type="button"
                 onClick={() => void loadBracket(t.id)}
-                className="flex items-center gap-3 rounded-(--radius-card) border border-line bg-elevated p-4 text-start transition-colors hover:bg-surface"
+                className="flex items-center gap-3 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4 text-start transition-colors hover:bg-surface"
               >
                 <span className="min-w-0 flex-1 truncate font-medium text-ink">{t.name}</span>
                 <span
@@ -147,7 +146,7 @@ export function FunCup() {
         </div>
 
         {/* ── ตารางสถิติ (FR-C09) ──────────────────────────────── */}
-        <div className="mt-6 rounded-(--radius-card) border border-line p-4">
+        <div className="mt-6 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
           <p className="text-sm font-medium text-ink">{ot('fun.stats.title')}</p>
           {stats.length === 0 ? (
             <p className="mt-1.5 text-xs text-ink-faint">{ot('fun.stats.empty')}</p>
@@ -186,7 +185,7 @@ export function FunCup() {
         <Button variant="ghost" onClick={() => setOpen(null)}>
           ‹ {ot('fun.cup.back')}
         </Button>
-        <h1 className="text-xl font-bold text-ink">{open.name}</h1>
+        <h2 className="text-xl font-bold text-ink">{open.name}</h2>
         {open.canManage ? (
           <Button size="sm" variant="danger" className="ms-auto" onClick={() => void remove(open.id)}>
             {ot('common.delete')}
@@ -195,7 +194,7 @@ export function FunCup() {
       </div>
 
       {champion ? (
-        <div className="mt-4 rounded-(--radius-card) border-2 p-4 text-center" style={{ borderColor: champion.color }}>
+        <div className="mt-4 rounded-2xl border-2 p-4 text-center" style={{ borderColor: champion.color }}>
           <p className="text-xs text-ink-soft">👑 {ot('fun.cup.champion')}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{champion.name}</p>
           <p className="mt-1 text-xs text-ink-faint">
@@ -263,7 +262,7 @@ function MatchCard({
   const ready = Boolean(a && b) && !match.winner
 
   return (
-    <div className="rounded-(--radius-card) border border-line bg-elevated p-2">
+    <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-2">
       {[a, b].map((t, i) => {
         const isWinner = t && match.winner === t.id
         return (

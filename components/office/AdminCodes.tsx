@@ -104,13 +104,12 @@ export function AdminCodes() {
 
   return (
     <div className="py-2">
-      <h1 className="text-xl font-bold text-ink">{ot('admin.codes.title')}</h1>
       <p className="mt-1 text-sm text-ink-soft">
         ทั้งหมด {rows.length} รหัส · สมัครแล้ว {claimed} · ว่าง {rows.length - claimed}
       </p>
 
       {/* ── เพิ่มรหัส ─────────────────────────────────────────────── */}
-      <div className="mt-5 flex flex-col gap-3 rounded-(--radius-card) border border-line bg-elevated p-4 sm:flex-row sm:items-end">
+      <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4 sm:flex-row sm:items-end">
         <label className="flex-1">
           <span className="mb-1.5 block text-sm font-medium text-ink">
             {ot('admin.codes.add')}
