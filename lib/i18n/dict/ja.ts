@@ -436,6 +436,7 @@ export const ja: Dict = {
   "valid.nameSetTaken": "มีชุดรายชื่อชื่อนี้อยู่แล้ว",
   "valid.lotteryNumber": "เลขต้องเป็น 2, 3 หรือ 6 หลัก",
   "valid.needImage": "ต้องมีรูปสินค้าอย่างน้อย 1 รูป",
+  "valid.needTwoTeams": "ต้องมีอย่างน้อย 2 ทีมถึงจะสร้างสายได้",
   "valid.noPriceForBill": "ประกาศนี้ไม่มีราคา จึงสร้างรายการค้างจ่ายไม่ได้",
   "srvErr.needQuery": "検索キーワードを入力してください",
   "srvErr.badOrigin": "許可されていない送信元からのリクエストです",

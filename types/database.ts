@@ -711,6 +711,56 @@ export type Database = {
         Relationships: []
       }
 
+      /* ── FR-C08 สายแข่งขัน (0032) ──────────────────────────────── */
+
+      tournaments: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          status: 'OPEN' | 'DONE'
+          created_at: string
+          updated_at: string
+        }
+        Insert: { owner_id: string; name?: string }
+        Update: { name?: string; status?: 'OPEN' | 'DONE' }
+        Relationships: []
+      }
+
+      tournament_teams: {
+        Row: {
+          id: string
+          tournament_id: string
+          name: string
+          color: string
+          members: unknown
+          seed: number
+          created_at: string
+        }
+        Insert: { tournament_id: string; name: string; color?: string; members?: unknown; seed?: number }
+        Update: { name?: string; color?: string }
+        Relationships: []
+      }
+
+      tournament_matches: {
+        Row: {
+          id: string
+          tournament_id: string
+          round: number
+          slot: number
+          team_a: string | null
+          team_b: string | null
+          winner: string | null
+          score_a: number | null
+          score_b: number | null
+          played_at: string | null
+          created_at: string
+        }
+        Insert: { tournament_id: string; round: number; slot: number }
+        Update: { winner?: string | null; score_a?: number | null; score_b?: number | null }
+        Relationships: []
+      }
+
       audit_log: {
         Row: {
           id: number
@@ -1176,6 +1226,38 @@ export type Database = {
       lottery_leaderboard: {
         Args: { p_limit?: number }
         Returns: { number: string; picks: number }[]
+      }
+
+      /* ── FR-C08/C09 สายแข่งขัน (0032) ──────────────────────────── */
+      create_tournament: {
+        Args: {
+          p_actor: string
+          p_name: string
+          p_teams: { name: string; color: string; members: { id?: string; label: string }[] }[]
+        }
+        Returns: string
+      }
+      record_match_result: {
+        Args: {
+          p_actor: string
+          p_match: string
+          p_winner: string
+          p_score_a?: number | null
+          p_score_b?: number | null
+        }
+        Returns: void
+      }
+      delete_tournament: {
+        Args: { p_actor: string; p_id: string }
+        Returns: string
+      }
+      player_stats: {
+        Args: Record<string, never>
+        Returns: { user_id: string; wins: number; losses: number; matches: number }[]
+      }
+      player_skill: {
+        Args: Record<string, never>
+        Returns: { user_id: string; skill: number; matches: number }[]
       }
 
       report_listing: {

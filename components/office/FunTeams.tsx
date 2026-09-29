@@ -12,6 +12,9 @@ import {
   splitTeamsWithRules,
   type TeamRule,
 } from '@/lib/office/team-rules'
+import { splitBalanced, strengthSpread } from '@/lib/office/skill'
+import { drawBracketOrder } from '@/lib/office/skill'
+import { useRouter } from 'next/navigation'
 import { playCelebrate, playTick, vibrate } from '@/lib/office/sound'
 import { prefersReducedMotion } from '@/lib/office/draw'
 import { Confetti } from './Confetti'
@@ -21,6 +24,7 @@ type NameSet = { id: string; name: string; members: Member[] }
 
 /** สุ่มทีม (FR-C03 / C04 / C05 / C07) */
 export function FunTeams() {
+  const router = useRouter()
   const [people, setPeople] = useState<Person[]>([])
   const [sets, setSets] = useState<NameSet[]>([])
   const [members, setMembers] = useState<Member[]>([])
@@ -42,6 +46,10 @@ export function FunTeams() {
   const [ruleKind, setRuleKind] = useState<'TOGETHER' | 'APART'>('TOGETHER')
   const [ruleError, setRuleError] = useState<string | null>(null)
   const [unmet, setUnmet] = useState<{ n: number; tries: number } | null>(null)
+  /** FR-C09 — ถ่วงฝีมือจากสถิติชนะ-แพ้ */
+  const [useSkill, setUseSkill] = useState(false)
+  const [skills, setSkills] = useState<Map<string, number>>(new Map())
+  const [creatingCup, setCreatingCup] = useState(false)
 
   useEffect(() => {
     void apiFetch<{ items: Person[] }>('/api/office/people')
@@ -49,6 +57,9 @@ export function FunTeams() {
       .catch(() => undefined)
     void apiFetch<{ items: NameSet[] }>('/api/office/fun/name-sets')
       .then((d) => setSets(d.items))
+      .catch(() => undefined)
+    void apiFetch<{ stats: { userId: string; skill: number }[] }>('/api/office/fun/tournaments')
+      .then((d) => setSkills(new Map(d.stats.map((s) => [s.userId, s.skill]))))
       .catch(() => undefined)
   }, [])
 
@@ -103,7 +114,27 @@ export function FunTeams() {
     }
     setRuleError(null)
 
-    const result = splitTeamsWithRules(members, opts, rules, splitTeams)
+    /*
+     * ★★ ถ่วงฝีมือแทนที่ตัวแบ่งทีม ไม่ใช่แก้ผลทีหลัง
+     *    ส่ง splitBalanced เข้าไปเป็น splitFn ของ splitTeamsWithRules
+     *    ★ เงื่อนไขทีม (FR-C06) จึงยังทำงานร่วมกับถ่วงฝีมือได้ทันที
+     *      โดยไม่ต้องเขียน logic ผสมสองอย่างขึ้นมาใหม่
+     */
+    const splitFn = useSkill
+      ? (m: Member[], o: typeof opts) => {
+          const n =
+            o.mode === 'BY_TEAMS'
+              ? Math.max(1, Math.min(o.value, m.length))
+              : Math.max(1, Math.ceil(m.length / Math.max(1, o.value)))
+          return splitBalanced(m, n, skills).map((group, i) => ({
+            name: `ทีม ${i + 1}`,
+            color: ['#ff0033', '#3ea6ff', '#ffd24d', '#4ade80', '#c084fc', '#fb923c'][i % 6]!,
+            members: group,
+          }))
+        }
+      : splitTeams
+
+    const result = splitTeamsWithRules(members, opts, rules, splitFn)
     setTeams(result.teams)
     setUnmet(result.unmet.length > 0 ? { n: result.unmet.length, tries: result.tries } : null)
     setRevealed(0)
@@ -134,6 +165,34 @@ export function FunTeams() {
 
   const nameOf = (id: string) => members.find((m) => m.id === id)?.label ?? '—'
 
+  /** FR-C08 — สร้างสายจากทีมที่แบ่งไว้ */
+  async function createCup() {
+    if (!teams || teams.length < 2) return
+    setCreatingCup(true)
+    try {
+      /* ★ สุ่มลำดับฝั่ง client แล้วส่งไป — server ไม่สุ่มให้ (ดู migration 0032) */
+      const ordered = drawBracketOrder(teams)
+      const res = await apiFetch<{ id: string }>('/api/office/fun/tournaments', {
+        method: 'POST',
+        body: {
+          name: `แข่ง ${new Date().toLocaleDateString('th-TH')}`,
+          teams: ordered.map((t) => ({
+            name: t.name,
+            color: t.color,
+            members: t.members.map((m) => ({
+              /* ★ ส่ง id เฉพาะคนในระบบ — ชื่อที่พิมพ์เองไม่มี id และไม่ถูกนับสถิติ */
+              ...(m.id.startsWith('typed:') ? {} : { id: m.id }),
+              label: m.label,
+            })),
+          })),
+        },
+      })
+      router.push(`/office/fun/cup?open=${res.id}`)
+    } catch {
+      setCreatingCup(false)
+    }
+  }
+
   function copyResult() {
     if (!teams) return
     const text = teams
@@ -146,6 +205,10 @@ export function FunTeams() {
   }
 
   const done = teams !== null && revealed >= revealTarget
+
+  /* ★ คำนวณไว้ล่วงหน้า — TypeScript narrow teams จาก done ไม่ได้
+     และการใส่ ! ใน JSX จะซ่อนข้อผิดพลาดจริงที่อาจเกิดในอนาคต */
+  const spread = teams ? strengthSpread(teams, skills) : 0
 
   /** ★ นับว่าคนที่ i ของทีม t ควรเปิดหรือยัง — เปิดวนทีละทีมตามลำดับการแจก */
   const revealOrder = useMemo(() => {
@@ -267,6 +330,21 @@ export function FunTeams() {
               </span>
             </label>
 
+            <label className="flex cursor-pointer items-start gap-2">
+              <input
+                type="checkbox"
+                checked={useSkill}
+                onChange={(e) => setUseSkill(e.target.checked)}
+                className="mt-0.5 size-4 accent-[var(--color-accent)]"
+              />
+              <span>
+                <span className="text-sm text-ink">{ot('fun.stats.useSkill')}</span>
+                <span className="block text-xs text-ink-faint">
+                  {ot('fun.stats.useSkillHint')}
+                </span>
+              </span>
+            </label>
+
             {sets.length > 0 ? (
               <div>
                 <p className="text-xs text-ink-faint">{ot('fun.sets.title')}</p>
@@ -321,7 +399,14 @@ export function FunTeams() {
                     </div>
                   </div>
 
-                  {rules.length > 0 ? (
+                  {useSkill ? (
+                <p className="mt-4 text-center text-xs text-ink-soft">
+                  {ot('fun.stats.spread', { n: spread })}
+                  {spread < 0.15 ? ` · ✓ ${ot('fun.stats.balanced')}` : ''}
+                </p>
+              ) : null}
+
+              {rules.length > 0 ? (
                     <ul className="mt-2 flex flex-col gap-1">
                       {rules.map((r, i) => (
                         <li key={`${r.a}-${r.b}`} className="flex items-center gap-2 text-xs">
@@ -450,6 +535,13 @@ export function FunTeams() {
 
           {done ? (
             <>
+              {useSkill ? (
+                <p className="mt-4 text-center text-xs text-ink-soft">
+                  {ot('fun.stats.spread', { n: spread })}
+                  {spread < 0.15 ? ` · ✓ ${ot('fun.stats.balanced')}` : ''}
+                </p>
+              ) : null}
+
               {rules.length > 0 ? (
                 <p
                   className={cn(
@@ -478,6 +570,14 @@ export function FunTeams() {
                 </Button>
                 <Button onClick={copyResult}>
                   {copied ? ot('fun.team.copied') : ot('fun.team.copy')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  loading={creatingCup}
+                  disabled={teams.length < 2}
+                  onClick={createCup}
+                >
+                  {ot('fun.cup.create')}
                 </Button>
                 <Button variant="ghost" onClick={newRound}>
                   {ot('fun.name.reset')}

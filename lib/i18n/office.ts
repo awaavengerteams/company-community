@@ -369,6 +369,32 @@ export const OFFICE_TH = {
   'fun.rules.met': 'ทำตามเงื่อนไขครบทุกข้อ',
   'fun.rules.pick': 'เลือกคู่',
 
+  /* ── เฟส 2 · สายแข่งขัน (FR-C08/C09) ────────────────────────── */
+  'fun.cup.title': 'สายการแข่งขัน',
+  'fun.cup.create': 'สร้างสายจากทีมนี้',
+  'fun.cup.name': 'ชื่อการแข่งขัน',
+  'fun.cup.open': 'กำลังแข่ง',
+  'fun.cup.done': 'จบแล้ว',
+  'fun.cup.champion': 'แชมป์',
+  'fun.cup.round': 'รอบ {n}',
+  'fun.cup.final': 'รอบชิง',
+  'fun.cup.semi': 'รอบรองฯ',
+  'fun.cup.bye': 'ผ่านเข้ารอบ',
+  'fun.cup.waiting': 'รอคู่แข่ง',
+  'fun.cup.pickWinner': 'เลือกผู้ชนะ',
+  'fun.cup.empty': 'ยังไม่มีการแข่งขัน — แบ่งทีมแล้วกดสร้างสาย',
+  'fun.cup.back': 'กลับไปรายการ',
+  'fun.cup.needTeams': 'ต้องมีอย่างน้อย 2 ทีม',
+
+  'fun.stats.title': 'สถิติผู้เล่น',
+  'fun.stats.empty': 'ยังไม่มีผลการแข่ง',
+  'fun.stats.winRate': 'อัตราชนะ',
+  'fun.stats.matches': '{n} นัด',
+  'fun.stats.useSkill': 'ถ่วงฝีมือ',
+  'fun.stats.useSkillHint': 'แบ่งทีมให้คะแนนรวมใกล้เคียงกันจากสถิติชนะ-แพ้',
+  'fun.stats.spread': 'ความต่างระหว่างทีม {n}',
+  'fun.stats.balanced': 'ทีมสูสี',
+
   /* ── ทั่วไป ──────────────────────────────────────────────────── */
   'common.save': 'บันทึก',
   'common.cancel': 'ยกเลิก',
