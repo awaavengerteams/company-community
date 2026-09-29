@@ -7,6 +7,11 @@ import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
 import { pickCaptain, splitTeams, type Member, type Team } from '@/lib/office/teams'
+import {
+  checkFeasible,
+  splitTeamsWithRules,
+  type TeamRule,
+} from '@/lib/office/team-rules'
 import { playCelebrate, playTick, vibrate } from '@/lib/office/sound'
 import { prefersReducedMotion } from '@/lib/office/draw'
 import { Confetti } from './Confetti'
@@ -30,6 +35,13 @@ export function FunTeams() {
   const [copied, setCopied] = useState(false)
   /** จำนวนคนที่เปิดแล้ว — ใช้ทำแอนิเมชันเปิดทีละคน (FR-C04) */
   const [revealed, setRevealed] = useState(0)
+  /** FR-C06 — เงื่อนไขคู่ที่ต้อง/ห้ามอยู่ทีมเดียวกัน */
+  const [rules, setRules] = useState<TeamRule[]>([])
+  const [ruleA, setRuleA] = useState('')
+  const [ruleB, setRuleB] = useState('')
+  const [ruleKind, setRuleKind] = useState<'TOGETHER' | 'APART'>('TOGETHER')
+  const [ruleError, setRuleError] = useState<string | null>(null)
+  const [unmet, setUnmet] = useState<{ n: number; tries: number } | null>(null)
 
   useEffect(() => {
     void apiFetch<{ items: Person[] }>('/api/office/people')
@@ -72,7 +84,28 @@ export function FunTeams() {
 
   function draw(isRedraw = false) {
     if (members.length < 2) return
-    setTeams(splitTeams(members, { mode, value, mixDepartments: mix }))
+
+    const opts = { mode, value, mixDepartments: mix }
+    const teamCount =
+      mode === 'BY_TEAMS'
+        ? Math.max(1, Math.min(value, members.length))
+        : Math.max(1, Math.ceil(members.length / Math.max(1, value)))
+
+    /*
+     * ★★ ตรวจว่าเงื่อนไขเป็นไปได้ก่อนสุ่ม
+     *    ถ้าไม่ตรวจ ผู้ใช้จะเห็นผลที่ผิดเงื่อนไขโดยไม่รู้ว่าเพราะอะไร —
+     *    "เป็นไปไม่ได้" กับ "สุ่มไม่เจอ" เป็นคนละปัญหาที่แก้คนละวิธี
+     */
+    const feasible = checkFeasible(members, teamCount, rules)
+    if (!feasible.ok) {
+      setRuleError(ot('fun.rules.impossible', { reason: feasible.reason }))
+      return
+    }
+    setRuleError(null)
+
+    const result = splitTeamsWithRules(members, opts, rules, splitTeams)
+    setTeams(result.teams)
+    setUnmet(result.unmet.length > 0 ? { n: result.unmet.length, tries: result.tries } : null)
     setRevealed(0)
     setCaptains({})
     setCopied(false)
@@ -84,7 +117,22 @@ export function FunTeams() {
     setRedrawUsed(false)
     setRevealed(0)
     setCaptains({})
+    setUnmet(null)
   }
+
+  function addRule() {
+    if (!ruleA || !ruleB || ruleA === ruleB) return
+    /* ★ กันเงื่อนไขซ้ำคู่เดิม — คู่เดียวกันมีได้ข้อเดียว */
+    setRules((p) => [
+      ...p.filter((r) => !((r.a === ruleA && r.b === ruleB) || (r.a === ruleB && r.b === ruleA))),
+      { kind: ruleKind, a: ruleA, b: ruleB },
+    ])
+    setRuleA('')
+    setRuleB('')
+    setRuleError(null)
+  }
+
+  const nameOf = (id: string) => members.find((m) => m.id === id)?.label ?? '—'
 
   function copyResult() {
     if (!teams) return
@@ -237,6 +285,85 @@ export function FunTeams() {
               </div>
             ) : null}
 
+            {/* ── เงื่อนไขการจับทีม (FR-C06) ──────────────────────── */}
+            <div className="border-t border-line pt-3">
+              <p className="text-sm font-medium text-ink">{ot('fun.rules.title')}</p>
+              <p className="mt-0.5 text-xs text-ink-faint">{ot('fun.rules.hint')}</p>
+
+              {members.length < 2 ? (
+                <p className="mt-2 text-xs text-ink-faint">{ot('fun.rules.needTwo')}</p>
+              ) : (
+                <>
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    <div className="flex gap-1.5">
+                      <Chip
+                        active={ruleKind === 'TOGETHER'}
+                        onClick={() => setRuleKind('TOGETHER')}
+                      >
+                        {ot('fun.rules.together')}
+                      </Chip>
+                      <Chip active={ruleKind === 'APART'} onClick={() => setRuleKind('APART')}>
+                        {ot('fun.rules.apart')}
+                      </Chip>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <PersonSelect members={members} value={ruleA} onChange={setRuleA} />
+                      <span className="text-xs text-ink-faint">+</span>
+                      <PersonSelect members={members} value={ruleB} onChange={setRuleB} />
+                      <Button
+                        size="sm"
+                        onClick={addRule}
+                        disabled={!ruleA || !ruleB || ruleA === ruleB}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+
+                  {rules.length > 0 ? (
+                    <ul className="mt-2 flex flex-col gap-1">
+                      {rules.map((r, i) => (
+                        <li key={`${r.a}-${r.b}`} className="flex items-center gap-2 text-xs">
+                          <span
+                            className={cn(
+                              'rounded-full px-2 py-0.5',
+                              r.kind === 'TOGETHER'
+                                ? 'bg-surface text-ink'
+                                : 'bg-danger/15 text-danger',
+                            )}
+                          >
+                            {r.kind === 'TOGETHER'
+                              ? ot('fun.rules.together')
+                              : ot('fun.rules.apart')}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-ink-soft">
+                            {nameOf(r.a)} · {nameOf(r.b)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setRules((p) => p.filter((_, j) => j !== i))}
+                            className="text-ink-faint hover:text-danger"
+                            aria-label="ลบเงื่อนไข"
+                          >
+                            ✕
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-xs text-ink-faint">{ot('fun.rules.empty')}</p>
+                  )}
+                </>
+              )}
+
+              {ruleError ? (
+                <p role="alert" className="mt-2 text-xs text-danger">
+                  {ruleError}
+                </p>
+              ) : null}
+            </div>
+
             <Button
               variant="primary"
               size="lg"
@@ -323,8 +450,21 @@ export function FunTeams() {
 
           {done ? (
             <>
+              {rules.length > 0 ? (
+                <p
+                  className={cn(
+                    'mt-4 text-center text-xs',
+                    unmet ? 'text-danger' : 'text-ink-soft',
+                  )}
+                >
+                  {unmet
+                    ? ot('fun.rules.unmet', { n: unmet.n, tries: unmet.tries })
+                    : `✓ ${ot('fun.rules.met')}`}
+                </p>
+              ) : null}
+
               {redrawUsed ? (
-                <p className="mt-4 text-center text-xs text-warn">{ot('fun.team.wasRedrawn')}</p>
+                <p className="mt-1 text-center text-xs text-warn">{ot('fun.team.wasRedrawn')}</p>
               ) : null}
 
               <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -350,6 +490,35 @@ export function FunTeams() {
         </div>
       )}
     </div>
+  )
+}
+
+/** ช่องเลือกคนสำหรับตั้งเงื่อนไข — ใช้ select เพราะรายชื่ออาจยาวมาก */
+function PersonSelect({
+  members,
+  value,
+  onChange,
+}: {
+  members: Member[]
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={cn(
+        'h-8 min-w-0 flex-1 rounded-full bg-surface px-3 text-[13px] text-ink',
+        'border-0 outline-none focus:ring-1 focus:ring-line-strong',
+      )}
+    >
+      <option value="">{ot('fun.rules.pick')}</option>
+      {members.map((m) => (
+        <option key={m.id} value={m.id}>
+          {m.label}
+        </option>
+      ))}
+    </select>
   )
 }
 
