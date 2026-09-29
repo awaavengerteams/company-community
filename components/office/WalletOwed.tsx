@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
@@ -32,6 +32,53 @@ export function WalletOwed() {
     setError(null)
     try {
       await apiFetch(`/api/office/wallet/debts/${id}`, { method: 'POST', body })
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : ot('common.error'))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  /**
+   * ★★ คู่ที่หักลบได้ = มีหนี้ค้างกันทั้งสองทาง (FR-B08)
+   *
+   *    ★ ปุ่มโผล่เฉพาะตอนหักลบได้จริง — ปุ่มที่กดแล้วขึ้น error
+   *      "ต้องมีหนี้ทั้งสองทาง" คือปุ่มที่ไม่ควรมีให้กดตั้งแต่แรก
+   */
+  const nettable = useMemo(() => {
+    if (!data) return []
+    const owe = new Map<string, { name: string; amount: number }>()
+    for (const d of data.iOwe) {
+      if (d.status !== 'PENDING') continue
+      const cur = owe.get(d.otherId) ?? { name: d.otherName, amount: 0 }
+      owe.set(d.otherId, { name: cur.name, amount: cur.amount + d.amount })
+    }
+    const owed = new Map<string, number>()
+    for (const d of data.owedToMe) {
+      if (d.status !== 'PENDING') continue
+      owed.set(d.otherId, (owed.get(d.otherId) ?? 0) + d.amount)
+    }
+    return [...owe.entries()]
+      .filter(([id]) => owed.has(id))
+      .map(([id, v]) => ({ id, name: v.name, iOwe: v.amount, theyOwe: owed.get(id)! }))
+  }, [data])
+
+  async function net_(otherId: string, name: string) {
+    if (!window.confirm(ot('wallet.net.confirm', { name }))) return
+    setBusy(otherId)
+    setError(null)
+    try {
+      const r = await apiFetch<{ closed: number; net: number; direction: string }>(
+        '/api/office/wallet/net',
+        { method: 'POST', body: { otherId } },
+      )
+      setError(null)
+      window.alert(
+        r.direction === 'EVEN'
+          ? ot('wallet.net.even')
+          : ot('wallet.net.done', { closed: r.closed }),
+      )
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : ot('common.error'))
@@ -79,6 +126,44 @@ export function WalletOwed() {
           }
         />
       </div>
+
+      {/* ── หักลบยอด (FR-B08) ────────────────────────────────────── */}
+      {nettable.length > 0 ? (
+        <div className="mt-4 rounded-(--radius-card) border border-line p-4">
+          <p className="text-sm font-medium text-ink">{ot('wallet.net.title')}</p>
+          <p className="mt-0.5 text-xs text-ink-faint">{ot('wallet.net.hint')}</p>
+          <div className="mt-3 flex flex-col gap-2">
+            {nettable.map((n) => {
+              const net = n.theyOwe - n.iOwe
+              return (
+                <div key={n.id} className="flex flex-wrap items-center gap-3 text-sm">
+                  <span className="font-medium text-ink">{n.name}</span>
+                  <span className="text-xs text-ink-faint">
+                    {ot('wallet.net.iOwe')} ฿{formatBaht(n.iOwe)} ·{' '}
+                    {ot('wallet.net.theyOwe')} ฿{formatBaht(n.theyOwe)}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-xs font-medium tabular-nums',
+                      net > 0 ? 'text-ink' : net < 0 ? 'text-danger' : 'text-ink-faint',
+                    )}
+                  >
+                    {ot('wallet.net.net')} ฿{formatBaht(Math.abs(net))}
+                  </span>
+                  <Button
+                    size="sm"
+                    className="ms-auto"
+                    loading={busy === n.id}
+                    onClick={() => void net_(n.id, n.name)}
+                  >
+                    {ot('wallet.net.action')}
+                  </Button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {error ? (
         <p role="alert" className="mt-4 text-sm text-danger">

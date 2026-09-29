@@ -47,6 +47,40 @@ export const distanceLabel = (d: DistanceBand): string => ot(`food.distance.${d}
  */
 export const PICK_THRESHOLD = 3
 
+/**
+ * ถ่วงน้ำหนักร้านที่เพิ่งไป (FR-A08)
+ *
+ * ★★★ "ลดโอกาส" ไม่ใช่ "ตัดออก"
+ *
+ *     เอกสารเขียนว่า "ลดโอกาสสุ่มได้ร้านที่ผู้ใช้เพิ่งไปภายใน 7 วัน"
+ *     ★ การตัดออกเลยจะทำให้ร้านโปรดที่ไปทุกวันหายไปจากวงล้อถาวร
+ *       ซึ่งไม่ใช่สิ่งที่คนขอ — เขาแค่อยากได้ความหลากหลายบ้าง
+ *
+ * ★★ วิธี: ใส่ร้านที่ไม่เพิ่งไปลงถังซ้ำ N ครั้ง แล้วสุ่มจากถัง
+ *
+ *    ★ ทำแบบนี้แทนการสุ่มถ่วงน้ำหนักจริง ๆ เพราะวงล้อต้องแสดง "ช่อง"
+ *      ให้เห็นก่อนหมุน — ถ้าน้ำหนักไม่สะท้อนในจำนวนช่อง ภาพที่เห็น
+ *      จะโกหกผู้ใช้ว่าโอกาสเท่ากันทั้งที่ไม่เท่า
+ *
+ *    ★★ ตรงนี้จึงไม่แตะ RandomWheel เลย — มันยังสุ่มจากรายการที่ได้รับ
+ *       แบบเท่า ๆ กันเหมือนเดิม ความถ่วงอยู่ที่ "รายการที่ส่งเข้าไป"
+ */
+export const RECENT_WEIGHT = 3
+
+export function weightByRecency(items: Restaurant[], recentIds: Set<string>): Restaurant[] {
+  if (recentIds.size === 0) return items
+
+  const out: Restaurant[] = []
+  for (const r of items) {
+    const times = recentIds.has(r.id) ? 1 : RECENT_WEIGHT
+    for (let i = 0; i < times; i++) out.push(r)
+  }
+
+  /* ★ ถ้าทุกร้านเพิ่งไปหมด ถังจะเท่ากับรายการเดิม — ไม่มีอะไรให้ถ่วง
+     คืนรายการเดิมไปดีกว่าปล่อยให้วงล้อมีช่องซ้ำโดยไม่ได้อะไร */
+  return out.length === items.length ? items : out
+}
+
 export type Filters = {
   query: string
   cuisine: string | null

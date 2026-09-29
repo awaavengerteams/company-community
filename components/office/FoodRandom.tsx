@@ -12,6 +12,7 @@ import {
   distanceLabel,
   emptyFilters,
   filterRestaurants,
+  weightByRecency,
   type Filters,
   type Restaurant,
   type RestaurantList,
@@ -30,6 +31,12 @@ export function FoodRandom() {
   const [winner, setWinner] = useState<Restaurant | null>(null)
   const [visitLogged, setVisitLogged] = useState(false)
   const [loading, setLoading] = useState(true)
+  /** FR-A08 — ร้านที่เพิ่งไปภายใน N วัน */
+  const [recent, setRecent] = useState<{ days: number; ids: Set<string> }>({
+    days: 7,
+    ids: new Set(),
+  })
+  const [avoidRecent, setAvoidRecent] = useState(true)
 
   const load = useCallback(async () => {
     try {
@@ -41,6 +48,9 @@ export function FoodRandom() {
 
   useEffect(() => {
     void load()
+    void apiFetch<{ days: number; ids: string[] }>('/api/office/food/recent')
+      .then((d) => setRecent({ days: d.days, ids: new Set(d.ids) }))
+      .catch(() => undefined)
   }, [load])
 
   const pool = useMemo(
@@ -48,10 +58,17 @@ export function FoodRandom() {
     [data.items, filters],
   )
 
-  const wheelItems: WheelItem[] = useMemo(
-    () => pool.map((r) => ({ id: r.id, label: r.name })),
-    [pool],
-  )
+  /*
+   * ★ ถ่วงน้ำหนักหลังกรอง ไม่ใช่ก่อน — ตัวกรองตัดสินว่า "ร้านไหนเข้าข่าย"
+   *   ส่วนการถ่วงตัดสินว่า "ร้านที่เข้าข่ายแล้วมีโอกาสเท่าไหร่"
+   *   สลับลำดับแล้วร้านที่ถูกกรองออกจะกลับเข้ามาผ่านการทำซ้ำ
+   */
+  const wheelItems: WheelItem[] = useMemo(() => {
+    const weighted = avoidRecent ? weightByRecency(pool, recent.ids) : pool
+    /* ★ id ต้องไม่ซ้ำใน RandomWheel — ต่อ index ท้ายช่องที่ซ้ำ
+       ตอนคืนผลจึงต้องตัดส่วนนั้นออกก่อนหาร้านจริง */
+    return weighted.map((r, i) => ({ id: `${r.id}#${i}`, label: r.name }))
+  }, [pool, avoidRecent, recent.ids])
 
   async function logVisit(id: string) {
     setVisitLogged(true)
@@ -90,6 +107,15 @@ export function FoodRandom() {
         >
           ★ {ot('food.random.onlyPicks')}
         </Chip>
+        {recent.ids.size > 0 ? (
+          <Chip
+            active={avoidRecent}
+            onClick={() => setAvoidRecent((v) => !v)}
+            title={ot('food.random.avoidHint', { days: recent.days })}
+          >
+            {ot('food.random.avoidRecent')}
+          </Chip>
+        ) : null}
         <span className="mx-1 w-px self-stretch bg-line" />
         {data.cuisines.map((c) => (
           <Chip
@@ -140,7 +166,8 @@ export function FoodRandom() {
             items={wheelItems}
             spinLabel={ot('food.random.spin')}
             onResult={(item) => {
-              setWinner(pool.find((r) => r.id === item.id) ?? null)
+              const realId = item.id.split('#')[0]
+              setWinner(pool.find((r) => r.id === realId) ?? null)
               setVisitLogged(false)
             }}
           />

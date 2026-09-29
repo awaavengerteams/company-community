@@ -587,6 +587,8 @@ export type Database = {
           receipt_path: string | null
           payer_id: string
           split_mode: SplitMode
+          /** ★ เฟส 2 (0030) — ใช้จัดกลุ่มในหน้าสรุป ไม่ใช่ title */
+          restaurant_id: string | null
           created_at: string
           updated_at: string
         }
@@ -598,6 +600,7 @@ export type Database = {
           receipt_path?: string | null
           payer_id: string
           split_mode?: SplitMode
+          restaurant_id?: string | null
         }
         Update: { title?: string; receipt_path?: string | null }
         Relationships: []
@@ -617,6 +620,8 @@ export type Database = {
           confirmed_at: string | null
           last_reminded_at: string | null
           auto_reminded: number[]
+          /** ★ true = หนี้จากการหักลบ ไม่ใช่รายจ่ายใหม่ (0031) */
+          is_settlement: boolean
           created_at: string
           updated_at: string
         }
@@ -1143,6 +1148,36 @@ export type Database = {
         Args: { p_actor: string; p_id: string }
         Returns: string
       }
+      /* ── เฟส 2 (0030) ──────────────────────────────────────────── */
+      net_debts_between: {
+        Args: { p_actor: string; p_other: string }
+        Returns: {
+          closed: number
+          net: number
+          direction: 'THEY_OWE_ME' | 'I_OWE_THEM' | 'EVEN'
+          newDebtId: string | null
+        }
+      }
+      my_expense_summary: {
+        Args: { p_actor: string; p_from: string; p_to: string }
+        Returns: {
+          total: number
+          myShare: number
+          owedOut: number
+          byCategory: Record<string, number>
+          byRestaurant: { name: string; amount: number }[]
+          byDay: { date: string; amount: number }[]
+        }
+      }
+      recent_restaurant_visits: {
+        Args: { p_actor: string }
+        Returns: { restaurant_id: string; last_visit: string }[]
+      }
+      lottery_leaderboard: {
+        Args: { p_limit?: number }
+        Returns: { number: string; picks: number }[]
+      }
+
       report_listing: {
         Args: { p_actor: string; p_id: string; p_reason?: string | null }
         Returns: { reports: number; threshold: number; hidden: boolean }

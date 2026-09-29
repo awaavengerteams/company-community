@@ -87,6 +87,7 @@ export const OFFICE_TH = {
   'notify.type.marketReserved': 'มีคนจองสินค้าของคุณ',
   'notify.type.contentHidden': 'เนื้อหาของคุณถูกซ่อนจากการรายงาน',
   'notify.type.drawInvite': 'คุณถูกเชิญเข้าห้องสุ่ม',
+  'notify.type.debtNetted': 'มีการหักลบยอดค้างกับคุณ ({closed} รายการถูกปิด)',
 
   /* ── รายงานเนื้อหา (FR-X08) ──────────────────────────────────── */
   'report.action': 'รายงาน',
@@ -323,6 +324,37 @@ export const OFFICE_TH = {
   'market.form.confirm': 'ยืนยันว่าไม่ใช่ทรัพย์สินของบริษัท และไม่ใช่สินค้าต้องห้าม',
   'market.form.banned':
     'ห้ามลงขายทรัพย์สินของบริษัท · อาวุธ · ของผิดกฎหมาย · สินค้าละเมิดลิขสิทธิ์ · สัตว์มีชีวิต · ยาและอาหารเสริมที่ไม่มี อย.',
+
+  /* ── เฟส 2 · หักลบยอด + สรุปค่าข้าว ─────────────────────────── */
+  'wallet.net.title': 'หักลบยอดกับคนเดียวกัน',
+  'wallet.net.hint': 'ปิดรายการที่ค้างกันไปมา แล้วเหลือยอดสุทธิรายการเดียว',
+  'wallet.net.action': 'หักลบยอด',
+  'wallet.net.iOwe': 'ฉันค้างเขา',
+  'wallet.net.theyOwe': 'เขาค้างฉัน',
+  'wallet.net.net': 'ยอดสุทธิ',
+  'wallet.net.done': 'หักลบแล้ว ปิดไป {closed} รายการ',
+  'wallet.net.even': 'หักลบแล้วเท่ากันพอดี — ไม่เหลือยอดค้าง',
+  'wallet.net.needBoth': 'ต้องมีหนี้ทั้งสองทางถึงจะหักลบได้',
+  'wallet.net.confirm': 'หักลบยอดกับ {name}? รายการเดิมจะถูกปิดทั้งหมด',
+
+  'wallet.summary.title': 'สรุปค่าข้าว',
+  'wallet.summary.month': 'รายเดือน',
+  'wallet.summary.year': 'รายปี',
+  'wallet.summary.total': 'ใช้จ่ายทั้งหมด',
+  'wallet.summary.myShare': 'ส่วนของฉันในบิลที่จ่ายเอง',
+  'wallet.summary.owedOut': 'ส่วนที่ค้างคนอื่น',
+  'wallet.summary.byCategory': 'แยกตามประเภท',
+  'wallet.summary.byRestaurant': 'ร้านที่ใช้จ่ายมากสุด',
+  'wallet.summary.byDay': 'รายวัน',
+  'wallet.summary.empty': 'ช่วงนี้ยังไม่มีรายการ',
+  'wallet.summary.export': 'ส่งออก CSV',
+  'wallet.summary.explain': 'นับเฉพาะส่วนที่เป็นของคุณจริง ๆ — เงินที่จ่ายไปก่อนแล้วเก็บคืนไม่ถูกนับ',
+
+  'food.random.avoidRecent': 'ลดโอกาสร้านที่เพิ่งไป',
+  'food.random.avoidHint': 'ร้านที่ไปภายใน {days} วันจะถูกสุ่มน้อยลง',
+  'fun.lottery.board': 'เลขยอดฮิตงวดนี้',
+  'fun.lottery.boardEmpty': 'ยังไม่มีใครบันทึกเลขงวดนี้',
+  'fun.lottery.picks': '{n} คน',
 
   /* ── ทั่วไป ──────────────────────────────────────────────────── */
   'common.save': 'บันทึก',

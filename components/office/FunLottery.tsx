@@ -10,6 +10,7 @@ import { isMuted, playCelebrate, playTick, setMuted, vibrate } from '@/lib/offic
 import { Confetti } from './Confetti'
 
 type Pick = { id: string; number: string; drawDate: string | null; createdAt: string }
+type BoardRow = { number: string; picks: number }
 
 const DIGIT_OPTIONS = [2, 3, 6] as const
 
@@ -29,6 +30,8 @@ export function FunLottery() {
   const [nextDraw, setNextDraw] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [muted, setMutedState] = useState(false)
+  /** FR-C12 — เลขยอดฮิตงวดนี้ */
+  const [board, setBoard] = useState<BoardRow[]>([])
   const rafRef = useRef<number | null>(null)
 
   const load = useCallback(async () => {
@@ -38,6 +41,9 @@ export function FunLottery() {
       )
       setPicks(d.items)
       setNextDraw(d.nextDraw)
+      /* ★ โหลดกระดานพร้อมกัน — มันเปลี่ยนทุกครั้งที่มีคนบันทึกเลข */
+      const b = await apiFetch<{ items: BoardRow[] }>('/api/office/fun/leaderboard')
+      setBoard(b.items)
     } catch {
       /* ของเสริม — โหลดไม่ได้ก็ยังสุ่มเล่นได้ */
     }
@@ -231,6 +237,34 @@ export function FunLottery() {
       <p className="mt-3 rounded-(--radius-box) border border-warn/40 bg-warn/10 p-3 text-center text-xs text-ink-soft">
         {ot('fun.lottery.disclaimer')}
       </p>
+
+      {/* ── กระดานเลขยอดฮิต (FR-C12) ────────────────────────────── */}
+      <div className="mt-5 rounded-(--radius-card) border border-line p-4">
+        <p className="text-sm font-medium text-ink">{ot('fun.lottery.board')}</p>
+        {board.length === 0 ? (
+          <p className="mt-1.5 text-xs text-ink-faint">{ot('fun.lottery.boardEmpty')}</p>
+        ) : (
+          <ol className="mt-2 flex flex-col gap-1">
+            {board.map((b, i) => (
+              <li key={b.number} className="flex items-center gap-3 text-sm">
+                <span className="w-5 text-xs text-ink-faint">{i + 1}.</span>
+                <span className="font-mono text-base tabular-nums text-ink">{b.number}</span>
+                {/* ★ แถบยาวตามสัดส่วนของอันดับหนึ่ง — เห็นความต่างได้ทันที
+                    โดยไม่ต้องอ่านตัวเลข */}
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface">
+                  <span
+                    className="block h-full rounded-full bg-accent"
+                    style={{ width: `${(b.picks / (board[0]?.picks || 1)) * 100}%` }}
+                  />
+                </span>
+                <span className="text-xs text-ink-soft">
+                  {ot('fun.lottery.picks', { n: b.picks })}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
 
       {/* ── เลขของฉัน ───────────────────────────────────────────── */}
       <div className="mt-5 rounded-(--radius-card) border border-line p-4">
