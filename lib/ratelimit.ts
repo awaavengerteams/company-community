@@ -81,6 +81,19 @@ export const LIMITS = {
   foodAction: { limit: 60, windowSeconds: 60 },
   /** ตรวจชื่อคล้ายระหว่างพิมพ์ (FR-A02) — ยิงถี่ตามการพิมพ์ */
   similarCheck: { limit: 120, windowSeconds: 60 },
+
+  /* ── โมดูล B · กระเป๋าเงิน (0026/0027) ──────────────────────────────── */
+
+  /**
+   * ★ สร้างบิล — จำกัดแน่นกว่าที่อื่นเพราะบิลหนึ่งใบสร้างหนี้ได้ถึง 50 รายการ
+   *   และแต่ละรายการยิงแจ้งเตือนหาคนหนึ่งคน การยิงรัวจึงกลายเป็นการสแปม
+   *   ทั้งออฟฟิศได้ในไม่กี่วินาที
+   */
+  createBill: { limit: 20, windowSeconds: 3600 },
+  /** กดโอนแล้ว / ยืนยัน / ยกเลิก / ทวง — เพดานจริงของการทวงอยู่ที่ DB */
+  walletAction: { limit: 60, windowSeconds: 60 },
+  /** อัป/อ่าน QR · ใบเสร็จ · สลิป */
+  walletFile: { limit: 30, windowSeconds: 300 },
 } as const
 
 export type RateLimitName = keyof typeof LIMITS

@@ -495,6 +495,9 @@ export const th = {
   "apiErr.ACCOUNT_SUSPENDED": "บัญชีนี้ถูกระงับ ติดต่อผู้ดูแลระบบ",
   "apiErr.NEEDS_EMPLOYEE_CODE": "ต้องผูกรหัสพนักงานก่อนจึงจะใช้เมนูนี้ได้",
   "valid.employeeCode": "รหัสพนักงานไม่ถูกต้อง (A-Z 0-9 . _ - ยาว 2–32 ตัว)",
+  "valid.amountDecimals": "ยอดเงินใส่ทศนิยมได้ไม่เกิน 2 ตำแหน่ง",
+  "valid.noPeople": "เลือกผู้ร่วมจ่ายอย่างน้อย 1 คน",
+  "valid.needEachAmount": "โหมดระบุยอดรายคน ต้องกรอกยอดให้ครบทุกคน",
 
   /* ── ข้อความผิดพลาดเฉพาะกรณี ─ */
   "srvErr.needQuery": "กรุณาใส่คำค้นหา",

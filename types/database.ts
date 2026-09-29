@@ -28,6 +28,20 @@ export type AccountStatus = 'ACTIVE' | 'SUSPENDED'
 /** ชนิดเนื้อหาที่รายงานได้ — ตรงกับ check constraint ของ content_reports */
 export type ReportTargetType = 'restaurant' | 'listing'
 
+/* ── โมดูล B · กระเป๋าเงิน (0026/0027) ────────────────────────────────── */
+
+/**
+ * PENDING      ค้างจ่าย
+ * PAID_PENDING ลูกหนี้กดโอนแล้ว รอเจ้าหนี้ยืนยัน
+ * SETTLED      เจ้าหนี้ยืนยันแล้ว
+ * CANCELLED    เจ้าหนี้ยกเลิก
+ */
+export type DebtStatus = 'PENDING' | 'PAID_PENDING' | 'SETTLED' | 'CANCELLED'
+export type ExpenseCategory = 'FOOD' | 'COFFEE' | 'OTHER'
+export type SplitMode = 'EQUAL' | 'CUSTOM'
+/** โทนข้อความทวง (FR-B06) */
+export type ReminderTone = 'POLITE' | 'FUNNY'
+
 /* ── โมดูล A · กินอะไรดี (0025) ───────────────────────────────────────── */
 
 /** ช่วงราคา — ตรงกับ check constraint ของ restaurants.price_range */
@@ -549,6 +563,63 @@ export type Database = {
         Relationships: []
       }
 
+      /* ── โมดูล B · กระเป๋าเงิน (0026/0027) ──────────────────────── */
+
+      expense_bills: {
+        Row: {
+          id: string
+          title: string
+          /** ★ numeric มาเป็น number จาก PostgREST — ห้ามคำนวณต่อด้วย float */
+          total_amount: number
+          category: ExpenseCategory
+          bill_date: string
+          receipt_path: string | null
+          payer_id: string
+          split_mode: SplitMode
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          title: string
+          total_amount: number
+          category?: ExpenseCategory
+          bill_date?: string
+          receipt_path?: string | null
+          payer_id: string
+          split_mode?: SplitMode
+        }
+        Update: { title?: string; receipt_path?: string | null }
+        Relationships: []
+      }
+
+      debts: {
+        Row: {
+          id: string
+          bill_id: string | null
+          creditor_id: string
+          debtor_id: string
+          amount: number
+          description: string | null
+          status: DebtStatus
+          slip_path: string | null
+          paid_at: string | null
+          confirmed_at: string | null
+          last_reminded_at: string | null
+          auto_reminded: number[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          bill_id?: string | null
+          creditor_id: string
+          debtor_id: string
+          amount: number
+          description?: string | null
+        }
+        Update: { status?: DebtStatus; slip_path?: string | null }
+        Relationships: []
+      }
+
       audit_log: {
         Row: {
           id: number
@@ -888,6 +959,47 @@ export type Database = {
         Args: { p_user: string }
         Returns: boolean
       }
+
+      /* ── โมดูล B · กระเป๋าเงิน (0026/0027) ──────────────────────── */
+      create_expense_bill: {
+        Args: {
+          p_actor: string
+          p_title: string
+          p_total: number
+          p_category: ExpenseCategory | null
+          p_date: string | null
+          p_receipt: string | null
+          p_split: SplitMode | null
+          /** [{userId, amount?}] — amount ใช้เฉพาะโหมด CUSTOM */
+          p_shares: { userId: string; amount?: number }[]
+          p_include_self?: boolean
+        }
+        Returns: Database['public']['Tables']['expense_bills']['Row']
+      }
+      mark_debt_paid: {
+        Args: { p_actor: string; p_id: string; p_slip?: string | null }
+        Returns: Database['public']['Tables']['debts']['Row']
+      }
+      confirm_debt: {
+        Args: { p_actor: string; p_id: string }
+        Returns: Database['public']['Tables']['debts']['Row']
+      }
+      cancel_debt: {
+        Args: { p_actor: string; p_id: string }
+        Returns: Database['public']['Tables']['debts']['Row']
+      }
+      remind_debt: {
+        Args: { p_actor: string; p_id: string; p_tone?: ReminderTone }
+        Returns: Database['public']['Tables']['debts']['Row']
+      }
+      send_due_reminders: {
+        Args: Record<string, never>
+        Returns: number
+      }
+      my_debt_summary: {
+        Args: { p_actor: string }
+        Returns: { iOwe: number; owedToMe: number; pendingConfirm: number }
+      }
     }
 
     Enums: {
@@ -908,6 +1020,8 @@ export type ProfileRow = Tables<'profiles'>
 export type RoomRow = Tables<'rooms'>
 export type EmployeeCodeRow = Tables<'employee_codes'>
 export type RestaurantRow = Tables<'restaurants'>
+export type DebtRow = Tables<'debts'>
+export type ExpenseBillRow = Tables<'expense_bills'>
 export type NotificationRow = Tables<'notifications'>
 export type AppSettingRow = Tables<'app_settings'>
 export type ChatMessageRow = Tables<'chat_messages'>

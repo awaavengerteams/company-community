@@ -1,0 +1,243 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { apiFetch } from '@/lib/api/client'
+import { Button } from '@/components/ui/Button'
+import { cn } from '@/lib/cn'
+import { ot } from '@/lib/i18n/office'
+import { formatBaht, statusLabel, type Debt, type WalletData } from '@/lib/office/wallet'
+
+/** หน้ายอดค้างของฉัน (FR-B04 / FR-B06 / FR-B07) */
+export function WalletOwed() {
+  const [data, setData] = useState<WalletData | null>(null)
+  const [tab, setTab] = useState<'iOwe' | 'owedToMe'>('iOwe')
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    try {
+      setData(await apiFetch<WalletData>('/api/office/wallet'))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : ot('common.error'))
+    }
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  async function act(id: string, body: Record<string, unknown>) {
+    setBusy(id)
+    setError(null)
+    try {
+      await apiFetch(`/api/office/wallet/debts/${id}`, { method: 'POST', body })
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : ot('common.error'))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const list = data ? data[tab] : []
+  /* ★ ซ่อนรายการที่ปิดไปแล้วจากรายการหลัก — ยอดค้างคือสิ่งที่ต้องทำ
+       ไม่ใช่ประวัติ (ประวัติเต็มอยู่ในหน้าสรุปค่าข้าว) */
+  const active = list.filter((d) => d.status === 'PENDING' || d.status === 'PAID_PENDING')
+
+  return (
+    <div className="py-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-ink">{ot('wallet.owed.title')}</h1>
+        <Link
+          href="/office/wallet/create"
+          className="inline-flex h-9 items-center rounded-full bg-accent px-4 text-sm font-medium text-accent-ink transition-colors hover:bg-accent-hover"
+        >
+          {ot('wallet.owed.create')}
+        </Link>
+      </div>
+
+      {/* ── การ์ดสรุปสองฝั่ง ─────────────────────────────────────── */}
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <SummaryCard
+          label={ot('wallet.owed.iOwe')}
+          amount={data?.summary.iOwe ?? 0}
+          tone="danger"
+          active={tab === 'iOwe'}
+          onClick={() => setTab('iOwe')}
+        />
+        <SummaryCard
+          label={ot('wallet.owed.owedToMe')}
+          amount={data?.summary.owedToMe ?? 0}
+          tone="ok"
+          active={tab === 'owedToMe'}
+          onClick={() => setTab('owedToMe')}
+          note={
+            data && data.summary.pendingConfirm > 0
+              ? ot('wallet.owed.pendingConfirm', { n: data.summary.pendingConfirm })
+              : undefined
+          }
+        />
+      </div>
+
+      {error ? (
+        <p role="alert" className="mt-4 text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
+
+      {/* ── รายการ ───────────────────────────────────────────────── */}
+      <div className="mt-5 flex flex-col gap-2">
+        {!data ? (
+          <p className="py-10 text-center text-sm text-ink-faint">{ot('common.loading')}</p>
+        ) : active.length === 0 ? (
+          <p className="py-10 text-center text-sm text-ink-faint">{ot('wallet.owed.empty')}</p>
+        ) : (
+          active.map((d) => (
+            <Row
+              key={d.id}
+              debt={d}
+              side={tab}
+              busy={busy === d.id}
+              onAct={(body) => void act(d.id, body)}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SummaryCard({
+  label,
+  amount,
+  tone,
+  active,
+  note,
+  onClick,
+}: {
+  label: string
+  amount: number
+  tone: 'danger' | 'ok'
+  active: boolean
+  note?: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'rounded-(--radius-card) border p-4 text-start transition-colors',
+        active ? 'border-line-strong bg-surface' : 'border-line bg-elevated hover:bg-surface',
+      )}
+    >
+      <p className="text-sm text-ink-soft">{label}</p>
+      <p
+        className={cn(
+          'mt-1 text-2xl font-bold tabular-nums',
+          tone === 'danger' ? 'text-danger' : 'text-ink',
+        )}
+      >
+        ฿{formatBaht(amount)}
+      </p>
+      {note ? <p className="mt-1 text-xs text-warn">{note}</p> : null}
+    </button>
+  )
+}
+
+function Row({
+  debt,
+  side,
+  busy,
+  onAct,
+}: {
+  debt: Debt
+  side: 'iOwe' | 'owedToMe'
+  busy: boolean
+  onAct: (body: Record<string, unknown>) => void
+}) {
+  const remindedToday =
+    debt.lastRemindedAt != null &&
+    new Date(debt.lastRemindedAt).toDateString() === new Date().toDateString()
+
+  return (
+    <article className="flex flex-wrap items-center gap-3 rounded-(--radius-card) border border-line bg-elevated p-4">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-ink">{debt.otherName}</p>
+          <span
+            className={cn(
+              'rounded-full px-2 py-0.5 text-xs',
+              debt.status === 'PAID_PENDING' ? 'bg-warn/15 text-warn' : 'bg-surface text-ink-faint',
+            )}
+          >
+            {statusLabel(debt.status)}
+          </span>
+        </div>
+        <p className="mt-0.5 truncate text-sm text-ink-soft">{debt.description ?? '—'}</p>
+        <p className="mt-0.5 text-xs text-ink-faint">
+          {debt.daysOwed === 0 ? ot('wallet.owed.today') : ot('wallet.owed.days', { n: debt.daysOwed })}
+        </p>
+      </div>
+
+      <p className="text-lg font-bold tabular-nums text-ink">฿{formatBaht(debt.amount)}</p>
+
+      <div className="flex w-full flex-wrap gap-1.5 border-t border-line pt-3 sm:w-auto sm:border-0 sm:pt-0">
+        {side === 'iOwe' ? (
+          <>
+            {/* ★ FR-B03: ถ้าผู้รับยังไม่อัปโหลด QR ต้องบอกให้ติดต่อโดยตรง
+                (หน้าจ่ายเงินที่แสดง QR จริงยังทำไม่เสร็จ — จงใจไม่ใส่ลิงก์ไว้
+                 ดีกว่าปล่อยลิงก์ที่กดแล้วเจอ 404) */}
+            {!debt.otherHasQr ? (
+              <span className="self-center text-xs text-ink-faint">{ot('wallet.action.noQr')}</span>
+            ) : null}
+            <Button
+              size="sm"
+              variant="primary"
+              loading={busy}
+              disabled={debt.status === 'PAID_PENDING'}
+              onClick={() => onAct({ action: 'markPaid' })}
+            >
+              {ot('wallet.action.markPaid')}
+            </Button>
+          </>
+        ) : (
+          <>
+            {debt.status === 'PAID_PENDING' ? (
+              <Button
+                size="sm"
+                variant="primary"
+                loading={busy}
+                onClick={() => onAct({ action: 'confirm' })}
+              >
+                {ot('wallet.action.confirm')}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                loading={busy}
+                disabled={remindedToday}
+                title={remindedToday ? ot('wallet.action.remindedToday') : undefined}
+                onClick={() => onAct({ action: 'remind', tone: 'POLITE' })}
+              >
+                {remindedToday ? ot('wallet.action.remindedToday') : ot('wallet.action.remind')}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              loading={busy}
+              onClick={() => {
+                if (window.confirm('ยกเลิกหนี้รายการนี้?')) onAct({ action: 'cancel' })
+              }}
+            >
+              {ot('wallet.action.cancel')}
+            </Button>
+          </>
+        )}
+      </div>
+    </article>
+  )
+}
