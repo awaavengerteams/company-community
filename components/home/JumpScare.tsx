@@ -48,6 +48,20 @@ const VARIANTS: Variant[] = ['hooded', 'hair', 'gaunt']
  */
 const GAPS = [10_000, 30_000, 60_000, 120_000, 180_000]
 
+/*
+ * ★★★ ครั้งแรกมาเร็วตายตัว ไม่สุ่ม
+ *
+ *     ★ ถ้าครั้งแรกสุ่มด้วย คนที่เปิดหน้าแล้วจับรหัสมาดูแป๊บเดียวมีโอกาส
+ *       ไม่เจออะไรเลย ★★ แล้วจะไม่มีวันรู้ว่าหน้านี้มีของแบบนี้อยู่
+ *     ★ สามวินาทีพอให้ตากวาดพาดหัวจบหนึ่งรอบและเริ่มรู้สึกว่าปลอดภัยแล้ว
+ *       — ซึ่งเป็นจังหวะที่มันได้ผลที่สุด
+ *
+ * ★★ หลังจากครั้งแรก กลับไปสุ่มจาก GAPS ตามเดิม
+ *    ★ ความน่ากลัวมาจากการคาดเดาไม่ได้ ถ้าทุกครั้งมาเร็วเท่ากันหมด
+ *      สมองจะจับจังหวะได้ภายในสามสี่ครั้งแล้วเลิกตกใจ
+ */
+const FIRST_GAP = 3_000
+
 /** ★ อยู่บนจอสั้นมาก — ยิ่งนานยิ่งกลายเป็นของประดับ ไม่ใช่การจู่โจม */
 const ON_SCREEN = 1_000
 
@@ -61,7 +75,16 @@ export function JumpScare() {
     let nextTimer = 0
 
     const pick = () => VARIANTS[Math.floor(Math.random() * VARIANTS.length)]!
-    const gap = () => GAPS[Math.floor(Math.random() * GAPS.length)]!
+
+    /* ★ รอบแรกใช้ค่าตายตัว รอบถัดไปสุ่ม */
+    let first = true
+    const gap = () => {
+      if (first) {
+        first = false
+        return FIRST_GAP
+      }
+      return GAPS[Math.floor(Math.random() * GAPS.length)]!
+    }
 
     const schedule = () => {
       nextTimer = window.setTimeout(() => {
