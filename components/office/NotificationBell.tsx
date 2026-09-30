@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { apiFetch } from '@/lib/api/client'
@@ -159,20 +160,35 @@ export function NotificationBell({ userId }: { userId: string }) {
             'overflow-hidden rounded-[var(--radius-card)] border border-line bg-elevated shadow-xl',
           )}
         >
-          <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-            <span className="text-sm font-medium text-ink">{ot('notify.title')}</span>
+          <div className="notify-head flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+            <span className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-ink">{ot('notify.title')}</span>
+              {unread > 0 ? (
+                <span className="rounded-full bg-accent px-1.5 text-[10px] font-bold leading-[17px] text-accent-ink">
+                  {unread > 99 ? '99+' : unread}
+                </span>
+              ) : null}
+            </span>
+
             {unread > 0 ? (
+              /* ★ ทำเป็นปุ่มจริง ไม่ใช่ลิงก์ข้อความ — มันเปลี่ยนสถานะของข้อมูล
+                 ไม่ได้พาไปหน้าอื่น ★★ ลิงก์สีฟ้าเล็ก ๆ อ่านเป็น "ไปที่อื่น" */
               <button
                 type="button"
                 onClick={markAll}
-                className="text-xs text-link hover:underline"
+                className={cn(
+                  'shrink-0 rounded-full bg-surface px-3 py-1 text-[11px] font-medium text-ink-soft',
+                  'transition-colors hover:bg-accent hover:text-accent-ink',
+                )}
               >
                 {ot('notify.markAll')}
               </button>
             ) : null}
           </div>
 
-          <div className="max-h-[60vh] overflow-y-auto">
+          {/* ★ ขอบล่างจางลง — รายการที่ถูกตัดกลางคันตรง ๆ อ่านเป็น "แสดงไม่หมด"
+              ★★ ส่วนขอบที่จางบอกว่า "เลื่อนลงต่อได้" ซึ่งเป็นคนละความหมาย */}
+          <div className="notify-scroll max-h-[60vh] overflow-y-auto">
             {loading && items.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-ink-faint">{ot('common.loading')}</p>
             ) : items.length === 0 ? (
@@ -187,6 +203,39 @@ export function NotificationBell({ userId }: { userId: string }) {
   )
 }
 
+/*
+ * ชนิดของแจ้งเตือน → ไอคอนและสี
+ *
+ * ★★ สีเดียวกับโมดูลต้นทางบนหน้าพอร์ทัล ★ แจ้งเตือนเรื่องเงินเป็นสีเขียว
+ *    เหมือนการ์ด "กระเป๋าเงิน" — คนจึงเดาได้ว่ากดแล้วไปไหนก่อนกด
+ *
+ * ★ ไม่รู้จักคีย์ไหนก็ตกมาที่ other ★★ แจ้งเตือนเก่าจากฟีเจอร์ที่ถอดไปแล้ว
+ *   ต้องไม่ทำให้ทั้งกล่องพัง — กฎเดียวกับที่ใช้กับข้อความด้านล่าง
+ */
+const KINDS = {
+  money: { tint: '52 199 123', icon: 'M12 2v20M17 6.5C17 4.6 14.8 4 12 4S7 4.8 7 7s2.6 2.8 5 3.3 5 1.3 5 3.7-2.2 3-5 3-5-.9-5-2.8' },
+  chat: { tint: '48 209 176', icon: 'M20 4H4a1 1 0 0 0-1 1v12l4-3h13a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z' },
+  market: { tint: '10 132 255', icon: 'M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 7V5a3 3 0 0 1 6 0v2' },
+  fun: { tint: '175 82 222', icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 3' },
+  warn: { tint: '255 149 0', icon: 'M12 3 2.5 20h19zM12 9v4M12 16.5v.5' },
+  other: { tint: '142 142 147', icon: 'M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9' },
+} as const
+
+const KIND_OF: Record<string, (typeof KINDS)[keyof typeof KINDS]> = {
+  'notify.type.debtCreated': KINDS.money,
+  'notify.type.debtReminder': KINDS.money,
+  'notify.type.debtPaidPending': KINDS.money,
+  'notify.type.debtNetted': KINDS.money,
+  'notify.type.chatMessage': KINDS.chat,
+  'notify.type.chatMention': KINDS.chat,
+  'notify.type.marketMessage': KINDS.chat,
+  'notify.type.marketQueueTurn': KINDS.market,
+  'notify.type.marketReserved': KINDS.market,
+  'notify.type.marketAlert': KINDS.market,
+  'notify.type.drawInvite': KINDS.fun,
+  'notify.type.contentHidden': KINDS.warn,
+}
+
 function Row({ item, onGo }: { item: Item; onGo: () => void }) {
   /*
    * ★ title_key ที่เก็บในฐานข้อมูลอาจเป็นคีย์ที่โค้ดรุ่นนี้ไม่รู้จัก
@@ -198,37 +247,69 @@ function Row({ item, onGo }: { item: Item; onGo: () => void }) {
     ? ot(item.titleKey as OfficeKey, item.params as Record<string, string | number>)
     : item.titleKey
 
+  const kind = KIND_OF[item.titleKey] ?? KINDS.other
+
   const body = (
     <div
       className={cn(
-        'flex gap-3 px-4 py-3 transition-colors',
-        item.readAt ? 'bg-transparent' : 'bg-surface/60',
+        'notify-row flex items-start gap-3 px-4 py-3',
+        item.readAt ? 'is-read' : 'is-unread',
       )}
+      style={{ '--tint': kind.tint } as CSSProperties}
     >
-      {/* ★ จุดแดงบอก "ยังไม่อ่าน" — ใช้สีอย่างเดียวไม่พอสำหรับคนตาบอดสี
-          จึงมีทั้งจุดและพื้นหลังที่ต่างกัน */}
+      {/*
+        * ★★★ ไอคอนบอกชนิดของเรื่อง ไม่ใช่แค่จุดแดงบอกว่าอ่านหรือยัง
+        *
+        *     ★ รายการเดิมเป็นข้อความสิบกว่าบรรทัดหน้าตาเหมือนกันหมด
+        *       ★★ ต้องอ่านทุกบรรทัดถึงจะรู้ว่าอันไหนเรื่องเงิน อันไหนเรื่องแชท
+        *     ★ ไอคอนที่มีสีประจำเรื่องทำให้กวาดตาแล้วแยกกองได้ทันที
+        *       ซึ่งคือสิ่งที่คนทำจริงเวลามีแจ้งเตือนค้าง 18 อัน
+        */}
       <span
-        className={cn(
-          'mt-1.5 size-2 shrink-0 rounded-full',
-          item.readAt ? 'bg-transparent' : 'bg-accent',
-        )}
         aria-hidden="true"
-      />
-      <div className="min-w-0">
-        <p className="text-sm text-ink">{text}</p>
-        <time
-          dateTime={item.createdAt}
-          className="mt-0.5 block text-xs text-ink-faint"
+        className={cn(
+          'mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl',
+          'text-[rgb(var(--tint))] ring-1 ring-[rgb(var(--tint)/0.28)]',
+        )}
+        style={{
+          background:
+            'linear-gradient(145deg, rgb(var(--tint) / 0.22), rgb(var(--tint) / 0.08))',
+        }}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          className="size-4.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
+          <path d={kind.icon} />
+        </svg>
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <p className={cn('text-sm leading-snug', item.readAt ? 'text-ink-soft' : 'font-medium text-ink')}>
+          {text}
+        </p>
+        <time dateTime={item.createdAt} className="mt-0.5 block text-[11px] text-ink-faint">
           {formatWhen(item.createdAt)}
         </time>
       </div>
+
+      {/* ★ จุดยังไม่อ่านอยู่ขวา ไม่ใช่ซ้าย — ซ้ายเป็นที่ของไอคอนชนิดแล้ว
+          ★★ ยังคงมีทั้งจุดและพื้นหลังที่ต่างกัน เพราะสีอย่างเดียวไม่พอ
+             สำหรับคนตาบอดสี */}
+      {!item.readAt ? (
+        <span aria-hidden="true" className="mt-2 size-2 shrink-0 rounded-full bg-accent" />
+      ) : null}
     </div>
   )
 
   if (!item.link) return body
   return (
-    <Link href={item.link} onClick={onGo} className="block hover:bg-surface">
+    <Link href={item.link} onClick={onGo} className="block">
       {body}
     </Link>
   )
