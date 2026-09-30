@@ -187,15 +187,27 @@ body {
  *   (เห็นตอนเทียบภาพหน้าจอ ไม่ใช่ตอน build — build ผ่านปกติ)
  */
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+/*
+ * ══════════════════════════════════════════════════════════════════════════
+ * ★★★ เว็บนี้ไม่ลดการเคลื่อนไหวตามค่า prefers-reduced-motion แล้ว
+ *
+ *     เดิมมีกฎ 18 ชุด นำโดยกฎกลางที่บีบ animation-duration ของทุก element
+ *     เหลือ 0.01ms ★ ผลคือเครื่องที่ตั้งค่านี้ไว้ไม่เห็นแอนิเมชันอะไรเลย
+ *     ทั้งเว็บ — ออโรรา · วงล้อ · สล็อต · ผีเดิน · จุดกำลังพิมพ์ · การ์ดพอร์ทัล
+ *
+ *     ★★ อาการที่เจอจริง: Windows ไม่เห็น Jump Scare เลย ส่วน Mac เห็นปกติ
+ *        ★ เพราะ Windows เปิด "ปิดเอฟเฟกต์แอนิเมชัน" ไว้เป็นค่าเริ่มต้น
+ *          ในหลายเครื่อง (Accessibility → Visual effects และ
+ *          Performance Options → Adjust for best performance)
+ *          ซึ่งคนตั้งไว้เพื่อให้เครื่องลื่น ไม่ใช่เหตุผลทางสุขภาพ
+ *
+ *     ★★★ เจ้าของระบบสั่งให้ทุกเครื่องได้แอนิเมชันเต็มโดยไม่ต้องตั้งค่าอะไร
+ *          จึงถอดออกทั้งหมด — เป็นการตัดสินใจที่รับทราบผลแล้ว ไม่ใช่การลืม
+ *          ★ ผลที่ตามมา: ผู้ใช้ที่ไวต่อการเคลื่อนไหวหรือแสงกะพริบไม่มีทาง
+ *            ปิดเอฟเฟกต์เหล่านี้จากฝั่งระบบปฏิบัติการได้อีกต่อไป
+ *          ★★ วันที่อยากคืนให้ ให้เพิ่มสวิตช์ในหน้าโปรไฟล์แทนการอ่านค่า OS
+ *             — จะได้แยก "อยากให้เครื่องลื่น" ออกจาก "ทนการเคลื่อนไหวไม่ได้"
+ * ══════════════════════════════════════════════════════════════════════════ */
 
 
 /* ---------------------------------------------------------------------------
@@ -260,18 +272,6 @@ input[type='range'].volume-range::-moz-range-track {
 }
 
 /* ★ ผู้ใช้ที่ตั้งค่าว่าไม่ชอบภาพเคลื่อนไหว ต้องไม่โดนยัดเยียด */
-@media (prefers-reduced-motion: reduce) {
-  .reaction-float {
-    animation-duration: 1s !important;
-    animation-name: reaction-fade;
-  }
-
-  @keyframes reaction-fade {
-    0% { opacity: 0; }
-    30% { opacity: 1; }
-    100% { opacity: 0; }
-  }
-}
 
 /* ---------------------------------------------------------------------------
  * วงแหวนกระเพื่อมของปุ่มไมค์ (หน้าต่างค้นหาด้วยเสียง)
@@ -304,13 +304,6 @@ input[type='range'].volume-range::-moz-range-track {
 }
 
 /* ★ ไม่ชอบภาพเคลื่อนไหว → เหลือวงนิ่ง ๆ จาง ๆ ไว้พอให้รู้ว่ากำลังฟัง */
-@media (prefers-reduced-motion: reduce) {
-  .voice-ring {
-    animation: none;
-    transform: scale(1.35);
-    opacity: 0.35;
-  }
-}
 
 /* ---------------------------------------------------------------------------
  * แสงเหนือบนหน้าแรก
@@ -410,11 +403,6 @@ html[data-theme='light'] {
 }
 
 /* ★ ไม่ชอบภาพเคลื่อนไหว → หยุดนิ่ง แต่ยังสวย ไม่ใช่หายไปทั้งหมด */
-@media (prefers-reduced-motion: reduce) {
-  .aurora-blob {
-    animation: none !important;
-  }
-}
 
 /* ---------------------------------------------------------------------------
  * ตัวอักษรไล่สี — ใช้กับคำเดียวในหัวเรื่องเท่านั้น
@@ -488,9 +476,6 @@ html[data-theme='light'] .grain-layer {
   to   { transform: scaleY(1); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .eq-bar { animation: none; transform: scaleY(0.6); }
-}
 
 /* ---------------------------------------------------------------------------
  * ขอบเรืองแสงตอนชี้เมาส์
@@ -586,9 +571,6 @@ html[data-theme='light'] .lobby-floor {
   animation: notice-in 4.5s ease-out forwards;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .join-notice { animation: none; opacity: 0.9; }
-}
 
 /* ---------------------------------------------------------------------------
  * ชั้นดนตรีของหน้าแรก
@@ -692,11 +674,6 @@ html[data-theme='light'] {
   12%  { opacity: 0.5; }
   70%  { opacity: 0.5; }
   100% { transform: translate3d(var(--dx, 20px), -320px, 0) rotate(var(--rot, 22deg)); opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .vinyl { animation: none; }
-  .note-float { animation: none; opacity: 0; }
 }
 
 
@@ -1052,39 +1029,12 @@ html:not([data-reveal='off']) .curtain > span {
   to   { opacity: 1; transform: none; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .menu-pop,
-  .menu-pop .menu-item {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-}
 
 /* ══ ปิดทุกอย่างเมื่อผู้ใช้ขอ ═════════════════════════════════════════════
  * ★★★ ด่านที่พลาดไม่ได้: ปิดอนิเมชันแล้วเนื้อหาต้องไม่หายไปด้วย
  *    reveal ที่เริ่มจาก opacity 0 ถ้าลืมคืนค่า คนที่ตั้ง reduce motion
  *    จะเจอหน้าว่างเปล่า ซึ่งไม่ใช่ "ไม่มีลูกเล่น" แต่คือ "เว็บใช้ไม่ได้"
  */
-@media (prefers-reduced-motion: reduce) {
-  .hero-in,
-  .hero-stagger > *,
-  .curtain > span,
-  .reveal,
-  .reveal-scale,
-  .reveal-stagger > *,
-  .is-above,
-  .parallax-slow,
-  .parallax-slower {
-    animation: none !important;
-    transition: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-    filter: none !important;
-  }
-
-  .lift, .zoom-media { transition: none; }
-}
 
 html[data-reveal='off'] .reveal,
 html[data-reveal='off'] .reveal-scale,
@@ -1281,20 +1231,6 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .dialog-veil,
-  .dialog-pop,
-  .pop-step,
-  .cover-blob,
-  .cover-sheen {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  /* ★ แสงกวาดที่ไม่เคลื่อนคือแถบขาวพาดกลางปกค้างอยู่ — ต้องเอาออกทั้งชิ้น */
-  .cover-sheen { display: none; }
-}
 
 /* ══════════════════════════════════════════════════════════════════════════
  * เดโมเคลื่อนไหวของฟีเจอร์บนหน้าแรก
@@ -1416,18 +1352,6 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
  *    ★ ไม่ใช่แค่หยุด แต่ต้อง "หยุดที่เฟรมที่อ่านรู้เรื่อง" —
  *      วงล้อที่หยุดกลางทางจะเห็นชื่อร้านครึ่งบรรทัด ซึ่งแย่กว่าไม่มีเดโมเลย
  */
-@media (prefers-reduced-motion: reduce) {
-  .demo-roll,
-  .demo-split > *,
-  .demo-swap-a,
-  .demo-swap-b,
-  .demo-pulse,
-  .sheen:hover::after {
-    animation: none !important;
-  }
-  .demo-roll { transform: translate3d(0, -96px, 0); }
-  .demo-split > * { opacity: 1; transform: none; }
-}
 
 /* ══════════════════════════════════════════════════════════════════════════
  * ชั้นอนิเมชันของหน้าแรก — "จัดเต็ม" แบบที่ยังอ่านออก
@@ -1605,21 +1529,6 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   50%      { opacity: 0.7; transform: scale(1); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .scroll-progress,
-  .shimmer-text,
-  .float-slow,
-  .pulse-ring::before,
-  .conic-ring::before,
-  .marquee-track,
-  .title-underline,
-  .spark {
-    animation: none !important;
-  }
-  .scroll-progress { display: none; }
-  .spark { opacity: 0.4; }
-  .title-underline { transform: none; opacity: 1; }
-}
 
 /* ── การ์ดที่มีสีประจำตัว ──────────────────────────────────────────────── */
 /*
@@ -1737,10 +1646,6 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   .phantom { display: none; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .phantom { display: none; }
-  .tint-glow { opacity: 0 !important; }
-}
 
 /* ── สามตนเดินคนละจังหวะ คนละทาง ───────────────────────────────────────── */
 /*
@@ -1986,16 +1891,6 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   100% { opacity: 0; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .slot-shake,
-  .slot-sweep::after,
-  .slot-locked,
-  .slot-flash {
-    animation: none !important;
-  }
-  .slot-sweep::after { display: none; }
-  .slot-flash { display: none; }
-}
 
 /* ══════════════════════════════════════════════════════════════════════════
  * จังหวะลุ้นของวงล้อกลม
@@ -2067,15 +1962,6 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   100% { opacity: 1; transform: scale(1); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .stage-dim,
-  .energy-ring,
-  .pointer-kick,
-  .winner-pop {
-    animation: none !important;
-  }
-  .stage-dim { display: none; }
-}
 
 /* ══════════════════════════════════════════════════════════════════════════
  * ภาพตัวอย่างเล็ก ๆ ในการ์ดพอร์ทัล
@@ -2123,14 +2009,6 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   42%           { transform: rotate(-6deg) scale(1); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .mini-wheel,
-  .dot-seq > *,
-  .dice-flip {
-    animation: none !important;
-  }
-  .dot-seq > * { opacity: 0.7; }
-}
 
 /* ══════════════════════════════════════════════════════════════════════════
  * แชทสไตล์ LINE
@@ -2622,20 +2500,6 @@ html[data-theme='dark'] {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .chat-unread-ring,
-  .chat-unread-ring::after {
-    animation: none;
-  }
-  .chat-unread-ring::after {
-    opacity: 0;
-  }
-  .chat-stat,
-  .chat-feat,
-  .chat-welcome-bubble {
-    animation: none;
-  }
-}
 
 /*
  * ── ฟอง "กำลังพิมพ์" ───────────────────────────────────────────────────────
@@ -2681,12 +2545,6 @@ html[data-theme='dark'] {
 }
 
 /* ★ ปิดการเต้นให้คนที่ตั้งค่าลดการเคลื่อนไหว — ฟองยังอยู่ แค่ไม่ขยับ */
-@media (prefers-reduced-motion: reduce) {
-  .chat-typing i {
-    animation: none;
-    opacity: 0.6;
-  }
-}
 
 /*
  * ── ช่องพิมพ์ ──────────────────────────────────────────────────────────────
