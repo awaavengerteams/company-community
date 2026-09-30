@@ -187,13 +187,51 @@ function Card({
   return (
     <article
       className={cn(
-        'flex flex-col overflow-hidden rounded-2xl border border-line bg-elevated/60 backdrop-blur-md',
-        l.status === 'SOLD' && 'opacity-60',
+        'market-card group flex flex-col overflow-hidden rounded-2xl border border-line bg-elevated/60 backdrop-blur-md',
+        l.status === 'SOLD' && 'is-sold',
         /* ★ ประกาศที่ถูกซ่อนมีขอบแดง — เจ้าของเห็นแต่คนอื่นไม่เห็น (FR-X08) */
         l.hidden && 'border-danger',
       )}
     >
-      {l.images[0] ? <ListingImage src={l.images[0]} alt={l.title} /> : null}
+      {/*
+        * ★★★ ส่วนหัวรูปมีเสมอ แม้ประกาศจะไม่มีรูป
+        *
+        *     ★ เดิมประกาศที่ไม่มีรูปจะไม่มีบล็อกนี้เลย ★★ พอวางเรียงในตาราง
+        *       การ์ดจะสูงไม่เท่ากันและหัวการ์ดอยู่คนละระดับทั้งแถว
+        *     ★ ช่องว่างที่มีลวดลายยังดูตั้งใจกว่าการ์ดที่หัวหายไป
+        *
+        * ★★ ราคาย้ายมาทับบนรูป ไม่ใช่บรรทัดใต้ชื่อ
+        *    ★ ราคาคือสิ่งที่ตาหาเป็นอันดับแรกในหน้าตลาด การวางทับบนรูป
+        *      ทำให้กวาดตาทั้งตารางแล้วเทียบราคาได้โดยไม่ต้องอ่านอย่างอื่นเลย
+        */}
+      <div className="market-media relative overflow-hidden">
+        {l.images[0] ? (
+          <ListingImage src={l.images[0]} alt={l.title} />
+        ) : (
+          <div className="flex aspect-4/3 w-full items-center justify-center bg-surface text-ink-faint">
+            <svg
+              viewBox="0 0 24 24"
+              className="size-8 opacity-60"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 7V5a3 3 0 0 1 6 0v2" />
+            </svg>
+          </div>
+        )}
+
+        <span className="market-scrim" aria-hidden="true" />
+
+        <span className="market-status absolute end-2.5 top-2.5">{statusLabel(l.status)}</span>
+
+        <span className="absolute bottom-2.5 start-3 text-[19px] font-bold tabular-nums text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]">
+          {priceLabel(l)}
+        </span>
+      </div>
 
       <div className="flex flex-1 flex-col p-4">
         {l.hidden ? (
@@ -202,14 +240,7 @@ function Card({
           </p>
         ) : null}
 
-        <div className="flex items-start justify-between gap-2">
-          <h2 className="font-medium text-ink">{l.title}</h2>
-          <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 text-xs text-ink-faint">
-            {statusLabel(l.status)}
-          </span>
-        </div>
-
-        <p className="mt-1 text-lg font-bold tabular-nums text-accent">{priceLabel(l)}</p>
+        <h2 className="text-[15px] font-semibold leading-snug text-ink">{l.title}</h2>
 
         <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-ink-faint">
           <Tag>{kindLabel(l.kind)}</Tag>
@@ -238,7 +269,9 @@ function Card({
           </p>
         ) : null}
 
-        <div className="mt-3 flex flex-wrap gap-1.5 border-t border-line pt-3">
+        {/* ★ mt-auto ดันแถวปุ่มไปชิดท้ายการ์ด ★★ ประกาศที่มีคำอธิบายยาว
+            กับสั้นจึงมีปุ่มอยู่ระดับเดียวกัน ไม่ลอยอยู่กลางการ์ดคนละที่ */}
+        <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-line pt-3">
           {l.canManage ? (
             <>
               {l.status !== 'SOLD' ? (

@@ -93,7 +93,15 @@ export function MarketPost() {
   return (
     <form onSubmit={submit} className="max-w-2xl py-2">
 
-      <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
+      {/*
+        * ★★★ แบ่งฟอร์มเป็นสามขั้นที่มีหัวข้อ ไม่ใช่กองเดียว 8 ช่อง
+        *
+        *     ★ ฟอร์มยาว ๆ ที่เป็นแถวป้าย-ช่องกรอกเรียงกันรวดเดียว อ่านแล้ว
+        *       ไม่รู้ว่าเหลืออีกเท่าไหร่ ★★ คนกรอกครึ่งทางแล้วเลิกกลางคัน
+        *     ★ หัวข้อที่มีเลขกำกับทำให้เห็นว่างานทั้งหมดมีแค่สามก้อน
+        *       และแต่ละก้อนสั้น ซึ่งเปลี่ยนความรู้สึกทั้งที่ช่องกรอกเท่าเดิม
+        */}
+      <Section n={1} title={ot('market.form.step1')} hint={ot('market.form.step1Hint')}>
         {/* ── รูป (บังคับ) ──────────────────────────────────────── */}
         <div>
           <p className="text-sm font-medium text-ink">
@@ -104,14 +112,14 @@ export function MarketPost() {
             </span>
           </p>
 
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-2">
             {images.map((url, i) => (
               <div key={url} className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={url}
                   alt={`รูปที่ ${i + 1}`}
-                  className="size-20 rounded-xl object-cover"
+                  className="size-28 rounded-2xl border border-line object-cover"
                 />
                 <button
                   type="button"
@@ -125,13 +133,29 @@ export function MarketPost() {
             ))}
 
             {images.length < 5 ? (
+              /* ★ ช่องเปล่าต้องบอกว่ากดแล้วได้อะไร ★★ เครื่องหมาย + เดี่ยว ๆ
+                   ในกรอบเล็ก ๆ อ่านเป็นปุ่มอะไรก็ได้ ไม่ใช่ "ใส่รูปตรงนี้" */
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={busy}
-                className="grid size-20 place-items-center rounded-xl border border-dashed border-line-strong text-ink-faint hover:bg-surface disabled:opacity-40"
+                className="dropzone flex size-28 flex-col items-center justify-center gap-1 rounded-2xl disabled:opacity-40"
               >
-                +
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="4" width="18" height="16" rx="2.5" />
+                  <path d="M12 9.5v5M9.5 12h5" />
+                </svg>
+                <span className="text-[11px] font-medium">{ot('market.form.dropzone')}</span>
+                <span className="text-[10px] opacity-70">{ot('market.form.dropzoneHint')}</span>
               </button>
             ) : null}
           </div>
@@ -152,6 +176,9 @@ export function MarketPost() {
           <Input radius="round" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required />
         </Field>
 
+      </Section>
+
+      <Section n={2} title={ot('market.form.step2')} hint={ot('market.form.step2Hint')}>
         <Field label={ot('market.form.kind')}>
           <div className="flex flex-wrap gap-1.5">
             {KINDS.map((k) => (
@@ -164,16 +191,23 @@ export function MarketPost() {
 
         {needsPrice ? (
           <Field label={ot('market.form.price')} required>
-            <Input radius="round"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              type="number"
-              step="0.01"
-              min="0.01"
-              inputMode="decimal"
-              className="max-w-40 tabular-nums"
-              required
-            />
+            {/* ★ สัญลักษณ์บาทอยู่ในช่องกรอก ไม่ใช่ในป้ายกำกับ
+                ★★ คนกรอกมองที่เคอร์เซอร์ ไม่ได้มองป้ายด้านบน — หน่วยจึงต้อง
+                   อยู่ตรงที่ตากำลังอยู่ ตอนที่กำลังตัดสินใจว่าจะพิมพ์อะไร */}
+            <span className="relative inline-flex max-w-44 items-center">
+              <span className="pointer-events-none absolute start-4 text-sm text-ink-faint">฿</span>
+              <Input
+                radius="round"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                type="number"
+                step="0.01"
+                min="0.01"
+                inputMode="decimal"
+                className="ps-8 tabular-nums"
+                required
+              />
+            </span>
           </Field>
         ) : null}
 
@@ -201,16 +235,21 @@ export function MarketPost() {
           </div>
         </Field>
 
+      </Section>
+
+      <Section n={3} title={ot('market.form.step3')} hint={ot('market.form.step3Hint')}>
         <Field label={ot('market.form.description')} hint={ot('link.optional')}>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             maxLength={1000}
             rows={3}
+            /* ★ ช่องกรอกอื่นในฟอร์มนี้เป็นทรงมนหมด ★★ ช่องเดียวที่เป็นเหลี่ยม
+                 อ่านเป็นของที่หลุดมาจากหน้าอื่น ไม่ใช่ความตั้งใจ */
             className={cn(
-              'w-full rounded-[2px] bg-input px-4 py-2',
+              'w-full rounded-2xl bg-input px-4 py-3',
               'border border-line text-[16px] placeholder:text-ink-faint sm:text-sm',
-              'transition-colors focus:border-link focus:outline-none',
+              'transition-colors focus:border-accent/70 focus:outline-none',
             )}
           />
         </Field>
@@ -245,32 +284,86 @@ export function MarketPost() {
           </div>
         </div>
 
-        {/* ★★ FR-D10: ข้อความเตือนสินค้าต้องห้ามต้องขึ้นตอนลงประกาศ
-               ไม่ใช่ซ่อนในหน้าเงื่อนไข — และต้องติ๊กยืนยันก่อนส่ง */}
-        <div className="rounded-xl border border-warn/40 bg-warn/10 p-3">
+      </Section>
+
+      {/* ★★ FR-D10: ข้อความเตือนสินค้าต้องห้ามต้องขึ้นตอนลงประกาศ
+             ไม่ใช่ซ่อนในหน้าเงื่อนไข — และต้องติ๊กยืนยันก่อนส่ง */}
+      <div className="mt-4 flex gap-3 rounded-2xl border border-warn/45 bg-warn/10 p-4">
+        <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-warn/20 text-warn">
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 8v5M12 16.5v.5" />
+            <path d="M12 3 2.5 20h19z" strokeWidth="1.5" strokeLinejoin="round" />
+          </svg>
+        </span>
+
+        <span className="min-w-0">
           <p className="text-xs leading-relaxed text-ink-soft">{ot('market.form.banned')}</p>
-          <label className="mt-2 flex cursor-pointer items-start gap-2">
+          <label className="mt-2.5 flex cursor-pointer items-start gap-2">
             <input
               type="checkbox"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
               className="mt-0.5 size-4 accent-[var(--color-accent)]"
             />
-            <span className="text-xs text-ink">{ot('market.form.confirm')}</span>
+            <span className="text-xs font-medium text-ink">{ot('market.form.confirm')}</span>
           </label>
-        </div>
+        </span>
+      </div>
 
-        {error ? (
-          <p role="alert" className="text-sm text-danger">
-            {error}
-          </p>
-        ) : null}
+      {error ? (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
 
+      <div className="mt-4">
         <Button type="submit" variant="primary" size="lg" loading={busy} disabled={!canSubmit} block>
           {ot('market.form.submit')}
         </Button>
       </div>
     </form>
+  )
+}
+
+/**
+ * หนึ่งขั้นของฟอร์ม
+ *
+ * ★ เลขอยู่ในวงกลมด้านซ้ายของหัวข้อ ★★ ไม่ใช่ prefix ในข้อความ เพราะวงกลม
+ *   ทำให้กวาดตาลงมาแล้วนับขั้นได้ทันทีโดยไม่ต้องอ่าน
+ */
+function Section({
+  n,
+  title,
+  hint,
+  children,
+}: {
+  n: number
+  title: string
+  hint: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="mt-4 rounded-2xl border border-line bg-elevated/60 p-5 backdrop-blur-md">
+      <div className="flex items-center gap-2.5">
+        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-accent text-[13px] font-bold text-accent-ink">
+          {n}
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[15px] font-semibold text-ink">{title}</span>
+          <span className="block text-xs text-ink-faint">{hint}</span>
+        </span>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-4">{children}</div>
+    </section>
   )
 }
 
