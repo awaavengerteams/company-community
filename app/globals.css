@@ -2126,3 +2126,123 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   }
   .dot-seq > * { opacity: 0.7; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * แชทสไตล์ LINE
+ *
+ * ★★★ ทำไมต้องลอกหน้าตาของ LINE จริง ๆ ไม่ใช่แค่ "คล้าย ๆ"
+ *
+ *     คนไทยทุกคนในออฟฟิศใช้ LINE ทุกวัน ★ ทุกตำแหน่งบนหน้าจอถูกจำไว้แล้ว
+ *     ว่าอะไรอยู่ตรงไหน — ฟองเขียวคือของเรา ฟองขาวคือของเขา เวลาอยู่ข้างฟอง
+ *     "อ่านแล้ว" อยู่เหนือเวลา ★★ การวางตำแหน่งให้ตรงกับที่เขาจำได้แปลว่า
+ *     ไม่ต้องเรียนรู้อะไรใหม่เลยแม้แต่นิดเดียว
+ *
+ * ★ สีพื้นหลังและสีฟองสลับตามธีม — ต้นฉบับเป็นฟ้าอมเทา ส่วนโหมดมืดใช้
+ *   โทนเดียวกันแต่เข้มลง ★★ ไม่ใช่บังคับพื้นฟ้าสว่างในโหมดมืด ซึ่งจะแสบตา
+ *   ในห้องมืดและขัดกับทั้งเว็บ
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --chat-wall: #8cabd8;
+  --chat-bubble-me: #8de055;
+  --chat-bubble-me-ink: #0f1a09;
+  --chat-bubble-you: #ffffff;
+  --chat-bubble-you-ink: #14161a;
+  --chat-meta: rgb(255 255 255 / 0.92);
+  --chat-pill: rgb(0 0 0 / 0.16);
+}
+
+html[data-theme='dark'] {
+  --chat-wall: #1b2430;
+  --chat-bubble-me: #06c755;
+  --chat-bubble-me-ink: #05140b;
+  --chat-bubble-you: #2b323c;
+  --chat-bubble-you-ink: #eef1f5;
+  --chat-meta: rgb(255 255 255 / 0.62);
+  --chat-pill: rgb(255 255 255 / 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) {
+    --chat-wall: #1b2430;
+    --chat-bubble-me: #06c755;
+    --chat-bubble-me-ink: #05140b;
+    --chat-bubble-you: #2b323c;
+    --chat-bubble-you-ink: #eef1f5;
+    --chat-meta: rgb(255 255 255 / 0.62);
+    --chat-pill: rgb(255 255 255 / 0.14);
+  }
+}
+
+.chat-wall {
+  background-color: var(--chat-wall);
+  /* ★ ลายจุดจาง ๆ — ผนังเรียบสนิทอ่านเป็นกล่องเปล่า ไม่ใช่ห้องแชท */
+  background-image: radial-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* ── ฟองข้อความ ─────────────────────────────────────────────────────────── */
+.bubble {
+  position: relative;
+  max-width: 100%;
+  padding: 8px 12px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bubble-me {
+  background: var(--chat-bubble-me);
+  color: var(--chat-bubble-me-ink);
+  border-bottom-right-radius: 4px;
+}
+
+.bubble-you {
+  background: var(--chat-bubble-you);
+  color: var(--chat-bubble-you-ink);
+  border-bottom-left-radius: 4px;
+}
+
+/*
+ * ★ หางฟองวาดด้วยสามเหลี่ยม ไม่ใช่รูป
+ *   ★★ โผล่เฉพาะฟองแรกของช่วง — ฟองที่ติดกันแล้วมีหางทุกใบอ่านเป็นฟันเลื่อย
+ */
+.bubble-tail-me::after,
+.bubble-tail-you::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 0 solid transparent;
+}
+
+.bubble-tail-me::after {
+  right: -5px;
+  border-left: 9px solid var(--chat-bubble-me);
+}
+
+.bubble-tail-you::after {
+  left: -5px;
+  border-right: 9px solid var(--chat-bubble-you);
+}
+
+/* ป้ายคั่นวัน — เม็ดยาสีจาง ๆ กลางจอ เหมือนต้นฉบับ */
+.chat-daypill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  background: var(--chat-pill);
+  padding: 3px 12px;
+  font-size: 11px;
+  color: var(--chat-meta);
+}
+
+.chat-meta {
+  color: var(--chat-meta);
+  font-size: 11px;
+  line-height: 1.2;
+}

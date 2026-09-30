@@ -267,39 +267,79 @@ export function OfficeChat() {
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-1.5">
+        {/*
+          * ★★ แถวรายการแบบ LINE: รูป 56px · ชื่อหนา · ข้อความล่าสุดสีจาง ·
+          *    เวลาอยู่ขวาบน · ป้ายยังไม่อ่านอยู่ขวาล่าง
+          *    ★ ตำแหน่งพวกนี้คนไทยจำได้หมดแล้ว การวางให้ตรงแปลว่าไม่ต้องเรียนใหม่
+          */}
+        <div className="overflow-hidden rounded-2xl border border-line bg-elevated/40 backdrop-blur-md">
           {rooms.length === 0 ? (
-            <p className="py-10 text-center text-sm text-ink-faint">{ot('chat.empty')}</p>
+            /*
+             * ★★ โหลดรายการไม่สำเร็จ ต้องบอกว่าพัง ไม่ใช่บอกว่า "ยังไม่มีห้อง"
+             *
+             *    ★ ตอนทดสอบเองเจอหน้าจอบอก "ยังไม่มีห้องแชท" ทั้งที่จริง ๆ คือ
+             *      API ตอบ 500 เพราะฐานข้อมูลยังไม่มีตาราง — หลงคิดว่าระบบปกติ
+             *    ★★ สถานะว่างกับสถานะพังต้องหน้าตาไม่เหมือนกันเสมอ
+             */
+            error ? (
+              <p role="alert" className="px-4 py-10 text-center text-sm text-danger">
+                {error}
+              </p>
+            ) : (
+              <p className="py-12 text-center text-sm text-ink-faint">{ot('chat.empty')}</p>
+            )
           ) : (
-            rooms.map((room) => (
+            rooms.map((room, i) => (
               <button
                 key={room.id}
                 type="button"
                 onClick={() => setOpenId(room.id)}
                 className={cn(
-                  'flex items-center gap-3 rounded-2xl border p-3 text-start transition-colors',
-                  room.id === openId
-                    ? 'border-accent/50 bg-accent/10'
-                    : 'border-line bg-elevated/40 hover:bg-surface',
+                  'flex w-full items-center gap-3 px-3 py-2.5 text-start transition-colors',
+                  i > 0 && 'border-t border-line/60',
+                  room.id === openId ? 'bg-accent/10' : 'hover:bg-surface/70',
                 )}
               >
-                <Avatar name={room.title} url={room.avatar} group={room.kind === 'GROUP'} />
+                <Avatar name={room.title} url={room.avatar} group={room.kind === 'GROUP'} size={52} />
 
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1.5">
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
+                  <span className="flex items-baseline gap-2">
+                    <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
                       {room.title}
+                      {room.kind === 'GROUP' ? (
+                        <span className="ms-1 text-xs font-normal text-ink-faint">
+                          {room.members}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="shrink-0 text-[11px] text-ink-faint">
                       {shortTime(room.last_message_at)}
                     </span>
                   </span>
-                  <span className="mt-0.5 flex items-center gap-1.5">
-                    <span className="min-w-0 flex-1 truncate text-xs text-ink-soft">
+
+                  <span className="mt-0.5 flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-ink-soft">
                       {room.last_text ?? ot('chat.noMessage')}
                     </span>
+                    {room.muted ? (
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="size-3.5 shrink-0 text-ink-faint"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M11 5 6 9H3v6h3l5 4zM17 9l4 6M21 9l-4 6" />
+                      </svg>
+                    ) : null}
                     {room.unread > 0 ? (
-                      <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-bold text-accent-ink">
+                      /* ★ ป้ายเขียวของ LINE — กลมเสมอ ไม่ใช่สี่เหลี่ยมมน */
+                      <span
+                        className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-[11px] font-bold text-white"
+                        style={{ background: '#06c755' }}
+                      >
                         {room.unread > 99 ? '99+' : room.unread}
                       </span>
                     ) : null}
@@ -314,38 +354,45 @@ export function OfficeChat() {
       {/* ═══ ห้องแชท ═══════════════════════════════════════════════ */}
       <section
         className={cn(
-          'flex min-h-[60vh] flex-col rounded-2xl border border-line bg-elevated/30 backdrop-blur-md',
+          'flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-line',
           !openId && 'hidden lg:flex',
         )}
       >
         {!openId || !thread ? (
-          <p className="m-auto p-10 text-center text-sm text-ink-faint">{ot('chat.pickRoom')}</p>
+          <div className="chat-wall m-0 flex flex-1 items-center justify-center">
+            <p className="chat-daypill">{ot('chat.pickRoom')}</p>
+          </div>
         ) : (
           <>
-            {/* หัวห้อง */}
-            <div className="flex items-center gap-3 border-b border-line p-3">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="lg:hidden"
+            {/* ── หัวห้อง ──────────────────────────────────────────── */}
+            <div className="flex items-center gap-2 border-b border-line bg-elevated/80 px-3 py-2 backdrop-blur-md">
+              <button
+                type="button"
                 onClick={() => {
                   setOpenId(null)
                   setThread(null)
                 }}
+                aria-label={ot('room.back')}
+                className="grid size-9 shrink-0 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface hover:text-ink lg:hidden"
               >
-                ‹
-              </Button>
+                <svg viewBox="0 0 24 24" className="size-5 rtl:-scale-x-100" fill="currentColor" aria-hidden="true">
+                  <path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4-4.6-4.6z" />
+                </svg>
+              </button>
+
               <Avatar
                 name={current?.title ?? ''}
                 url={current?.avatar ?? null}
                 group={thread.room?.kind === 'GROUP'}
+                size={36}
               />
+
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-ink">
+                <span className="block truncate text-[15px] font-semibold text-ink">
                   {current?.title ?? thread.room?.title ?? '—'}
                 </span>
                 {thread.room?.kind === 'GROUP' ? (
-                  <span className="block text-xs text-ink-faint">
+                  <span className="block text-[11px] text-ink-faint">
                     {ot('chat.memberCount', { n: thread.members.length })}
                   </span>
                 ) : null}
@@ -369,7 +416,7 @@ export function OfficeChat() {
                   stroke="currentColor"
                   strokeWidth="1.8"
                   strokeLinecap="round"
-                  className="size-4.5"
+                  className="size-5"
                   aria-hidden="true"
                 >
                   <path d="M11 5 6 9H3v6h3l5 4z" />
@@ -378,63 +425,74 @@ export function OfficeChat() {
               </button>
             </div>
 
-            {/* ข้อความ */}
-            <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-4">
+            {/* ── ผนังห้องแชท ─────────────────────────────────────── */}
+            <div className="chat-wall flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
               {thread.messages.length === 0 ? (
-                <p className="m-auto text-sm text-ink-faint">{ot('chat.sayHi')}</p>
+                <p className="chat-daypill m-auto">{ot('chat.sayHi')}</p>
               ) : (
                 thread.messages.map((m, i) => {
                   const prev = thread.messages[i - 1]
-                  const grouped = prev?.mine === m.mine && prev?.senderName === m.senderName
+                  const next = thread.messages[i + 1]
                   const showDay = !prev || dayOf(prev.createdAt) !== dayOf(m.createdAt)
+                  /* ★ ฟองแรกของช่วงเท่านั้นที่มีหางและรูปโปรไฟล์ */
+                  const first = !prev || prev.mine !== m.mine || prev.senderName !== m.senderName || showDay
+                  const last = !next || next.mine !== m.mine || next.senderName !== m.senderName
 
                   return (
                     <div key={m.id}>
                       {showDay ? (
-                        <p className="my-3 text-center text-[11px] text-ink-faint">
-                          {dayLabel(m.createdAt)}
+                        <p className="my-3 flex justify-center">
+                          <span className="chat-daypill">{dayLabel(m.createdAt)}</span>
                         </p>
                       ) : null}
 
-                      <div className={cn('flex items-end gap-2', m.mine ? 'justify-end' : 'justify-start')}>
-                        {/* ★ รูปโปรไฟล์โผล่เฉพาะข้อความแรกของช่วง — ติดกันหมดจะรก */}
+                      <div
+                        className={cn(
+                          'flex items-end gap-2',
+                          m.mine ? 'justify-end' : 'justify-start',
+                          first ? 'mt-2' : 'mt-0.5',
+                        )}
+                      >
                         {!m.mine ? (
-                          <span className={cn('shrink-0', grouped && 'invisible')}>
-                            <Avatar name={m.senderName} url={m.senderAvatar} size={28} />
+                          <span className={cn('shrink-0', !first && 'invisible')}>
+                            <Avatar name={m.senderName} url={m.senderAvatar} size={34} />
                           </span>
                         ) : null}
 
-                        <span className={cn('flex max-w-[76%] flex-col', m.mine ? 'items-end' : 'items-start')}>
-                          {!m.mine && !grouped && thread.room?.kind === 'GROUP' ? (
-                            <span className="mb-0.5 ps-1 text-[11px] text-ink-faint">{m.senderName}</span>
+                        <span className={cn('flex max-w-[72%] flex-col', m.mine ? 'items-end' : 'items-start')}>
+                          {/* ★ ชื่อคนส่งขึ้นเฉพาะในกลุ่มและเฉพาะฟองแรกของช่วง */}
+                          {!m.mine && first && thread.room?.kind === 'GROUP' ? (
+                            <span className="chat-meta mb-1 ps-1">{m.senderName}</span>
                           ) : null}
 
                           <span className="flex items-end gap-1.5">
-                            {/* ★ เวลาและ "อ่านแล้ว" อยู่ฝั่งนอกของฟอง เหมือนแอปแชททั่วไป */}
+                            {/* ★★ "อ่านแล้ว" อยู่เหนือเวลา ทางซ้ายของฟองเรา — ตำแหน่งเดียวกับต้นฉบับ */}
                             {m.mine ? (
-                              <span className="flex flex-col items-end text-[10px] leading-tight text-ink-faint">
-                                {m.read ? <span className="text-accent">{ot('chat.read')}</span> : null}
-                                <span>{shortTime(m.createdAt)}</span>
+                              <span className="flex flex-col items-end">
+                                {m.read && last ? (
+                                  <span className="chat-meta font-medium">{ot('chat.read')}</span>
+                                ) : null}
+                                {last ? <span className="chat-meta">{shortTime(m.createdAt)}</span> : null}
                               </span>
                             ) : null}
 
                             <span
                               className={cn(
-                                'rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words',
+                                'bubble',
                                 m.deleted
-                                  ? 'border border-line text-ink-faint italic'
+                                  ? 'border border-white/25 bg-transparent italic'
                                   : m.mine
-                                    ? 'bg-accent text-accent-ink'
-                                    : 'bg-surface text-ink',
+                                    ? 'bubble-me'
+                                    : 'bubble-you',
+                                !m.deleted && last && (m.mine ? 'bubble-tail-me' : 'bubble-tail-you'),
                               )}
+                              style={m.deleted ? { color: 'var(--chat-meta)' } : undefined}
                             >
                               {m.deleted ? ot('chat.deleted') : m.text}
                             </span>
 
-                            {!m.mine ? (
-                              <span className="text-[10px] leading-tight text-ink-faint">
-                                {shortTime(m.createdAt)}
-                              </span>
+                            {!m.mine && last ? (
+                              <span className="chat-meta">{shortTime(m.createdAt)}</span>
                             ) : null}
                           </span>
                         </span>
@@ -447,15 +505,19 @@ export function OfficeChat() {
             </div>
 
             {error ? (
-              <p role="alert" className="px-4 pb-1 text-xs text-danger">
+              <p role="alert" className="bg-elevated px-4 py-1 text-xs text-danger">
                 {error}
               </p>
             ) : null}
 
-            {/* ช่องพิมพ์ */}
-            <div className="flex items-center gap-2 border-t border-line p-3">
-              <Input
-                radius="round"
+            {/* ── แถบพิมพ์ ─────────────────────────────────────────── */}
+            {/*
+              * ★★ ปุ่มส่งเป็นวงกลมที่โผล่เมื่อมีข้อความ เหมือนต้นฉบับ
+              *    ★ ปุ่มที่กดไม่ได้ค้างอยู่ตลอดเวลาเป็นสิ่งรบกวนสายตา
+              *      ส่วนปุ่มที่โผล่มาตอนพิมพ์เสร็จคือการยืนยันว่า "พร้อมส่งแล้ว"
+              */}
+            <div className="flex items-end gap-2 border-t border-line bg-elevated/90 px-3 py-2.5 backdrop-blur-md">
+              <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => {
@@ -464,13 +526,34 @@ export function OfficeChat() {
                     void send()
                   }
                 }}
+                rows={1}
                 placeholder={ot('chat.placeholder')}
                 maxLength={2000}
                 aria-label={ot('chat.placeholder')}
+                className={cn(
+                  'max-h-28 min-h-10 flex-1 resize-none rounded-2xl border border-line bg-surface px-4 py-2.5',
+                  'text-[15px] text-ink outline-none placeholder:text-ink-faint',
+                  'focus-visible:border-accent',
+                )}
               />
-              <Button variant="primary" loading={busy} disabled={!text.trim()} onClick={send}>
-                {ot('chat.send')}
-              </Button>
+
+              <button
+                type="button"
+                onClick={send}
+                disabled={!text.trim() || busy}
+                aria-label={ot('chat.send')}
+                className={cn(
+                  'grid size-10 shrink-0 place-items-center rounded-full transition-all',
+                  text.trim()
+                    ? 'scale-100 text-white opacity-100'
+                    : 'pointer-events-none scale-75 opacity-0',
+                )}
+                style={{ background: '#06c755' }}
+              >
+                <svg viewBox="0 0 24 24" className="size-5 rtl:-scale-x-100" fill="currentColor" aria-hidden="true">
+                  <path d="M3 20.5 21 12 3 3.5 3 10l12 2-12 2z" />
+                </svg>
+              </button>
             </div>
           </>
         )}
