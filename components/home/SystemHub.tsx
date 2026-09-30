@@ -35,8 +35,7 @@ type Card = {
   tint: string
   /** ภาพตัวอย่างเล็ก ๆ ที่บอกว่าข้างในมีอะไร */
   demo: 'eq' | 'wheel' | 'split' | 'dice' | 'queue' | 'grid' | 'bubble'
-  featured?: boolean
-  /** ★ ใบสุดท้ายกินเต็มแถว — ไม่งั้นมันจะเหลือใบเดียวโดด ๆ ในแถวที่สาม */
+  /** ★ ใบสุดท้ายกินเต็มแถว — ไม่งั้นมันจะเหลือใบเดียวโดด ๆ ในแถวสุดท้าย */
   full?: boolean
 }
 
@@ -47,7 +46,6 @@ const CARDS: Card[] = [
     detailKey: 'hub.musicDetail',
     icon: 'M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
     tint: '255 0 51',
-    featured: true,
     demo: 'eq',
   },
   {
@@ -113,18 +111,12 @@ const EQ = [40, 72, 96, 55, 88, 34, 66, 100, 48, 80, 60, 92]
  * ★★★ เป็น aria-hidden ทั้งหมด — มันเล่าเรื่องเดียวกับคำอธิบายข้างบน
  *      โปรแกรมอ่านหน้าจอไม่ควรต้องฟังซ้ำเป็นชิ้นส่วนที่ไม่มีความหมาย
  */
-function CardDemo({
-  kind,
-  featured,
-}: {
-  kind: Card['demo']
-  featured?: boolean
-}) {
+function CardDemo({ kind }: { kind: Card['demo'] }) {
   if (kind === 'eq') {
     return (
       <span
         aria-hidden="true"
-        className={cn('relative flex items-end gap-[3px]', featured ? 'mt-5 h-8' : 'mt-4 h-6')}
+        className="relative flex h-7 items-end gap-[3px]"
         style={{
           maskImage: 'linear-gradient(90deg, #000 55%, transparent)',
           WebkitMaskImage: 'linear-gradient(90deg, #000 55%, transparent)',
@@ -284,24 +276,45 @@ export async function SystemHub() {
             href={card.href}
             style={{ '--tint': card.tint } as CSSProperties}
             className={cn(
-              'tint-card sheen lift group relative isolate overflow-hidden rounded-3xl',
+              'tint-card sheen lift group relative isolate flex flex-col overflow-hidden rounded-3xl',
               'border border-line bg-elevated/50 p-6 backdrop-blur-md',
-              card.featured && 'sm:col-span-2 lg:col-span-2',
-              card.full && 'sm:col-span-2 lg:col-span-3 lg:flex lg:items-center lg:gap-6',
+              card.full
+                ? 'sm:col-span-2 lg:col-span-3 lg:flex-row lg:items-center lg:gap-6'
+                : 'min-h-[218px]',
             )}
           >
             {/* ★ แสงประจำสีของการ์ด โผล่ตอนชี้ — เป็น element ไม่ใช่ ::after
                 เพราะ ::after ถูก .sheen ใช้ไปแล้ว */}
             <span className="tint-glow" aria-hidden="true" />
 
+            {/*
+              * ★★ สีของโมดูลติดอยู่ที่การ์ดตลอดเวลา ไม่ใช่โผล่ตอนชี้อย่างเดียว
+              *
+              *    ★ การ์ดที่เป็นสีเทาเหมือนกันหมดจนกว่าจะเอาเมาส์ไปชี้ คือการ์ด
+              *      ที่บนมือถือไม่มีสีเลยตลอดกาล — เพราะมือถือไม่มีการชี้
+              *    ★★ จาง 7% พอให้แยกใบได้ด้วยหางตา แต่ไม่แย่งความสนใจจากตัวหนังสือ
+              */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 -z-10"
+              style={{
+                background:
+                  'radial-gradient(120% 80% at 88% -10%, rgb(var(--tint) / 0.07), transparent 58%)',
+              }}
+            />
+
             <span
               aria-hidden="true"
               className={cn(
-                'float-slow relative grid size-12 place-items-center rounded-2xl',
-                'bg-[rgb(var(--tint)/0.16)] text-[rgb(var(--tint))]',
-                'ring-1 ring-[rgb(var(--tint)/0.28)] transition-transform duration-500',
-                'group-hover:scale-110',
+                'float-slow relative grid size-14 shrink-0 place-items-center rounded-2xl',
+                'text-[rgb(var(--tint))] ring-1 ring-[rgb(var(--tint)/0.3)]',
+                'shadow-[0_10px_26px_-14px] shadow-[rgb(var(--tint)/0.9)]',
+                'transition-transform duration-500 group-hover:scale-110',
               )}
+              style={{
+                background:
+                  'linear-gradient(145deg, rgb(var(--tint) / 0.24), rgb(var(--tint) / 0.10))',
+              }}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -310,7 +323,7 @@ export async function SystemHub() {
                 strokeWidth="1.9"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="size-6"
+                className="size-7"
               >
                 <path d={card.icon} />
               </svg>
@@ -319,8 +332,7 @@ export async function SystemHub() {
             <span className={cn('relative block', card.full && 'lg:flex lg:items-baseline lg:gap-3')}>
               <p
                 className={cn(
-                  'font-semibold tracking-tight',
-                  card.featured ? 'text-xl sm:text-2xl' : 'text-[17px]',
+                  'text-[19px] font-semibold tracking-tight',
                   card.full ? 'mt-5 lg:mt-0' : 'mt-5',
                 )}
               >
@@ -336,8 +348,13 @@ export async function SystemHub() {
               </p>
             </span>
 
-            {/* ★ ภาพตัวอย่างที่ขยับ — บอกว่าเข้าไปแล้วเจออะไร โดยไม่ต้องอ่าน */}
-            <CardDemo kind={card.demo} featured={card.featured} />
+            {/* ★ ภาพตัวอย่างที่ขยับ — บอกว่าเข้าไปแล้วเจออะไร โดยไม่ต้องอ่าน
+                ★★ mt-auto ดันไปชิดล่าง ทุกใบจึงมีเส้นฐานเดียวกันแม้คำอธิบายยาวไม่เท่ากัน */}
+            {card.full ? null : (
+              <span className="relative mt-auto block pt-4">
+                <CardDemo kind={card.demo} />
+              </span>
+            )}
 
             {/* ★ ลูกศรเลื่อนเข้ามาตอนชี้ — บอกว่ากดได้โดยไม่กินที่ตอนอ่านเฉย ๆ */}
             <span
