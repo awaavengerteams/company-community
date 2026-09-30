@@ -2071,3 +2071,58 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   }
   .stage-dim { display: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * ภาพตัวอย่างเล็ก ๆ ในการ์ดพอร์ทัล
+ *
+ * ★★★ บอกว่า "ข้างในมีอะไร" ด้วยการทำให้ดู ไม่ใช่ด้วยการเขียนเพิ่ม
+ *
+ *     การ์ดที่มีไอคอนกับคำอธิบายบอกได้แค่ชื่อระบบ ★ ภาพที่ขยับบอกว่า
+ *     เข้าไปแล้วจะได้เจออะไร ภายในหนึ่งวินาทีที่ตากวาดผ่าน
+ *     ★★ ทุกอันใช้สีประจำโมดูล (--tint) จึงไม่ต้องเขียน CSS ใหม่ทีละใบ
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* วงล้อจิ๋วที่หมุนช้า ๆ — ตัวอย่างของหน้าสุ่มอาหาร */
+.mini-wheel {
+  animation: mini-wheel 7s linear infinite;
+}
+
+@keyframes mini-wheel {
+  to { transform: rotate(360deg); }
+}
+
+/* จุดที่สว่างไล่กัน — ตัวอย่างของหน้ารวม */
+.dot-seq > * {
+  animation: dot-seq 2.4s ease-in-out infinite;
+}
+.dot-seq > *:nth-child(2) { animation-delay: 0.16s; }
+.dot-seq > *:nth-child(3) { animation-delay: 0.32s; }
+.dot-seq > *:nth-child(4) { animation-delay: 0.6s; }
+.dot-seq > *:nth-child(5) { animation-delay: 0.76s; }
+.dot-seq > *:nth-child(6) { animation-delay: 0.92s; }
+
+@keyframes dot-seq {
+  0%, 70%, 100% { opacity: 0.22; }
+  35%           { opacity: 1; }
+}
+
+/* ลูกเต๋าที่พลิกหน้า — ตัวอย่างของหน้าสุ่มและเกม */
+.dice-flip {
+  animation: dice-flip 3.2s cubic-bezier(0.34, 1.4, 0.4, 1) infinite;
+}
+
+@keyframes dice-flip {
+  0%, 55%, 100% { transform: rotate(0deg) scale(1); }
+  12%           { transform: rotate(-18deg) scale(1.08); }
+  28%           { transform: rotate(14deg) scale(1.04); }
+  42%           { transform: rotate(-6deg) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-wheel,
+  .dot-seq > *,
+  .dice-flip {
+    animation: none !important;
+  }
+  .dot-seq > * { opacity: 0.7; }
+}

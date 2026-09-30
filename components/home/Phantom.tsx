@@ -421,27 +421,48 @@ function headPath(p: FaceParams, skull: boolean): string {
   const cx = 110
   const top = p.eyeY - p.headH
   const w = p.headW
-  const chin = p.headH * (p.jawDrop ? 1.24 : 0.98)
+  const h = p.headH
+  /* ระยะจากแนวตาลงไปถึงปลายคาง */
+  const chin = h * (p.jawDrop ? 1.24 : 0.98)
+
+  /*
+   * ★★★ ห้ามเติมเครื่องหมายลบหน้าค่าที่อาจติดลบอยู่แล้ว
+   *
+   *     เดิมเขียน `-${chin - h * 0.88 - h * 0.3}` ★ พอวงเล็บให้ค่าติดลบ
+   *     ผลลัพธ์คือ "--9.8" ซึ่ง SVG อ่านไม่ออก แล้วทิ้ง path ทั้งเส้น
+   *     ★★ เบราว์เซอร์ไม่ได้พังและไม่มี error บนหน้า — มันแค่ไม่วาดหัวผีให้
+   *        เจอเพราะไปอ่าน console ไม่ใช่เพราะภาพผิด (ผีมีหมอกบังอยู่แล้ว)
+   *
+   * ★ ทางแก้: คำนวณเป็นตัวเลขให้เสร็จ แล้วปล่อยให้ตัวเลขพาเครื่องหมายของมันเอง
+   */
+  const n = (v: number) => (Math.round(v * 100) / 100).toString()
 
   if (skull) {
+    const shoulder = h * 0.86
+    const cheek = h * 0.58
+    const jaw = chin - shoulder - cheek
+
     return [
-      `M${cx} ${top}`,
-      `c${w * 0.62} 0 ${w} ${p.headH * 0.4} ${w} ${p.headH * 0.86}`,
-      `c0 ${p.headH * 0.28} -${w * 0.18} ${p.headH * 0.46} -${w * 0.3} ${p.headH * 0.58}`,
-      `c-${w * 0.04} ${chin - p.headH * 1.44} -${w * 0.26} ${chin - p.headH * 1.3} -${w * 0.7} ${chin - p.headH * 1.3}`,
-      `c-${w * 0.44} 0 -${w * 0.66} -${p.headH * 0.02} -${w * 0.7} -${chin - p.headH * 1.3}`,
-      `c-${w * 0.12} -${p.headH * 0.12} -${w * 0.3} -${p.headH * 0.3} -${w * 0.3} -${p.headH * 0.58}`,
-      `c0 -${p.headH * 0.46} ${w * 0.38} -${p.headH * 0.86} ${w} -${p.headH * 0.86}`,
+      `M${n(cx)} ${n(top)}`,
+      `c${n(w * 0.62)} 0 ${n(w)} ${n(h * 0.4)} ${n(w)} ${n(shoulder)}`,
+      `c0 ${n(h * 0.28)} ${n(-w * 0.18)} ${n(cheek * 0.8)} ${n(-w * 0.3)} ${n(cheek)}`,
+      `c${n(-w * 0.04)} ${n(jaw * 0.5)} ${n(-w * 0.26)} ${n(jaw)} ${n(-w * 0.7)} ${n(jaw)}`,
+      `c${n(-w * 0.44)} 0 ${n(-w * 0.66)} ${n(-jaw * 0.5)} ${n(-w * 0.7)} ${n(-jaw)}`,
+      `c${n(-w * 0.12)} ${n(-cheek * 0.3)} ${n(-w * 0.3)} ${n(-cheek * 0.7)} ${n(-w * 0.3)} ${n(-cheek)}`,
+      `c0 ${n(-h * 0.46)} ${n(w * 0.38)} ${n(-shoulder)} ${n(w)} ${n(-shoulder)}`,
       'z',
     ].join(' ')
   }
 
+  const widest = h * 0.88
+  const drop = chin - widest
+
   return [
-    `M${cx} ${top}`,
-    `c${w * 0.66} 0 ${w} ${p.headH * 0.44} ${w} ${p.headH * 0.88}`,
-    `c0 ${p.headH * 0.3} -${w * 0.34} ${chin - p.headH * 0.88} -${w} ${chin - p.headH * 0.88}`,
-    `c-${w * 0.66} 0 -${w} -${chin - p.headH * 0.88 - p.headH * 0.3} -${w} -${chin - p.headH * 0.88}`,
-    `c0 -${p.headH * 0.44} ${w * 0.34} -${p.headH * 0.88} ${w} -${p.headH * 0.88}`,
+    `M${n(cx)} ${n(top)}`,
+    `c${n(w * 0.66)} 0 ${n(w)} ${n(h * 0.44)} ${n(w)} ${n(widest)}`,
+    `c0 ${n(h * 0.3)} ${n(-w * 0.34)} ${n(drop)} ${n(-w)} ${n(drop)}`,
+    `c${n(-w * 0.66)} 0 ${n(-w)} ${n(-drop)} ${n(-w)} ${n(-drop - h * 0.3)}`,
+    `c0 ${n(-h * 0.44)} ${n(w * 0.34)} ${n(-widest)} ${n(w)} ${n(-widest)}`,
     'z',
   ].join(' ')
 }

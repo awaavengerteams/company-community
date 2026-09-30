@@ -33,6 +33,8 @@ type Card = {
   icon: string
   /** สีประจำโมดูล เป็น rgb triplet เพื่อส่งเข้า CSS variable ได้ตรง ๆ */
   tint: string
+  /** ภาพตัวอย่างเล็ก ๆ ที่บอกว่าข้างในมีอะไร */
+  demo: 'eq' | 'wheel' | 'split' | 'dice' | 'queue' | 'grid'
   featured?: boolean
   /** ★ ใบสุดท้ายกินเต็มแถว — ไม่งั้นมันจะเหลือใบเดียวโดด ๆ ในแถวที่สาม */
   full?: boolean
@@ -46,6 +48,7 @@ const CARDS: Card[] = [
     icon: 'M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
     tint: '255 0 51',
     featured: true,
+    demo: 'eq',
   },
   {
     href: '/office/food/random',
@@ -53,6 +56,7 @@ const CARDS: Card[] = [
     detailKey: 'hub.foodDetail',
     icon: 'M7 3v8a3 3 0 0 0 3 3v7M7 3v5M10 3v5M17 3c-1.5 2-2 4-2 6s.5 3 2 3v9',
     tint: '255 149 0',
+    demo: 'wheel',
   },
   {
     href: '/office/wallet/owed',
@@ -60,6 +64,7 @@ const CARDS: Card[] = [
     detailKey: 'hub.walletDetail',
     icon: 'M3 8a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2M3 8v9a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3M3 8h1m17 3h-4a2 2 0 0 0 0 4h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z',
     tint: '52 199 123',
+    demo: 'split',
   },
   {
     href: '/office/fun/name',
@@ -67,6 +72,7 @@ const CARDS: Card[] = [
     detailKey: 'hub.funDetail',
     icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 3',
     tint: '175 82 222',
+    demo: 'dice',
   },
   {
     href: '/office/market',
@@ -74,6 +80,7 @@ const CARDS: Card[] = [
     detailKey: 'hub.marketDetail',
     icon: 'M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 7V5a3 3 0 0 1 6 0v2',
     tint: '10 132 255',
+    demo: 'queue',
   },
   {
     href: '/office',
@@ -82,11 +89,146 @@ const CARDS: Card[] = [
     icon: 'M4 6h16M4 12h16M4 18h10',
     tint: '142 142 147',
     full: true,
+    demo: 'grid',
   },
 ]
 
 /** แถบอีควอไลเซอร์ในการ์ดห้องเพลง — ค่าคงที่ ห้ามสุ่มตอน render */
 const EQ = [40, 72, 96, 55, 88, 34, 66, 100, 48, 80, 60, 92]
+
+/**
+ * ภาพตัวอย่างในการ์ด
+ *
+ * ★★ ทุกอันใช้ rgb(var(--tint)) ที่การ์ดส่งมา จึงเป็นสีประจำโมดูลเองอัตโนมัติ
+ *    ★ ไม่มีการฮาร์ดโค้ดสีในนี้แม้แต่จุดเดียว — เพิ่มโมดูลใหม่ก็ได้สีถูกทันที
+ *
+ * ★★★ เป็น aria-hidden ทั้งหมด — มันเล่าเรื่องเดียวกับคำอธิบายข้างบน
+ *      โปรแกรมอ่านหน้าจอไม่ควรต้องฟังซ้ำเป็นชิ้นส่วนที่ไม่มีความหมาย
+ */
+function CardDemo({
+  kind,
+  featured,
+}: {
+  kind: Card['demo']
+  featured?: boolean
+}) {
+  if (kind === 'eq') {
+    return (
+      <span
+        aria-hidden="true"
+        className={cn('relative flex items-end gap-[3px]', featured ? 'mt-5 h-8' : 'mt-4 h-6')}
+        style={{
+          maskImage: 'linear-gradient(90deg, #000 55%, transparent)',
+          WebkitMaskImage: 'linear-gradient(90deg, #000 55%, transparent)',
+        }}
+      >
+        {EQ.map((height, index) => (
+          <span
+            key={index}
+            className="eq-bar w-[3px] rounded-full bg-[rgb(var(--tint)/0.6)]"
+            style={{
+              height: `${height}%`,
+              animationDuration: `${0.8 + (index % 5) * 0.12}s`,
+              animationDelay: `${(index % 4) * 0.09}s`,
+            }}
+          />
+        ))}
+      </span>
+    )
+  }
+
+  if (kind === 'wheel') {
+    /* ★ วงล้อจิ๋วหมุนช้า ๆ พร้อมเข็มที่นิ่ง — ย่อหน้าสุ่มอาหารลงมาทั้งหน้า */
+    return (
+      <span aria-hidden="true" className="relative mt-4 block size-9">
+        <span
+          className="mini-wheel absolute inset-0 rounded-full"
+          style={{
+            background:
+              'conic-gradient(rgb(var(--tint)) 0deg 60deg, rgb(var(--tint)/0.45) 60deg 120deg, rgb(var(--tint)/0.8) 120deg 180deg, rgb(var(--tint)/0.35) 180deg 240deg, rgb(var(--tint)/0.65) 240deg 300deg, rgb(var(--tint)/0.25) 300deg 360deg)',
+          }}
+        />
+        <span className="absolute inset-[30%] rounded-full bg-elevated" />
+        <span className="absolute -top-1 left-1/2 size-0 -translate-x-1/2 border-x-4 border-t-[7px] border-x-transparent border-t-[rgb(var(--tint))]" />
+      </span>
+    )
+  }
+
+  if (kind === 'split') {
+    /* ★ ยอดเดียวแตกเป็นสามก้อน — ภาพของการหารบิล */
+    return (
+      <span aria-hidden="true" className="demo-split mt-4 flex items-center gap-1.5">
+        {['400', '400', '400'].map((amount, i) => (
+          <span
+            key={i}
+            className="rounded-md px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
+            style={{
+              background: 'rgb(var(--tint) / 0.16)',
+              color: 'rgb(var(--tint))',
+            }}
+          >
+            ฿{amount}
+          </span>
+        ))}
+      </span>
+    )
+  }
+
+  if (kind === 'dice') {
+    /* ★ ลูกเต๋าพลิกไปมา — ภาพของการสุ่ม */
+    return (
+      <span aria-hidden="true" className="mt-4 flex items-center gap-2">
+        <span
+          className="dice-flip grid size-8 place-items-center rounded-lg"
+          style={{ background: 'rgb(var(--tint) / 0.16)' }}
+        >
+          <span className="grid grid-cols-2 gap-[3px]">
+            {[0, 1, 2, 3].map((i) => (
+              <span key={i} className="size-1 rounded-full bg-[rgb(var(--tint))]" />
+            ))}
+          </span>
+        </span>
+        <span className="flex gap-1">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="h-1.5 w-5 rounded-full"
+              style={{ background: `rgb(var(--tint) / ${0.55 - i * 0.15})` }}
+            />
+          ))}
+        </span>
+      </span>
+    )
+  }
+
+  if (kind === 'queue') {
+    /* ★ ประกาศหนึ่งชิ้นกับป้ายคิวที่เด้ง — ภาพของตลาดนัด */
+    return (
+      <span aria-hidden="true" className="mt-4 flex items-center gap-2">
+        <span className="size-8 rounded-lg" style={{ background: 'rgb(var(--tint) / 0.2)' }} />
+        <span className="flex flex-col gap-1">
+          <span className="h-1.5 w-14 rounded-full bg-line" />
+          <span className="h-1.5 w-9 rounded-full bg-line/60" />
+        </span>
+        <span
+          className="demo-pulse rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+          style={{ background: 'rgb(var(--tint))', color: 'var(--color-page)' }}
+        >
+          +1
+        </span>
+      </span>
+    )
+  }
+
+  /* ★ ตารางจุดที่สว่างไล่กัน — ภาพของหน้ารวมทุกกิจกรรม */
+  return (
+    <span aria-hidden="true" className="dot-seq mt-4 grid w-fit grid-cols-3 gap-1.5">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <span key={i} className="size-2 rounded-[3px] bg-[rgb(var(--tint))]" />
+      ))}
+    </span>
+  )
+}
 
 export async function SystemHub() {
   const { t } = await getT()
@@ -154,29 +296,8 @@ export async function SystemHub() {
               </p>
             </span>
 
-            {/* ★ การ์ดเด่นได้คลื่นเสียงเต้น — บอกว่า "ที่นี่มีเสียง" โดยไม่ต้องอ่าน */}
-            {card.featured ? (
-              <span
-                aria-hidden="true"
-                className="relative mt-5 flex h-8 items-end gap-[3px]"
-                style={{
-                  maskImage: 'linear-gradient(90deg, #000 55%, transparent)',
-                  WebkitMaskImage: 'linear-gradient(90deg, #000 55%, transparent)',
-                }}
-              >
-                {EQ.map((height, index) => (
-                  <span
-                    key={index}
-                    className="eq-bar w-[3px] rounded-full bg-[rgb(var(--tint)/0.55)]"
-                    style={{
-                      height: `${height}%`,
-                      animationDuration: `${0.8 + (index % 5) * 0.12}s`,
-                      animationDelay: `${(index % 4) * 0.09}s`,
-                    }}
-                  />
-                ))}
-              </span>
-            ) : null}
+            {/* ★ ภาพตัวอย่างที่ขยับ — บอกว่าเข้าไปแล้วเจออะไร โดยไม่ต้องอ่าน */}
+            <CardDemo kind={card.demo} featured={card.featured} />
 
             {/* ★ ลูกศรเลื่อนเข้ามาตอนชี้ — บอกว่ากดได้โดยไม่กินที่ตอนอ่านเฉย ๆ */}
             <span
