@@ -20,8 +20,15 @@ import { playTick } from '@/lib/office/sound'
  *    ระยะทางที่ต้องหมุนคำนวณย้อนจาก target ไม่ใช่หมุนไปเรื่อยแล้วดูว่าหยุดตรงไหน
  */
 
-/** ความสูงของช่องหนึ่งหลัก (px) — ต้องตรงกับคลาสด้านล่าง */
-const H = 72
+/**
+ * ความสูงของช่องหนึ่งหลัก (px)
+ *
+ * ★★★ ค่านี้ต้องตรงกับ h-[...] ของวงล้อด้านล่างเป๊ะ ๆ
+ *     ★ ระยะเลื่อนทั้งหมดคำนวณจากมัน — ถ้าเปลี่ยนความสูงใน class
+ *       แล้วลืมแก้ตรงนี้ วงล้อจะหยุดคร่อมระหว่างสองเลข
+ *       ★★ และจะไม่มี error อะไรเตือนเลย เห็นได้จากตาอย่างเดียว
+ */
+const H = 104
 
 /** ★ แถบมีเลข 0-9 สองรอบ เพื่อให้เลื่อนวนได้โดยไม่เห็นรอยต่อ */
 const STRIP = [...Array(20).keys()].map((n) => n % 10)
@@ -147,7 +154,7 @@ export function SlotReels({
   }, [count])
 
   return (
-    <div className="flex justify-center gap-1.5 sm:gap-2">
+    <div className="flex justify-center gap-2 sm:gap-2.5">
       {Array.from({ length: count }, (_, i) => {
         const cycle = 10 * H
         const shift = ((offsets[i] ?? 0) % cycle + cycle) % cycle
@@ -156,7 +163,10 @@ export function SlotReels({
           <div
             key={i}
             className={cn(
-              'slot-reel h-[72px] w-14 sm:w-16',
+              /* ★ ใหญ่ขึ้นจาก 72px เป็น 104px — เดิมเล็กจนต้องเอาตัวเลขไปโชว์ซ้ำ
+                 ใต้เครื่องอีกชุด ★★ ซึ่งทำให้คนเห็นเลขเดียวกันสองที่พร้อมกัน
+                 แล้วไม่รู้ว่าอันไหนคือผลจริง */
+              'slot-reel h-[104px] w-[72px] sm:w-[84px]',
               locked.includes(i) && !spinning && 'slot-locked',
             )}
           >
@@ -170,7 +180,7 @@ export function SlotReels({
               {STRIP.map((n, k) => (
                 <span
                   key={k}
-                  className="grid h-[72px] place-items-center font-mono text-[34px] font-bold tabular-nums text-ink"
+                  className="grid h-[104px] place-items-center font-mono text-[52px] font-bold tabular-nums text-ink"
                 >
                   {n}
                 </span>

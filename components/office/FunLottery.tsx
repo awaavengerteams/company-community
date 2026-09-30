@@ -110,15 +110,6 @@ export function FunLottery() {
   return (
     <div className="max-w-2xl py-2">
 
-      {/* ── นับถอยหลัง (FR-C11) ─────────────────────────────────── */}
-      <p className="mt-1 text-sm text-ink-soft">
-        {daysLeft === null
-          ? ot('fun.lottery.noDraw')
-          : daysLeft <= 0
-            ? ot('fun.lottery.today')
-            : ot('fun.lottery.countdown', { days: daysLeft })}
-      </p>
-
       {/* ── สล็อตแมชชีน ─────────────────────────────────────────── */}
       {/*
         * ★★ ตัวเครื่องมีสามชั้นที่ทำงานคนละหน้าที่
@@ -140,18 +131,43 @@ export function FunLottery() {
           className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-b from-accent/[0.06] to-transparent"
         />
 
-        <div className="relative">
-          <SlotReels target={target} spinning={spinning} onDone={finish} />
+        {/*
+          * ★★★ ป้ายไฟหัวตู้ — ที่อยู่ของ "งวดถัดไป"
+          *
+          *     ★ เดิมนับถอยหลังเป็นข้อความสีเทาบรรทัดเดียวลอยเหนือตู้
+          *       ★★ ซึ่งเป็นข้อมูลที่สำคัญที่สุดในหน้า (จดเลขไปทำไมถ้าไม่รู้ว่าออกวันไหน)
+          *          แต่ถูกวางเหมือนคำอธิบายประกอบ
+          *     ★ ย้ายมาอยู่บนตู้ในกรอบไฟวิ่ง — ตู้สล็อตจริงทุกตู้มีป้ายตรงนี้
+          *       และตาจะไปตกที่มันก่อนเสมอเพราะมันคือจุดสูงสุดของเครื่อง
+          */}
+        <div className="lotto-marquee relative mx-auto -mt-1 mb-5 w-fit rounded-full px-5 py-1.5">
+          <span className="lotto-lights" aria-hidden="true" />
+          <span className="relative text-[12px] font-semibold tracking-wide text-ink">
+            {daysLeft === null
+              ? ot('fun.lottery.noDraw')
+              : daysLeft <= 0
+                ? ot('fun.lottery.today')
+                : ot('fun.lottery.countdown', { days: daysLeft })}
+          </span>
+        </div>
+
+        {/*
+          * ★★ กรอบกระจกครอบวงล้อ พร้อมเส้นจ่ายเงินพาดกลาง
+          *    ★ วงล้อที่ลอยอยู่บนพื้นเปล่าอ่านเป็น "ตัวเลขสามกล่อง"
+          *      ★★ กรอบกับเส้นกลางคือสิ่งที่ทำให้สมองอ่านว่า "เครื่องสล็อต"
+          *         ซึ่งพาความคาดหวังเรื่องการลุ้นมาด้วยทั้งชุดโดยไม่ต้องอธิบาย
+          */}
+        <div className="lotto-glass relative mx-auto w-fit rounded-2xl px-4 py-4">
+          <span
+            aria-hidden="true"
+            className={cn('lotto-payline', spinning && 'is-live')}
+          />
+          <div className="relative">
+            <SlotReels target={target} spinning={spinning} onDone={finish} />
+          </div>
         </div>
 
         {flash ? <span aria-hidden="true" className="slot-flash rounded-3xl" /> : null}
-
-        {/* ★ ตัวเลขที่ได้ แสดงเป็นพาดหัวไล่สีอีกชั้น — วงล้ออ่านยากตอนตัวเล็ก */}
-        {result && !spinning ? (
-          <p className="reveal-scale mt-5 text-center text-[34px] font-bold tracking-[0.12em] sm:text-[44px]">
-            <span className="text-aurora shimmer-text">{result}</span>
-          </p>
-        ) : null}
 
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           {DIGIT_OPTIONS.map((n) => (
@@ -169,9 +185,20 @@ export function FunLottery() {
             </button>
           ))}
 
-          <Button variant="primary" loading={spinning} onClick={spin}>
+          {/*
+            * ★★ ปุ่มสุ่มเป็นปุ่มกลมนูนของตู้ ไม่ใช่ปุ่มสี่เหลี่ยมเหมือนปุ่มอื่นในเว็บ
+            *    ★ มันคือการกระทำเดียวที่คนเข้ามาหน้านี้เพื่อทำ — ต้องหาเจอ
+            *      จากหางตาโดยไม่ต้องอ่าน ★★ ปุ่มที่หน้าตาเหมือนปุ่มอื่นทุกใบ
+            *      คือปุ่มที่ต้องอ่านก่อนถึงจะรู้ว่าใช่
+            */}
+          <button
+            type="button"
+            disabled={spinning}
+            onClick={spin}
+            className={cn('lotto-button', spinning && 'is-spinning')}
+          >
             {ot('fun.lottery.spin')}
-          </Button>
+          </button>
 
           <button
             type="button"
