@@ -1277,6 +1277,25 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   100% { transform: translate3d(0, -96px, 0); }
 }
 
+/*
+ * ── วงล้อเล็กบนการ์ดพอร์ทัล: หมุนแล้วหยุดค้าง ─────────────────────────────
+ *
+ * ★★ ต้องมีคลาสของตัวเอง ใช้ .demo-roll ไม่ได้
+ *    ★ .demo-roll เลื่อนขึ้น 96px เพราะออกแบบมาสำหรับ "แถบชื่อที่ไหลในกล่องที่ครอบไว้"
+ *      ★★ พอเอามาใส่วงกลมที่ไม่มีกล่องครอบ มันเลยลอยขึ้นไปทับชื่อการ์ด
+ *         — เห็นตอนถ่ายภาพหน้าจอ ไม่มี error อะไรเตือนเลย
+ * ★ อันนี้หมุนอยู่กับที่ แล้วค้างช่วงท้ายให้เหมือนวงล้อที่หยุดแล้ว
+ */
+.portal-spin {
+  animation: portal-spin 5.5s cubic-bezier(0.3, 0, 0.15, 1) infinite;
+}
+
+@keyframes portal-spin {
+  0%   { transform: rotate(0deg); }
+  62%  { transform: rotate(776deg); }
+  100% { transform: rotate(776deg); }
+}
+
 /* ── หารบิล: ยอดย่อยโผล่ทีละใบแล้ววนใหม่ ──────────────────────────────── */
 .demo-split > * {
   animation: demo-fade-up 4.5s ease-in-out infinite both;
