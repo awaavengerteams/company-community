@@ -439,6 +439,7 @@ export const vi: Dict = {
   "valid.needTwoTeams": "ต้องมีอย่างน้อย 2 ทีมถึงจะสร้างสายได้",
   "valid.keywordLen": "คำค้นต้องยาว 2–40 ตัวอักษร",
   "valid.needTwoOptions": "ต้องมีตัวเลือกอย่างน้อย 2 อย่าง",
+  "valid.fileTooBig": "File is larger than 20 MB",
   "valid.noPriceForBill": "ประกาศนี้ไม่มีราคา จึงสร้างรายการค้างจ่ายไม่ได้",
   "srvErr.needQuery": "Vui lòng nhập từ khoá tìm kiếm",
   "srvErr.badOrigin": "Yêu cầu đến từ nguồn không được phép",

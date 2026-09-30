@@ -130,6 +130,8 @@ export const LIMITS = {
    *   ★★ ลิมิตที่ต่ำเกินไปในระบบแชทไม่ได้กันสแปม แต่กันคนที่คุยเก่ง
    */
   chatAction: { limit: 120, windowSeconds: 60 },
+  /** อัปโหลดไฟล์ในแชท — หนักกว่าส่งข้อความมาก จึงคุมแยก */
+  chatUpload: { limit: 30, windowSeconds: 300 },
 } as const
 
 export type RateLimitName = keyof typeof LIMITS

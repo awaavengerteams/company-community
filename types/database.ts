@@ -837,8 +837,11 @@ export type Database = {
           title: string | null
           created_by: string
           pair_key: string | null
+          avatar_path: string | null
+          pinned_message_id: string | null
           last_message_at: string
           created_at: string
+          updated_at: string
         }
         Insert: { kind?: 'DM' | 'GROUP'; title?: string | null; created_by: string; pair_key?: string | null }
         Update: { title?: string | null; last_message_at?: string }
@@ -851,6 +854,10 @@ export type Database = {
           user_id: string
           last_read_at: string
           muted: boolean
+          role: 'OWNER' | 'MEMBER'
+          pinned: boolean
+          hidden: boolean
+          forced_unread: boolean
           joined_at: string
         }
         Insert: { room_id: string; user_id: string }
@@ -864,6 +871,14 @@ export type Database = {
           room_id: string
           sender_id: string
           text: string
+          kind: 'TEXT' | 'IMAGE' | 'FILE' | 'AUDIO' | 'STICKER' | 'SYSTEM'
+          file_path: string | null
+          file_name: string | null
+          file_size: number | null
+          mime: string | null
+          reply_to: string | null
+          edited_at: string | null
+          mentions: string[]
           deleted_at: string | null
           created_at: string
         }
@@ -1403,6 +1418,44 @@ export type Database = {
       office_home_summary: { Args: { p_actor: string }; Returns: Json }
 
       open_office_dm: { Args: { p_actor: string; p_other: string }; Returns: string }
+      update_office_group: {
+        Args: { p_actor: string; p_room: string; p_title?: string | null; p_avatar?: string | null }
+        Returns: void
+      }
+      add_office_members: {
+        Args: { p_actor: string; p_room: string; p_members: string[] }
+        Returns: number
+      }
+      remove_office_member: {
+        Args: { p_actor: string; p_room: string; p_member: string }
+        Returns: void
+      }
+      send_office_chat_v2: {
+        Args: {
+          p_actor: string
+          p_room: string
+          p_text: string
+          p_kind?: string
+          p_file_path?: string | null
+          p_file_name?: string | null
+          p_file_size?: number | null
+          p_mime?: string | null
+          p_reply_to?: string | null
+          p_mentions?: string[]
+        }
+        Returns: string
+      }
+      edit_office_chat: { Args: { p_actor: string; p_msg: string; p_text: string }; Returns: void }
+      delete_office_chat: { Args: { p_actor: string; p_msg: string }; Returns: void }
+      pin_office_message: { Args: { p_actor: string; p_room: string; p_msg: string }; Returns: void }
+      set_office_chat_pref: {
+        Args: { p_actor: string; p_room: string; p_field: string; p_value: boolean }
+        Returns: void
+      }
+      search_office_chat: {
+        Args: { p_actor: string; p_query: string; p_room?: string | null }
+        Returns: Json
+      }
       create_office_group: {
         Args: { p_actor: string; p_title: string; p_members: string[] }
         Returns: string
