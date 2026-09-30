@@ -16,6 +16,13 @@ import type { OfficeKey } from '@/lib/i18n/office'
 export type NavChild = {
   href: string
   labelKey: OfficeKey
+  /**
+   * ไอคอนของเมนูย่อย
+   *
+   * ★ ไอคอนช่วยให้ตาเล็งถูกเร็วกว่าอ่านตัวอักษร โดยเฉพาะเมนูที่ชื่อยาวใกล้กัน
+   *   ("สร้างรายการเงิน" กับ "สรุปค่าข้าว") ★ ตากวาดเจอรูปก่อนเสมอ
+   */
+  icon: string
 }
 
 export type NavSection = {
@@ -54,8 +61,8 @@ export const OFFICE_NAV: NavSection[] = [
     labelKey: 'nav.food',
     icon: ICONS.food,
     children: [
-      { href: '/office/food/random', labelKey: 'nav.food.random' },
-      { href: '/office/food/picks', labelKey: 'nav.food.picks' },
+      { href: '/office/food/random', labelKey: 'nav.food.random' , icon: 'M12 3a9 9 0 1 0 9 9M12 3v9l6.4 6.4M12 3a9 9 0 0 1 9 9' },
+      { href: '/office/food/picks', labelKey: 'nav.food.picks' , icon: 'M12 4l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 9.7l5.4-.8z' },
     ],
   },
   {
@@ -63,10 +70,10 @@ export const OFFICE_NAV: NavSection[] = [
     labelKey: 'nav.wallet',
     icon: ICONS.wallet,
     children: [
-      { href: '/office/wallet/owed', labelKey: 'nav.wallet.owed' },
-      { href: '/office/wallet/create', labelKey: 'nav.wallet.create' },
-      { href: '/office/wallet/summary', labelKey: 'nav.wallet.summary' },
-      { href: '/office/wallet/qr', labelKey: 'top.qr' },
+      { href: '/office/wallet/owed', labelKey: 'nav.wallet.owed' , icon: 'M12 2v20M17 6.5C17 4.6 14.8 4 12 4S7 4.8 7 7s2.6 2.8 5 3.3 5 1.3 5 3.7-2.2 3-5 3-5-.9-5-2.8' },
+      { href: '/office/wallet/create', labelKey: 'nav.wallet.create' , icon: 'M12 5v14M5 12h14' },
+      { href: '/office/wallet/summary', labelKey: 'nav.wallet.summary' , icon: 'M4 20V10M10 20V4M16 20v-7M22 20H2' },
+      { href: '/office/wallet/qr', labelKey: 'top.qr' , icon: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z' },
     ],
   },
   {
@@ -74,11 +81,11 @@ export const OFFICE_NAV: NavSection[] = [
     labelKey: 'nav.fun',
     icon: ICONS.fun,
     children: [
-      { href: '/office/fun/name', labelKey: 'nav.fun.name' },
-      { href: '/office/fun/team', labelKey: 'nav.fun.team' },
-      { href: '/office/fun/lottery', labelKey: 'nav.fun.lottery' },
-      { href: '/office/fun/cup', labelKey: 'fun.cup.title' },
-      { href: '/office/fun/room', labelKey: 'room.title' },
+      { href: '/office/fun/name', labelKey: 'nav.fun.name' , icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 5v4l3 2M12 3v3' },
+      { href: '/office/fun/team', labelKey: 'nav.fun.team' , icon: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M16 20a6 6 0 0 1 6-6' },
+      { href: '/office/fun/lottery', labelKey: 'nav.fun.lottery' , icon: 'M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4zM9 8v8' },
+      { href: '/office/fun/cup', labelKey: 'fun.cup.title' , icon: 'M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v2a3 3 0 0 0 3 3M16 6h3v2a3 3 0 0 1-3 3M10 17h4l1 3H9z' },
+      { href: '/office/fun/room', labelKey: 'room.title' , icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 9h.01M16 9h.01M8 15c1.5 1.3 6.5 1.3 8 0' },
     ],
   },
   {
@@ -86,10 +93,10 @@ export const OFFICE_NAV: NavSection[] = [
     labelKey: 'nav.market',
     icon: ICONS.market,
     children: [
-      { href: '/office/market', labelKey: 'nav.market.all' },
-      { href: '/office/market/post', labelKey: 'nav.market.post' },
-      { href: '/office/market/mine', labelKey: 'nav.market.mine' },
-      { href: '/office/market/chat', labelKey: 'market.chat.title' },
+      { href: '/office/market', labelKey: 'nav.market.all' , icon: 'M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 7V5a3 3 0 0 1 6 0v2' },
+      { href: '/office/market/post', labelKey: 'nav.market.post' , icon: 'M12 5v14M5 12h14' },
+      { href: '/office/market/mine', labelKey: 'nav.market.mine' , icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 8a7 7 0 0 1 14 0' },
+      { href: '/office/market/chat', labelKey: 'market.chat.title' , icon: 'M20 4H4a1 1 0 0 0-1 1v12l4-3h13a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z' },
     ],
   },
   {
@@ -98,10 +105,10 @@ export const OFFICE_NAV: NavSection[] = [
     icon: ICONS.admin,
     adminOnly: true,
     children: [
-      { href: '/office/admin/dashboard', labelKey: 'dash.title' },
-      { href: '/office/admin/codes', labelKey: 'nav.admin.codes' },
-      { href: '/office/admin/users', labelKey: 'nav.admin.users' },
-      { href: '/office/admin/settings', labelKey: 'nav.admin.settings' },
+      { href: '/office/admin/dashboard', labelKey: 'dash.title' , icon: 'M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 8h6V4h-6z' },
+      { href: '/office/admin/codes', labelKey: 'nav.admin.codes' , icon: 'M14 7l6 6-6 6M4 13h10M7 4v16' },
+      { href: '/office/admin/users', labelKey: 'nav.admin.users' , icon: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M17 8l2 2 4-4' },
+      { href: '/office/admin/settings', labelKey: 'nav.admin.settings' , icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.5 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1.6a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 3.3 7.5a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V1.6a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7h.1a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.1z' },
     ],
   },
 ]

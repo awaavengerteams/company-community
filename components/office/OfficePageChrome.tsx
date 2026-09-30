@@ -67,13 +67,17 @@ export function OfficePageChrome({ isAdmin }: { isAdmin: boolean }) {
 
         {siblings.length > 1 ? (
           /*
-           * ★ เลื่อนแนวนอนได้บนจอแคบ ไม่ตัดบรรทัด
-           *   ★★ ชิปที่ตัดบรรทัดจะทำให้ความสูงของหัวหน้าเปลี่ยนตามความยาวชื่อ
-           *      แล้วเนื้อหาข้างล่างจะกระโดดเวลาเปลี่ยนหน้าในหมวดเดียวกัน
+           * ★★ แท็บเลื่อนแนวนอนได้บนจอแคบ ไม่ตัดบรรทัด
+           *
+           *    ชิปที่ตัดบรรทัดทำให้ความสูงของหัวหน้าเปลี่ยนตามความยาวชื่อ
+           *    ★ แล้วเนื้อหาข้างล่างจะกระโดดเวลาเปลี่ยนหน้าในหมวดเดียวกัน
+           *
+           * ★★★ มีไอคอนทุกอัน — ตากวาดเจอรูปก่อนอ่านตัวอักษรเสมอ
+           *     โดยเฉพาะเมนูที่ชื่อยาวใกล้เคียงกัน ("สร้างรายการเงิน" กับ "สรุปค่าข้าว")
            */
           <nav
             aria-label={ot(meta.titleKey)}
-            className="hero-in -mx-4 mt-5 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="hero-in -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {siblings.map((child) => {
               const on = active === child.href
@@ -83,12 +87,35 @@ export function OfficePageChrome({ isAdmin }: { isAdmin: boolean }) {
                   href={child.href}
                   aria-current={on ? 'page' : undefined}
                   className={cn(
-                    'inline-flex h-9 shrink-0 items-center rounded-full px-4 text-sm transition-colors',
+                    'group relative inline-flex h-11 shrink-0 items-center gap-2 rounded-full ps-3 pe-4',
+                    'text-sm transition-all duration-300',
                     on
-                      ? 'bg-accent font-medium text-accent-ink'
-                      : 'border border-line bg-page/50 text-ink-soft backdrop-blur-md hover:border-line-strong hover:text-ink',
+                      ? /* ★ แท็บที่เปิดอยู่: พื้นสีเน้น + เงาเรือง — เด่นแบบที่ไม่ต้องหา */
+                        'bg-accent font-medium text-accent-ink shadow-[0_10px_28px_-12px] shadow-accent/70'
+                      : /* ★ แท็บอื่น: กระจกจาง ๆ ยกขึ้นเล็กน้อยตอนชี้ */
+                        'border border-line bg-page/50 text-ink-soft backdrop-blur-md hover:-translate-y-0.5 hover:border-line-strong hover:bg-surface hover:text-ink',
                   )}
                 >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'grid size-7 shrink-0 place-items-center rounded-full transition-colors',
+                      on ? 'bg-accent-ink/15' : 'bg-surface group-hover:bg-elevated',
+                    )}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.9"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-4"
+                    >
+                      <path d={child.icon} />
+                    </svg>
+                  </span>
+
                   {ot(child.labelKey)}
                 </Link>
               )

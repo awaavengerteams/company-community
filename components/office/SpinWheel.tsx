@@ -26,8 +26,14 @@ import { Confetti } from './Confetti'
 
 export type WheelSlot = { id: string; label: string }
 
-/** ★ สีของช่อง — ไล่โทนจากสีแบรนด์ ไม่ใช่สีรุ้งที่ตีกับธีมทั้งเว็บ */
-const SEGMENT_TINTS = [
+/**
+ * สีของช่อง — ไล่โทนจากสีแบรนด์ ไม่ใช่สีรุ้งที่ตีกับธีมทั้งเว็บ
+ *
+ * ★ export ออกไปให้หน้าที่ใช้วงล้อเอาไปทาสีชิปรายชื่อได้ด้วย
+ *   ★★ ชิปกับช่องในวงล้อที่สีตรงกัน ทำให้คนโยงได้ทันทีว่าชื่อไหนอยู่ช่องไหน
+ *      ถ้าสีไม่ตรง วงล้อจะกลายเป็นของประดับที่ไม่เกี่ยวกับรายชื่อข้าง ๆ
+ */
+export const SEGMENT_TINTS = [
   '255 0 51',
   '255 84 66',
   '255 149 0',
@@ -42,14 +48,39 @@ const SIZE = 320
 const R = 148
 const HUB = 46
 
+/**
+ * ปัดพิกัดให้เหลือ 3 ตำแหน่ง
+ *
+ * ★★★ ไม่ใช่เรื่องความสวย แต่เป็นเรื่อง hydration
+ *
+ *     Math.cos/Math.sin ไม่ได้ถูกบังคับให้ปัดเศษเหมือนกันทุก engine
+ *     ★ Node ที่เรนเดอร์ฝั่ง server ได้ 45.684646700454124
+ *       ส่วน Chrome ฝั่ง client ได้ 45.68464670045414 — ต่างกันที่หลักสุดท้าย
+ *     ★★ React เทียบสตริงแล้วเจอว่าไม่ตรง จึงฟ้อง hydration mismatch
+ *        และทิ้งต้นไม้ทั้งก้อนไปวาดใหม่ ★ ซึ่งมองด้วยตาไม่เห็นเลย
+ *        เจอเพราะไปอ่าน console ไม่ใช่เพราะภาพผิด
+ *
+ * ★ ปัดที่ 3 ตำแหน่งเท่ากันทั้งสองฝั่ง = ได้สตริงเดียวกันเสมอ
+ *   และละเอียดเกินพอสำหรับวงล้อขนาด 320 หน่วย
+ */
+const r3 = (n: number) => Math.round(n * 1000) / 1000
+
 export function SpinWheel({
   slots,
   spinLabel,
   onResult,
+  preview = false,
 }: {
   slots: WheelSlot[]
   spinLabel: string
   onResult?: (slot: WheelSlot) => void
+  /**
+   * โหมดตัวอย่าง — วาดวงล้อจาง ๆ กดไม่ได้
+   *
+   * ★ ใช้ตอนยังไม่มีรายชื่อ แทนที่จะโชว์กล่องข้อความว่าง ๆ
+   *   ★★ คนเห็นรูปร่างของสิ่งที่กำลังจะได้ก่อนลงมือ — จูงใจกว่าคำอธิบายมาก
+   */
+  preview?: boolean
 }) {
   const [angle, setAngle] = useState(0)
   const [phase, setPhase] = useState<'idle' | 'spinning' | 'done'>('idle')
@@ -71,7 +102,7 @@ export function SpinWheel({
   useEffect(() => stop, [stop])
 
   const spin = useCallback(() => {
-    if (phase === 'spinning' || slots.length < 2) return
+    if (preview || phase === 'spinning' || slots.length < 2) return
 
     /*
      * ★★★ ผลถูกตัดสินตรงนี้ ก่อนเฟรมแรกของแอนิเมชัน (FR-X05)
@@ -138,14 +169,14 @@ export function SpinWheel({
     }
 
     frameRef.current = requestAnimationFrame(tick)
-  }, [angle, onResult, phase, slots])
+  }, [angle, onResult, phase, preview, slots])
 
   if (slots.length < 2) return null
 
   const seg = 360 / slots.length
 
   return (
-    <div className="relative flex flex-col items-center gap-6">
+    <div className={cn('relative flex flex-col items-center gap-6', preview && 'opacity-45 saturate-50')}>
       {/* ── วงล้อ ──────────────────────────────────────────────── */}
       <div className="relative">
         {/* ★ แสงใต้วงล้อ ทำให้มันลอยออกจากพื้นหลัง ไม่ใช่แปะติด */}
@@ -174,8 +205,22 @@ export function SpinWheel({
             </filter>
           </defs>
 
-          {/* ขอบนอก */}
-          <circle cx={SIZE / 2} cy={SIZE / 2} r={R + 8} fill="rgb(var(--color-line-rgb, 60 60 60) / 0.25)" />
+          {/*
+            * ขอบนอก
+            *
+            * ★★ ใช้ var() ตรง ๆ ใน fill ไม่ใช่ยัดไว้ใน rgb(...)
+            *
+            *    เดิมเขียน fill="rgb(var(--color-line-rgb, 60 60 60) / 0.25)" ซึ่ง
+            *    ★ ตัวแปรนั้นไม่มีอยู่จริงในธีม และรูปแบบนั้นก็ไม่ถูกต้อง
+            *      เบราว์เซอร์จึงทำให้ค่าใน DOM ต่างจากที่ server ส่งมา
+            *      → React ฟ้อง hydration mismatch (เจอจาก console ไม่ใช่จากตาดู)
+            */}
+          <circle
+            cx={SIZE / 2}
+            cy={SIZE / 2}
+            r={R + 8}
+            className="fill-[var(--color-line)] opacity-30"
+          />
 
           <g transform={`rotate(${angle} ${SIZE / 2} ${SIZE / 2})`} filter="url(#wheel-shadow)">
             {slots.map((slot, i) => {
@@ -188,8 +233,8 @@ export function SpinWheel({
 
               const d = [
                 `M${cx} ${cy}`,
-                `L${cx + R * Math.cos(a0)} ${cy + R * Math.sin(a0)}`,
-                `A${R} ${R} 0 ${large} 1 ${cx + R * Math.cos(a1)} ${cy + R * Math.sin(a1)}`,
+                `L${r3(cx + R * Math.cos(a0))} ${r3(cy + R * Math.sin(a0))}`,
+                `A${R} ${R} 0 ${large} 1 ${r3(cx + R * Math.cos(a1))} ${r3(cy + R * Math.sin(a1))}`,
                 'z',
               ].join(' ')
 
@@ -203,8 +248,8 @@ export function SpinWheel({
                */
               const mid = i * seg + seg / 2 - 90
               const flip = mid > 90 || mid < -90
-              const tx = cx + (R - 16) * Math.cos((mid * Math.PI) / 180)
-              const ty = cy + (R - 16) * Math.sin((mid * Math.PI) / 180)
+              const tx = r3(cx + (R - 16) * Math.cos((mid * Math.PI) / 180))
+              const ty = r3(cy + (R - 16) * Math.sin((mid * Math.PI) / 180))
 
               return (
                 <g key={slot.id}>
@@ -262,6 +307,7 @@ export function SpinWheel({
       </div>
 
       {/* ── ปุ่ม ───────────────────────────────────────────────── */}
+      {preview ? null : (
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -302,6 +348,7 @@ export function SpinWheel({
           </svg>
         </button>
       </div>
+      )}
 
       {phase === 'done' ? <Confetti /> : null}
     </div>
