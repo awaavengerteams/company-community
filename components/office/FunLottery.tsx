@@ -1,13 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
-import { easeOut, prefersReducedMotion, randomIndex } from '@/lib/office/draw'
-import { isMuted, playCelebrate, playTick, setMuted, vibrate } from '@/lib/office/sound'
+import { randomIndex } from '@/lib/office/draw'
+import { isMuted, playCelebrate, setMuted, vibrate } from '@/lib/office/sound'
 import { Confetti } from './Confetti'
+import { SlotReels } from './SlotReels'
 
 type Pick = { id: string; number: string; drawDate: string | null; createdAt: string }
 type BoardRow = { number: string; picks: number }
@@ -23,7 +24,8 @@ const DIGIT_OPTIONS = [2, 3, 6] as const
  */
 export function FunLottery() {
   const [digits, setDigits] = useState<number>(2)
-  const [display, setDisplay] = useState<string[]>(['0', '0'])
+  const [target, setTarget] = useState<string[]>(['0', '0'])
+  const [flash, setFlash] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [spinning, setSpinning] = useState(false)
   const [picks, setPicks] = useState<Pick[]>([])
@@ -32,7 +34,6 @@ export function FunLottery() {
   const [muted, setMutedState] = useState(false)
   /** FR-C12 — เลขยอดฮิตงวดนี้ */
   const [board, setBoard] = useState<BoardRow[]>([])
-  const rafRef = useRef<number | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -55,82 +56,31 @@ export function FunLottery() {
   }, [load])
 
   useEffect(() => {
-    setDisplay(Array.from({ length: digits }, () => '0'))
+    setTarget(Array.from({ length: digits }, () => '0'))
     setResult(null)
     setSaved(false)
   }, [digits])
 
-  useEffect(
-    () => () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
-    },
-    [],
-  )
 
   function spin() {
     if (spinning) return
 
-    /* ★ สุ่มผลจริงก่อนเริ่มแอนิเมชัน — หลักการเดียวกับวงล้อ (FR-X05) */
-    const target = Array.from({ length: digits }, () => String(randomIndex(10)))
-
-    setSpinning(true)
+    /* ★ สุ่มผลจริงก่อนเริ่มแอนิเมชัน — หลักการเดียวกับวงล้อ (FR-X05)
+       ★★ SlotReels คำนวณระยะหมุนย้อนจากผลนี้ ไม่ใช่หมุนไปเรื่อยแล้วดูว่าหยุดตรงไหน */
+    setTarget(Array.from({ length: digits }, () => String(randomIndex(10))))
     setResult(null)
     setSaved(false)
+    setSpinning(true)
+  }
 
-    const reduced = prefersReducedMotion()
-    const base = reduced ? 900 : 2600
-    /* ★ หลักสุดท้ายหมุนนานที่สุด — เพิ่มทีละ 450ms ต่อหลัก */
-    const stopAt = target.map((_, i) => base + i * (reduced ? 120 : 450))
-    const totalMs = stopAt[stopAt.length - 1]!
-
-    const start = performance.now()
-    let lastTick = 0
-
-    function frame(now: number) {
-      const elapsed = now - start
-
-      const next = target.map((digit, i) => {
-        if (elapsed >= stopAt[i]!) return digit
-
-        /*
-         * ★★ จังหวะหลอกของหลักสุดท้าย
-         *    ช่วง 300ms ก่อนหยุด ให้แสดงเลขที่ "ใกล้เคียง" แทนที่จะสุ่มมั่ว
-         *    ทำให้ดูเหมือนกำลังจะหยุดแล้วเลื่อนต่อ ซึ่งคือจังหวะที่คนลุ้น
-         */
-        const remain = stopAt[i]! - elapsed
-        const isLast = i === target.length - 1
-        if (isLast && remain < 300) {
-          const off = randomIndex(3) - 1
-          return String((Number(digit) + off + 10) % 10)
-        }
-
-        /* ★ ยิ่งใกล้หยุดยิ่งเปลี่ยนช้า — ใช้ ease เดียวกับวงล้อ */
-        const p = easeOut(Math.min(1, elapsed / stopAt[i]!))
-        const speed = 1 - p
-        return Math.floor(elapsed / Math.max(28, 28 + speed * 90) + i) % 10 === 0
-          ? String(randomIndex(10))
-          : String(randomIndex(10))
-      })
-
-      setDisplay(next)
-
-      if (now - lastTick > 70) {
-        lastTick = now
-        playTick()
-      }
-
-      if (elapsed >= totalMs) {
-        setDisplay(target)
-        setResult(target.join(''))
-        setSpinning(false)
-        playCelebrate()
-        vibrate([30, 40, 60])
-        return
-      }
-      rafRef.current = requestAnimationFrame(frame)
-    }
-
-    rafRef.current = requestAnimationFrame(frame)
+  /** เรียกจาก SlotReels เมื่อวงล้อทุกหลักหยุดหมดแล้ว */
+  function finish() {
+    setSpinning(false)
+    setResult(target.join(''))
+    setFlash(true)
+    playCelebrate()
+    vibrate([30, 40, 60])
+    window.setTimeout(() => setFlash(false), 520)
   }
 
   async function save() {
@@ -169,22 +119,39 @@ export function FunLottery() {
             : ot('fun.lottery.countdown', { days: daysLeft })}
       </p>
 
-      {/* ── สล็อต ───────────────────────────────────────────────── */}
-      <div className="relative mt-5 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-6">
-        <div className="flex justify-center gap-2">
-          {display.map((d, i) => (
-            <span
-              key={i}
-              className={cn(
-                'grid h-16 w-12 place-items-center rounded-xl',
-                'bg-surface font-mono text-3xl font-bold tabular-nums text-ink',
-                spinning && 'text-ink-soft',
-              )}
-            >
-              {d}
-            </span>
-          ))}
+      {/* ── สล็อตแมชชีน ─────────────────────────────────────────── */}
+      {/*
+        * ★★ ตัวเครื่องมีสามชั้นที่ทำงานคนละหน้าที่
+        *    1. กรอบเรืองแสงตอนหมุน — บอกว่า "กำลังทำงาน"
+        *    2. เครื่องสั่นเบา ๆ — ให้รู้สึกว่ามีมอเตอร์อยู่ข้างใน
+        *    3. แสงกวาดหน้ากระจก — ทำให้พื้นผิวดูเป็นกระจกจริง ไม่ใช่สี่เหลี่ยมแบน
+        */}
+      <div
+        className={cn(
+          'slot-machine relative mt-5 rounded-3xl border p-6 backdrop-blur-md transition-shadow duration-500',
+          spinning
+            ? 'slot-shake slot-sweep border-accent/55 bg-elevated/70 shadow-[0_0_70px_-16px] shadow-accent/60'
+            : 'border-line bg-elevated/60',
+        )}
+      >
+        {/* ★ ไล่สีในกรอบ ทำให้พื้นไม่แบน */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-b from-accent/[0.06] to-transparent"
+        />
+
+        <div className="relative">
+          <SlotReels target={target} spinning={spinning} onDone={finish} />
         </div>
+
+        {flash ? <span aria-hidden="true" className="slot-flash rounded-3xl" /> : null}
+
+        {/* ★ ตัวเลขที่ได้ แสดงเป็นพาดหัวไล่สีอีกชั้น — วงล้ออ่านยากตอนตัวเล็ก */}
+        {result && !spinning ? (
+          <p className="reveal-scale mt-5 text-center text-[34px] font-bold tracking-[0.12em] sm:text-[44px]">
+            <span className="text-aurora shimmer-text">{result}</span>
+          </p>
+        ) : null}
 
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           {DIGIT_OPTIONS.map((n) => (

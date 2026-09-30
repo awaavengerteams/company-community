@@ -1872,3 +1872,122 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
 @media (prefers-reduced-motion: reduce) {
   .scare-layer { display: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * สล็อตแมชชีนของหน้าสุ่มเลขเด็ด
+ *
+ * ★★★ สิ่งที่ทำให้สล็อตจริงน่าลุ้นไม่ใช่ตัวเลข แต่เป็น "เครื่อง"
+ *
+ *     เลขที่เปลี่ยนไปมาเฉย ๆ คือ setState เร็ว ๆ — ไม่มีใครลุ้นกับมัน
+ *     ★ ของจริงมีวงล้อที่หมุนจนเบลอ · ตัวเครื่องสั่น · แสงกวาด · เสียงกึกตอนหยุด
+ *       ★★ ทุกอันในบล็อกนี้ทำหน้าที่นั้น และหยุดหมดเมื่อผู้ใช้ขอลดการเคลื่อนไหว
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.slot-machine {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ★ เครื่องสั่นตอนหมุน — เบามากและไม่เป็นจังหวะ ไม่งั้นอ่านเป็นของเสีย */
+.slot-shake {
+  animation: slot-shake 0.42s ease-in-out infinite;
+}
+
+@keyframes slot-shake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  20%      { transform: translate3d(-1.5px, 1px, 0); }
+  45%      { transform: translate3d(1px, -1.5px, 0); }
+  70%      { transform: translate3d(-1px, -0.5px, 0); }
+}
+
+/* ★ แสงกวาดผ่านหน้าเครื่องระหว่างหมุน */
+.slot-sweep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 38%,
+    color-mix(in oklab, var(--color-ink) 10%, transparent) 50%,
+    transparent 62%
+  );
+  transform: translate3d(-100%, 0, 0);
+  animation: slot-sweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes slot-sweep {
+  to { transform: translate3d(100%, 0, 0); }
+}
+
+/*
+ * ★★ วงล้อแต่ละหลัก
+ *
+ *    ★ ขอบบน-ล่างมืดลง ทำให้ดูเหมือนมองผ่านช่องเข้าไปในเครื่อง
+ *      ไม่ใช่ตัวเลขที่ลอยอยู่บนพื้นราบ
+ */
+.slot-reel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, #000 45%, var(--color-surface)),
+    var(--color-surface) 32%,
+    var(--color-surface) 68%,
+    color-mix(in oklab, #000 45%, var(--color-surface))
+  );
+  box-shadow:
+    inset 0 10px 14px -10px rgb(0 0 0 / 0.9),
+    inset 0 -10px 14px -10px rgb(0 0 0 / 0.9);
+}
+
+/* ★ เส้นกลางบาง ๆ — จุดอ้างอิงที่บอกว่า "ตรงนี้คือช่องที่นับ" */
+.slot-reel::after {
+  content: '';
+  position: absolute;
+  inset-inline: 6%;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-0.5px);
+  background: color-mix(in oklab, var(--color-accent) 55%, transparent);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ★ วงล้อที่เพิ่งหยุด กระตุกหนึ่งทีเหมือนเฟืองล็อกเข้าที่ */
+.slot-locked {
+  animation: slot-lock 0.34s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+@keyframes slot-lock {
+  0%   { transform: translate3d(0, -4px, 0); }
+  55%  { transform: translate3d(0, 2px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+/* ★ แสงวาบตอนออกผล — สั้นมาก ทำหน้าที่ "ตัดฉาก" ให้ตารู้ว่าจบแล้ว */
+.slot-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgb(255 255 255 / 0.55), transparent 65%);
+  animation: slot-flash 0.5s ease-out both;
+}
+
+@keyframes slot-flash {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot-shake,
+  .slot-sweep::after,
+  .slot-locked,
+  .slot-flash {
+    animation: none !important;
+  }
+  .slot-sweep::after { display: none; }
+  .slot-flash { display: none; }
+}
