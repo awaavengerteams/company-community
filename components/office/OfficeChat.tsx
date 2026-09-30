@@ -40,6 +40,11 @@ type Room = {
 type Message = {
   id: string
   text: string
+  kind: 'TEXT' | 'IMAGE' | 'FILE' | 'AUDIO' | 'STICKER'
+  fileUrl: string | null
+  fileName: string | null
+  fileSize: number | null
+  mime: string | null
   deleted: boolean
   mine: boolean
   senderName: string
@@ -91,8 +96,11 @@ export function OfficeChat() {
   const [picked, setPicked] = useState<Set<string>>(new Set())
   /** เปิดแผงข้อมูลกลุ่มทับห้องแชทอยู่หรือไม่ */
   const [panel, setPanel] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   const endRef = useRef<HTMLDivElement | null>(null)
+  const photoRef = useRef<HTMLInputElement | null>(null)
+  const fileRef = useRef<HTMLInputElement | null>(null)
 
   /*
    * ★★★ ถามซ้ำทุก 5 วินาที แต่ห้าม setState ถ้าข้อมูลเหมือนเดิม
@@ -126,10 +134,10 @@ export function OfficeChat() {
   const loadThread = useCallback(async (id: string) => {
     try {
       const d = await apiFetch<Thread>(`/api/office/chat/${id}`)
-      const key = JSON.stringify(d)
+      const key = threadKey(d)
       if (key !== threadRef.current) {
         threadRef.current = key
-        setThread(d)
+        setThread((prev) => keepLoadedUrls(prev, d))
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : ot('common.error'))
@@ -228,6 +236,54 @@ export function OfficeChat() {
      *       จึงปล่อยให้ทำงานเบื้องหลังได้ และตัวถามซ้ำทุก 5 วินาทีก็รับช่วงต่อ
      */
     setBusy(false)
+    void loadThread(openId)
+    void loadRooms()
+  }
+
+  /**
+   * แนบไฟล์ — อัปโหลดก่อน แล้วค่อยส่งข้อความที่ชี้ไปหาไฟล์นั้น
+   *
+   * ★★ สองขั้นแยกกันโดยตั้งใจ
+   *    ★ ถ้ายัดไฟล์ไปกับข้อความในคำขอเดียว การส่งพลาดกลางทางจะไม่รู้ว่า
+   *      ไฟล์ขึ้นไปแล้วหรือยัง และผู้ใช้ต้องอัปใหม่ทั้งก้อน
+   *    ★★ แยกแล้วขั้นอัปโหลดตรวจสิทธิ์ห้องได้ก่อนเปลืองพื้นที่จริง
+   */
+  async function sendAttachment(file: File, kind: 'IMAGE' | 'FILE') {
+    if (!openId || uploading) return
+
+    setUploading(true)
+    setError(null)
+
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('roomId', openId)
+
+      const res = await fetch('/api/office/chat/upload', { method: 'POST', body: form })
+      const payload = (await res.json()) as
+        | { ok: true; data: { path: string; name: string; size: number; mime: string } }
+        | { ok: false; error: { message: string } }
+
+      if (!payload.ok) throw new Error(payload.error.message)
+
+      await apiFetch(`/api/office/chat/${openId}`, {
+        method: 'POST',
+        body: {
+          action: 'send',
+          kind,
+          filePath: payload.data.path,
+          fileName: payload.data.name,
+          fileSize: payload.data.size,
+          mime: payload.data.mime,
+        },
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : ot('common.error'))
+      setUploading(false)
+      return
+    }
+
+    setUploading(false)
     void loadThread(openId)
     void loadRooms()
   }
@@ -634,20 +690,7 @@ export function OfficeChat() {
                               </span>
                             ) : null}
 
-                            <span
-                              className={cn(
-                                'bubble',
-                                m.deleted
-                                  ? 'border border-white/25 bg-transparent italic'
-                                  : m.mine
-                                    ? 'bubble-me'
-                                    : 'bubble-you',
-                                !m.deleted && last && (m.mine ? 'bubble-tail-me' : 'bubble-tail-you'),
-                              )}
-                              style={m.deleted ? { color: 'var(--chat-meta)' } : undefined}
-                            >
-                              {m.deleted ? ot('chat.deleted') : m.text}
-                            </span>
+                            <MessageBody m={m} last={last} />
 
                             {!m.mine && last ? (
                               <span className="chat-meta">{shortTime(m.createdAt)}</span>
@@ -662,6 +705,15 @@ export function OfficeChat() {
               <div ref={endRef} />
             </div>
 
+            {/* ★ กำลังอัปโหลดต้องเห็น — ไฟล์ใหญ่ใช้เวลาหลายวินาทีโดยที่หน้าจอ
+                ไม่มีอะไรเปลี่ยนเลย คนจะกดแนบซ้ำแล้วได้ไฟล์ซ้ำสองอัน */}
+            {uploading ? (
+              <p className="flex items-center gap-2 bg-elevated px-4 py-1 text-xs text-ink-soft">
+                <span className="size-3 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                {ot('chat.uploading')}
+              </p>
+            ) : null}
+
             {error ? (
               <p role="alert" className="bg-elevated px-4 py-1 text-xs text-danger">
                 {error}
@@ -675,6 +727,81 @@ export function OfficeChat() {
               *      ส่วนปุ่มที่โผล่มาตอนพิมพ์เสร็จคือการยืนยันว่า "พร้อมส่งแล้ว"
               */}
             <div className="flex items-end gap-2 border-t border-line bg-elevated/90 px-3 py-2.5 backdrop-blur-md">
+              {/*
+                * ★★ ปุ่มรูปกับปุ่มไฟล์แยกกัน ไม่ยุบเป็นปุ่ม "+" อันเดียว
+                *    ★ การส่งรูปเป็นสิ่งที่ทำบ่อยที่สุดรองจากพิมพ์ข้อความ
+                *      ซ่อนไว้ใต้เมนูแปลว่าเพิ่มคลิกให้กับงานที่ทำทุกวัน
+                *    ★★ accept ต่างกันด้วย — ปุ่มรูปเปิดแกลเลอรีบนมือถือ
+                *       ส่วนปุ่มไฟล์เปิดตัวจัดการไฟล์ คนละที่กันคนละงานกัน
+                */}
+              <input
+                ref={photoRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) void sendAttachment(f, 'IMAGE')
+                  e.target.value = ''
+                }}
+              />
+              <input
+                ref={fileRef}
+                type="file"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) void sendAttachment(f, 'FILE')
+                  e.target.value = ''
+                }}
+              />
+
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => photoRef.current?.click()}
+                title={ot('chat.sendImage')}
+                aria-label={ot('chat.sendImage')}
+                className="grid size-9 shrink-0 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface hover:text-ink disabled:opacity-40"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="4" width="18" height="16" rx="2.5" />
+                  <circle cx="8.5" cy="9.5" r="1.6" />
+                  <path d="m4 17 4.5-4.5 3.5 3.5 3-2.5L20 18" />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => fileRef.current?.click()}
+                title={ot('chat.sendFile')}
+                aria-label={ot('chat.sendFile')}
+                className="grid size-9 shrink-0 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface hover:text-ink disabled:opacity-40"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 11.5 12 19.5a5 5 0 0 1-7-7l8-8a3.4 3.4 0 0 1 4.8 4.8l-8 8a1.8 1.8 0 0 1-2.5-2.5l7.3-7.3" />
+                </svg>
+              </button>
+
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -721,6 +848,134 @@ export function OfficeChat() {
       </section>
     </div>
   )
+}
+
+/**
+ * เนื้อในฟองข้อความ — ข้อความ · รูป · ไฟล์
+ *
+ * ★★ รูปไม่ใส่ฟอง
+ *    ★ ฟองมีไว้แยก "คำพูด" ออกจากพื้นหลัง แต่รูปมีขอบของตัวเองอยู่แล้ว
+ *      การครอบฟองอีกชั้นทำให้ได้กรอบซ้อนกรอบและรูปเล็กลงโดยไม่ได้อะไรกลับมา
+ *    ★★ แอปแชททุกตัวจึงปล่อยรูปลอยบนผนังห้องตรง ๆ
+ */
+function MessageBody({ m, last }: { m: Message; last: boolean }) {
+  if (m.deleted) {
+    return (
+      <span
+        className="bubble border border-white/25 bg-transparent italic"
+        style={{ color: 'var(--chat-meta)' }}
+      >
+        {ot('chat.deleted')}
+      </span>
+    )
+  }
+
+  if (m.kind === 'IMAGE' && m.fileUrl) {
+    return (
+      <a href={m.fileUrl} target="_blank" rel="noreferrer" className="chat-photo">
+        {/* ★ ใช้ <img> ธรรมดา ไม่ใช่ next/image — ลิงก์เซ็นชื่อมีอายุ 10 นาที
+            และโดเมนเปลี่ยนตามโปรเจกต์ ตัวปรับขนาดของ Next จึงแคชผิดตัวได้ */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={m.fileUrl} alt={m.fileName ?? ot('chat.image')} loading="lazy" />
+      </a>
+    )
+  }
+
+  /*
+   * ★ ไฟล์ทุกชนิดที่ไม่ใช่รูป (รวมถึงรูปที่ลิงก์หมดอายุ) แสดงเป็นแถบไฟล์
+   *   ★★ ไม่ปล่อยให้กลายเป็นฟองว่างเปล่า — ข้อความที่ว่างทั้งฟองอ่านเหมือนระบบพัง
+   */
+  if (m.kind === 'IMAGE' || m.kind === 'FILE') {
+    const inner = (
+      <>
+        <svg
+          viewBox="0 0 24 24"
+          className="size-7 shrink-0 opacity-70"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M14 3v5h5" />
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        </svg>
+        <span className="min-w-0">
+          <span className="block truncate text-[14px]">{m.fileName ?? ot('chat.file')}</span>
+          <span className="block text-[11px] opacity-60">{prettySize(m.fileSize)}</span>
+        </span>
+      </>
+    )
+
+    const shell = cn(
+      'bubble flex max-w-[16rem] items-center gap-2.5',
+      m.mine ? 'bubble-me' : 'bubble-you',
+      last && (m.mine ? 'bubble-tail-me' : 'bubble-tail-you'),
+    )
+
+    return m.fileUrl ? (
+      <a href={m.fileUrl} download={m.fileName ?? undefined} className={shell} title={ot('chat.download')}>
+        {inner}
+      </a>
+    ) : (
+      <span className={shell}>{inner}</span>
+    )
+  }
+
+  return (
+    <span
+      className={cn(
+        'bubble',
+        m.mine ? 'bubble-me' : 'bubble-you',
+        last && (m.mine ? 'bubble-tail-me' : 'bubble-tail-you'),
+      )}
+    >
+      {m.text}
+    </span>
+  )
+}
+
+/*
+ * ★★★ ลายเซ็นของบทสนทนาต้องไม่รวมลิงก์ไฟล์
+ *
+ *     ไฟล์ในแชทอยู่ใน bucket ส่วนตัว เซิร์ฟเวอร์จึงเซ็น URL ใหม่ทุกครั้งที่ถาม
+ *     ★ แปลว่า JSON ของบทสนทนา "ไม่เคยเหมือนเดิม" แม้ไม่มีข้อความใหม่เลย
+ *     ★★ ถ้าใช้ JSON ทั้งก้อนเป็นลายเซ็น ตัวกันวาดซ้ำจะไร้ผลทันทีที่ห้องมีรูป
+ *        — วาดใหม่ทุก 5 วินาที และ src ของ <img> เปลี่ยนทุกครั้ง
+ *        ★ ผลที่คนใช้เห็นคือรูปกะพริบทุก 5 วินาทีตลอดเวลาที่เปิดห้องค้างไว้
+ *
+ *     ★ จึงตัดเฉพาะฟิลด์ที่ "เปลี่ยนโดยไม่มีความหมาย" ออกจากการเทียบ
+ */
+function threadKey(t: Thread): string {
+  return JSON.stringify(t, (k, v) => (k === 'fileUrl' || k === 'avatarUrl' ? null : v))
+}
+
+/*
+ * ★★ ข้อความที่เคยแสดงอยู่แล้ว ให้คงลิงก์เดิมไว้
+ *
+ *    ★ ตอนมีข้อความใหม่เข้ามาเราต้อง setState จริง ซึ่งจะพาลิงก์ชุดใหม่
+ *      เข้ามาทั้งกระดาน ★★ รูปเก่าที่โหลดเสร็จไปแล้วจะถูกสั่งโหลดใหม่หมด
+ *      เพราะ src เปลี่ยน ทั้งที่รูปเป็นรูปเดิมเป๊ะ
+ *    ★ ลิงก์เก่ายังไม่หมดอายุ (10 นาที) และรูปก็วาดอยู่บนจอแล้ว
+ *      การคงของเดิมไว้จึงทั้งถูกต้องและไม่เสียแบนด์วิดท์
+ */
+function keepLoadedUrls(prev: Thread | null, next: Thread): Thread {
+  if (!prev) return next
+  const had = new Map(prev.messages.filter((m) => m.fileUrl).map((m) => [m.id, m.fileUrl]))
+  if (had.size === 0) return next
+  return {
+    ...next,
+    messages: next.messages.map((m) => (had.has(m.id) ? { ...m, fileUrl: had.get(m.id)! } : m)),
+  }
+}
+
+/** ขนาดไฟล์แบบอ่านออก — ไม่ใช้ทศนิยมเมื่อเป็นหน่วยเล็ก */
+function prettySize(bytes: number | null): string {
+  if (!bytes || bytes < 0) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
 function shortTime(iso: string): string {
