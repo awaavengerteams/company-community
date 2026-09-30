@@ -77,10 +77,29 @@ export function OfficeChat() {
 
   const endRef = useRef<HTMLDivElement | null>(null)
 
+  /*
+   * ★★★ ถามซ้ำทุก 5 วินาที แต่ห้าม setState ถ้าข้อมูลเหมือนเดิม
+   *
+   *     ★ ถ้าเซ็ตทุกครั้ง React จะวาดรายการห้องใหม่ทั้งชุดทุก 5 วินาที
+   *       แม้ไม่มีอะไรเปลี่ยน — ปุ่มถูกสร้างใหม่ ตำแหน่งขยับ สถานะ hover หลุด
+   *     ★★ อาการนี้จับได้ตอนทดสอบอัตโนมัติ: คลิกแถวแล้ว timeout เพราะ
+   *        ตัวตรวจ "องค์ประกอบนิ่งหรือยัง" ไม่เคยผ่านสักที
+   *        ★ คนใช้จริงจะไม่เห็นเป็น error แต่จะรู้สึกว่ารายการ "ดิ้น"
+   *
+   *     ★ เทียบด้วย JSON.stringify ตรง ๆ พอ — ข้อมูลชุดนี้เล็กและมาจาก
+   *       ลำดับที่แน่นอนของฐานข้อมูล จึงเทียบสตริงได้ตรงไปตรงมา
+   */
+  const roomsRef = useRef('')
+  const threadRef = useRef('')
+
   const loadRooms = useCallback(async () => {
     try {
       const d = await apiFetch<{ rooms: Room[] }>('/api/office/chat')
-      setRooms(d.rooms)
+      const key = JSON.stringify(d.rooms)
+      if (key !== roomsRef.current) {
+        roomsRef.current = key
+        setRooms(d.rooms)
+      }
       setListError(null)
     } catch (e) {
       setListError(e instanceof Error ? e.message : ot('common.error'))
@@ -89,7 +108,12 @@ export function OfficeChat() {
 
   const loadThread = useCallback(async (id: string) => {
     try {
-      setThread(await apiFetch<Thread>(`/api/office/chat/${id}`))
+      const d = await apiFetch<Thread>(`/api/office/chat/${id}`)
+      const key = JSON.stringify(d)
+      if (key !== threadRef.current) {
+        threadRef.current = key
+        setThread(d)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : ot('common.error'))
     }
@@ -103,6 +127,8 @@ export function OfficeChat() {
   }, [loadRooms])
 
   useEffect(() => {
+    /* ★ เปลี่ยนห้องต้องล้างลายเซ็นเดิม ไม่งั้นห้องใหม่จะถูกมองว่า "ไม่เปลี่ยน" */
+    threadRef.current = ''
     if (openId) void loadThread(openId)
   }, [openId, loadThread])
 
@@ -146,22 +172,46 @@ export function OfficeChat() {
   }, [thread?.messages.length])
 
   async function send() {
-    if (!openId || !text.trim() || busy) return
+    const body = text.trim()
+    if (!openId || !body || busy) return
+
+    /*
+     * ★★★ ล้างช่องพิมพ์ทันที ไม่ใช่หลังส่งสำเร็จ
+     *
+     *     เดิมล้างหลัง await ★ ถ้าผู้ใช้พิมพ์ข้อความถัดไประหว่างที่ข้อความแรก
+     *     ยังส่งไม่เสร็จ setText('') จะไปลบสิ่งที่เพิ่งพิมพ์ทิ้ง
+     */
+    setText('')
     setBusy(true)
     setError(null)
+
     try {
       await apiFetch(`/api/office/chat/${openId}`, {
         method: 'POST',
-        body: { action: 'send', text },
+        body: { action: 'send', text: body },
       })
-      setText('')
-      await loadThread(openId)
-      await loadRooms()
     } catch (e) {
       setError(e instanceof Error ? e.message : ot('common.error'))
-    } finally {
+      /* ★ คืนข้อความให้ผู้ใช้ ไม่ให้สิ่งที่พิมพ์หายไปพร้อมกับความผิดพลาด */
+      setText((t) => (t ? t : body))
       setBusy(false)
+      return
     }
+
+    /*
+     * ★★★ ปลดล็อกช่องพิมพ์ทันทีที่เซิร์ฟเวอร์รับข้อความแล้ว
+     *
+     *     เดิมรอ loadThread + loadRooms ให้เสร็จก่อนค่อยปลด ★ สองอันนั้น
+     *     ยิงรวมกันห้า query กินเวลาเกินวินาที — คนพิมพ์เร็วจะกด Enter
+     *     ข้อความถัดไปแล้วไม่มีอะไรเกิดขึ้น ★★ วัดได้ตอนทดสอบ: busy ยังเป็น
+     *     true ที่ 1.5 วินาทีหลังส่ง แล้วข้อความที่สองหายไปเงียบ ๆ
+     *
+     *     ★ การรีเฟรชเป็นเรื่องของ "ภาพที่เห็น" ไม่ใช่ "ส่งสำเร็จหรือยัง"
+     *       จึงปล่อยให้ทำงานเบื้องหลังได้ และตัวถามซ้ำทุก 5 วินาทีก็รับช่วงต่อ
+     */
+    setBusy(false)
+    void loadThread(openId)
+    void loadRooms()
   }
 
   async function openDm(userId: string) {
@@ -545,10 +595,13 @@ export function OfficeChat() {
                 placeholder={ot('chat.placeholder')}
                 maxLength={2000}
                 aria-label={ot('chat.placeholder')}
+                /* ★ ปิดทั้ง outline และ ring ของเบราว์เซอร์ — ไม่งั้นได้ขอบสองชั้น
+                   สีแดงจากธีมซ้อนกับสีฟ้าของระบบ ซึ่งอ่านเป็นช่องกรอกผิดพลาด */
                 className={cn(
                   'max-h-28 min-h-10 flex-1 resize-none rounded-2xl border border-line bg-surface px-4 py-2.5',
-                  'text-[15px] text-ink outline-none placeholder:text-ink-faint',
-                  'focus-visible:border-accent',
+                  'text-[15px] text-ink placeholder:text-ink-faint',
+                  'outline-none focus:outline-none focus-visible:outline-none',
+                  'focus:border-accent/70',
                 )}
               />
 
