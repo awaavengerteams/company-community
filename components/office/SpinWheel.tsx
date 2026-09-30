@@ -65,6 +65,31 @@ const HUB = 46
  */
 const r3 = (n: number) => Math.round(n * 1000) / 1000
 
+/**
+ * ขนาดตัวอักษรในช่อง — โตตามความกว้างของช่อง
+ *
+ * ★★ เดิมตั้งไว้ 13px สำหรับทุกกรณีที่ช่องน้อยกว่า 9 ช่อง
+ *    ★ ผลคือวงล้อ 3 ช่องบนพื้นที่ 380px มีตัวหนังสือเท่าข้อความทั่วไปในหน้า
+ *      ซึ่งเล็กจนอ่านจากอีกฝั่งโต๊ะไม่ออก — และวงล้อมีไว้ให้คนทั้งโต๊ะดู
+ *    ★★ ยิ่งช่องน้อย ช่องยิ่งกว้าง ตัวอักษรจึงต้องโตตามไปด้วย
+ */
+function fontFor(count: number): number {
+  if (count <= 3) return 26
+  if (count <= 4) return 23
+  if (count <= 6) return 20
+  if (count <= 8) return 17
+  if (count <= 10) return 15
+  if (count <= 12) return 13
+  return 11
+}
+
+/** จำนวนตัวอักษรสูงสุดที่ใส่ในช่องได้โดยไม่ล้นออกนอกวง */
+function maxCharsFor(count: number): number {
+  if (count <= 4) return 11
+  if (count <= 8) return 14
+  return 16
+}
+
 export function SpinWheel({
   slots,
   spinLabel,
@@ -197,6 +222,8 @@ export function SpinWheel({
   if (slots.length < 2) return null
 
   const seg = 360 / slots.length
+  const fontSize = fontFor(slots.length)
+  const maxChars = maxCharsFor(slots.length)
 
   return (
     <div className={cn('relative flex flex-col items-center gap-6', preview && 'opacity-45 saturate-50')}>
@@ -279,8 +306,9 @@ export function SpinWheel({
                */
               const mid = i * seg + seg / 2 - 90
               const flip = mid > 90 || mid < -90
-              const tx = r3(cx + (R - 16) * Math.cos((mid * Math.PI) / 180))
-              const ty = r3(cy + (R - 16) * Math.sin((mid * Math.PI) / 180))
+              const inset = 12 + fontSize * 0.35
+              const tx = r3(cx + (R - inset) * Math.cos((mid * Math.PI) / 180))
+              const ty = r3(cy + (R - inset) * Math.sin((mid * Math.PI) / 180))
 
               return (
                 <g key={slot.id}>
@@ -306,14 +334,18 @@ export function SpinWheel({
                     textAnchor={flip ? 'start' : 'end'}
                     dominantBaseline="middle"
                     fill="#fff"
-                    fontSize={slots.length > 12 ? 9 : slots.length > 8 ? 11 : 13}
-                    fontWeight="600"
+                    fontSize={fontSize}
+                    fontWeight="700"
+                    /* ★ เส้นขอบหนาตามขนาดตัวอักษร — ตัวโตบนสีสดต้องมีขอบหนาขึ้น
+                       ไม่งั้นตัวหนังสือจะจมไปกับสีช่อง */
                     style={{ paintOrder: 'stroke' }}
                     stroke="#000"
-                    strokeOpacity="0.4"
-                    strokeWidth="2.5"
+                    strokeOpacity="0.45"
+                    strokeWidth={fontSize * 0.22}
                   >
-                    {slot.label.length > 16 ? `${slot.label.slice(0, 15)}…` : slot.label}
+                    {slot.label.length > maxChars
+                      ? `${slot.label.slice(0, maxChars - 1)}…`
+                      : slot.label}
                   </text>
                 </g>
               )
@@ -343,8 +375,11 @@ export function SpinWheel({
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <span
             className={cn(
-              'max-w-[92px] text-center text-[11px] font-medium leading-tight',
-              phase === 'done' && revealed ? 'winner-pop text-accent' : 'text-ink-faint',
+              'max-w-[86px] text-center leading-tight',
+              /* ★ ชื่อผู้ชนะตัวโตกว่าคำว่า "หมุนเลย" — มันคือสิ่งที่ทุกคนรอดู */
+              phase === 'done' && revealed
+                ? 'winner-pop text-[15px] font-bold text-accent'
+                : 'text-[12px] font-medium text-ink-faint',
             )}
           >
             {phase === 'spinning'
