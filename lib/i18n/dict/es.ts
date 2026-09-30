@@ -687,6 +687,8 @@ export const es: Dict = {
   "hub.funDetail": "Ruleta de nombres, armar equipos, cuadro de torneo",
   "hub.market": "Mercadillo",
   "hub.marketDetail": "Pasa lo que no usas, encuentra cosas de segunda mano",
+  "hub.chat": "Chat",
+  "hub.chatDetail": "En grupo o en privado: los mensajes llegan al instante",
   "hub.more": "Ver todo",
   "hub.moreDetail": "La página con todas las actividades de la oficina",
 }

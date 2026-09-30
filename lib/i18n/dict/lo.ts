@@ -687,6 +687,8 @@ export const lo: Dict = {
   "hub.funDetail": "ວົງລໍ້ສຸ່ມຊື່ ແບ່ງທີມ ສາຍແຂ່ງຂັນ",
   "hub.market": "ຕະຫຼາດນັດ",
   "hub.marketDetail": "ປ່ອຍເຄື່ອງທີ່ບໍ່ໃຊ້ ຫາເຄື່ອງມືສອງ",
+  "hub.chat": "ແຊັດ",
+  "hub.chatDetail": "ລົມກຸ່ມຫຼືລົມສ່ວນຕົວ ຂໍ້ຄວາມເຖິງທັນທີ",
   "hub.more": "ເບິ່ງທັງໝົດ",
   "hub.moreDetail": "ໜ້າລວມກິດຈະກຳຫ້ອງການ",
 }

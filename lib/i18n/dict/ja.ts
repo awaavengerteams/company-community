@@ -687,6 +687,8 @@ export const ja: Dict = {
   "hub.funDetail": "名前ルーレット、チーム分け、トーナメント表",
   "hub.market": "フリーマーケット",
   "hub.marketDetail": "使わないものを譲る、中古を探す",
+  "hub.chat": "チャット",
+  "hub.chatDetail": "グループでも個別でも、メッセージは即座に届く",
   "hub.more": "すべて見る",
   "hub.moreDetail": "オフィス活動のまとめページ",
 }

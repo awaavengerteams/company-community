@@ -687,6 +687,8 @@ export const ar: Dict = {
   "hub.funDetail": "عجلة الأسماء وتقسيم الفرق وجدول البطولة",
   "hub.market": "سوق المكتب",
   "hub.marketDetail": "مرّر ما لا تستخدمه واعثر على المستعمل",
+  "hub.chat": "المحادثة",
+  "hub.chatDetail": "جماعية أو خاصة — الرسائل تصل فورًا",
   "hub.more": "عرض الكل",
   "hub.moreDetail": "صفحة تجمع كل أنشطة المكتب",
 }

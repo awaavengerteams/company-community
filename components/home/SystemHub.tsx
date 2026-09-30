@@ -34,7 +34,7 @@ type Card = {
   /** สีประจำโมดูล เป็น rgb triplet เพื่อส่งเข้า CSS variable ได้ตรง ๆ */
   tint: string
   /** ภาพตัวอย่างเล็ก ๆ ที่บอกว่าข้างในมีอะไร */
-  demo: 'eq' | 'wheel' | 'split' | 'dice' | 'queue' | 'grid'
+  demo: 'eq' | 'wheel' | 'split' | 'dice' | 'queue' | 'grid' | 'bubble'
   featured?: boolean
   /** ★ ใบสุดท้ายกินเต็มแถว — ไม่งั้นมันจะเหลือใบเดียวโดด ๆ ในแถวที่สาม */
   full?: boolean
@@ -81,6 +81,14 @@ const CARDS: Card[] = [
     icon: 'M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 7V5a3 3 0 0 1 6 0v2',
     tint: '10 132 255',
     demo: 'queue',
+  },
+  {
+    href: '/office/chat',
+    titleKey: 'hub.chat',
+    detailKey: 'hub.chatDetail',
+    icon: 'M20 4H4a1 1 0 0 0-1 1v12l4-3h13a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z',
+    tint: '48 209 176',
+    demo: 'bubble',
   },
   {
     href: '/office',
@@ -215,6 +223,38 @@ function CardDemo({
           style={{ background: 'rgb(var(--tint))', color: 'var(--color-page)' }}
         >
           +1
+        </span>
+      </span>
+    )
+  }
+
+  if (kind === 'bubble') {
+    /* ★ ฟองข้อความสองฝั่งกับจุดกำลังพิมพ์ — ภาพของแชทในสองวินาที */
+    return (
+      <span aria-hidden="true" className="demo-split mt-4 flex flex-col gap-1.5">
+        <span className="flex items-center gap-1.5">
+          <span
+            className="h-4 w-12 rounded-full rounded-bl-sm"
+            style={{ background: 'rgb(var(--tint) / 0.24)' }}
+          />
+        </span>
+        <span className="flex items-center justify-end gap-1.5">
+          <span
+            className="h-4 w-16 rounded-full rounded-br-sm"
+            style={{ background: 'rgb(var(--tint))' }}
+          />
+        </span>
+        <span className="flex items-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="demo-pulse size-1.5 rounded-full"
+              style={{
+                background: 'rgb(var(--tint) / 0.6)',
+                animationDelay: `${i * 0.18}s`,
+              }}
+            />
+          ))}
         </span>
       </span>
     )

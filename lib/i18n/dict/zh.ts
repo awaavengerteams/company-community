@@ -687,6 +687,8 @@ export const zh: Dict = {
   "hub.funDetail": "名字转盘、分队、比赛对阵表",
   "hub.market": "跳蚤市场",
   "hub.marketDetail": "转让闲置，淘二手好物",
+  "hub.chat": "聊天",
+  "hub.chatDetail": "群聊或私聊，消息即时送达",
   "hub.more": "查看全部",
   "hub.moreDetail": "办公室活动总览",
 }

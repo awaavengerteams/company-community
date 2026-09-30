@@ -688,6 +688,8 @@ export const en: Dict = {
   "hub.funDetail": "Name wheel, team picker, tournament brackets",
   "hub.market": "Marketplace",
   "hub.marketDetail": "Pass on what you don't use, find second-hand deals",
+  "hub.chat": "Chat",
+  "hub.chatDetail": "Group or private — messages arrive instantly",
   "hub.more": "See everything",
   "hub.moreDetail": "The full office activity hub",
 }

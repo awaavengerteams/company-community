@@ -48,6 +48,7 @@ const ICONS = {
   fun: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 3',
   market:
     'M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 7V5a3 3 0 0 1 6 0v2',
+  chat: 'M20 4H4a1 1 0 0 0-1 1v12l4-3h13a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z',
   admin:
     'M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6zM9.5 12l2 2 3.5-3.5',
   music: 'M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
@@ -99,6 +100,7 @@ export const OFFICE_NAV: NavSection[] = [
       { href: '/office/market/chat', labelKey: 'market.chat.title' , icon: 'M20 4H4a1 1 0 0 0-1 1v12l4-3h13a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z' },
     ],
   },
+  { href: '/office/chat', labelKey: 'chat.title', icon: ICONS.chat },
   {
     href: '/office/admin',
     labelKey: 'nav.admin',
@@ -159,6 +161,7 @@ export type PageMeta = {
 const PAGE_META: Record<string, PageMeta> = {
   '/office': { titleKey: 'nav.home', descKey: 'pdesc.home' },
   '/office/profile': { titleKey: 'profile.title', descKey: 'pdesc.profile' },
+  '/office/chat': { titleKey: 'chat.title', descKey: 'pdesc.chat' },
 
   '/office/food/random': { titleKey: 'food.random.title', descKey: 'pdesc.foodRandom', section: '/office/food' },
   '/office/food/picks': { titleKey: 'food.picks.title', descKey: 'pdesc.foodPicks', section: '/office/food' },

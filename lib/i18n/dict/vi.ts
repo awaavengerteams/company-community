@@ -687,6 +687,8 @@ export const vi: Dict = {
   "hub.funDetail": "Vòng quay tên, chia đội, nhánh thi đấu",
   "hub.market": "Chợ phiên",
   "hub.marketDetail": "Nhượng lại đồ không dùng, tìm đồ cũ",
+  "hub.chat": "Trò chuyện",
+  "hub.chatDetail": "Nhóm hay riêng tư — tin nhắn đến ngay lập tức",
   "hub.more": "Xem tất cả",
   "hub.moreDetail": "Trang tổng hợp hoạt động văn phòng",
 }

@@ -687,6 +687,8 @@ export const ms: Dict = {
   "hub.funDetail": "Roda nama, bahagi pasukan, carta kejohanan",
   "hub.market": "Pasar pejabat",
   "hub.marketDetail": "Lepaskan barang tak guna, cari barang terpakai",
+  "hub.chat": "Sembang",
+  "hub.chatDetail": "Kumpulan atau peribadi — mesej sampai serta-merta",
   "hub.more": "Lihat semua",
   "hub.moreDetail": "Halaman himpunan aktiviti pejabat",
 }

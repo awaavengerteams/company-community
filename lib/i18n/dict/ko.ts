@@ -687,6 +687,8 @@ export const ko: Dict = {
   "hub.funDetail": "이름 룰렛, 팀 나누기, 토너먼트 대진표",
   "hub.market": "벼룩시장",
   "hub.marketDetail": "안 쓰는 물건 나눔, 중고 찾기",
+  "hub.chat": "채팅",
+  "hub.chatDetail": "그룹이든 1:1이든 메시지가 바로 도착",
   "hub.more": "전체 보기",
   "hub.moreDetail": "사무실 활동 모아보기",
 }

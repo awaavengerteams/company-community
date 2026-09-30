@@ -687,6 +687,8 @@ export const pt: Dict = {
   "hub.funDetail": "Roleta de nomes, divisão de times, chave de torneio",
   "hub.market": "Feira do escritório",
   "hub.marketDetail": "Passe adiante o que não usa, ache usados",
+  "hub.chat": "Conversa",
+  "hub.chatDetail": "Em grupo ou privado — as mensagens chegam na hora",
   "hub.more": "Ver tudo",
   "hub.moreDetail": "A página com todas as atividades do escritório",
 }

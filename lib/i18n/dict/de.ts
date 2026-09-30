@@ -687,6 +687,8 @@ export const de: Dict = {
   "hub.funDetail": "Namensrad, Teameinteilung, Turnierbaum",
   "hub.market": "Flohmarkt",
   "hub.marketDetail": "Ungenutztes weitergeben, Gebrauchtes finden",
+  "hub.chat": "Chat",
+  "hub.chatDetail": "Gruppe oder privat — Nachrichten kommen sofort an",
   "hub.more": "Alles ansehen",
   "hub.moreDetail": "Die Übersicht aller Büroaktivitäten",
 }

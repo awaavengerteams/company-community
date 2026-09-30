@@ -1,0 +1,59 @@
+import type { NextRequest } from 'next/server'
+import { z } from 'zod'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { fromPostgresError } from '@/lib/http/errors'
+import { assertSameOrigin, parseJsonBody } from '@/lib/http/guard'
+import { ok, withErrorHandling } from '@/lib/http/respond'
+import { enforceRateLimit } from '@/lib/ratelimit'
+import { requireOfficeUser } from '@/lib/office/guard'
+
+export const dynamic = 'force-dynamic'
+
+/** รายการห้องแชทของฉัน */
+export const GET = withErrorHandling(async () => {
+  const actor = await requireOfficeUser()
+  const admin = getSupabaseAdminClient()
+
+  const { data, error } = await admin.rpc('my_office_chats', { p_actor: actor.id })
+  if (error) throw fromPostgresError(error)
+
+  return ok({ rooms: data ?? [] })
+})
+
+const schema = z.union([
+  /* แชทส่วนตัว — เปิดซ้ำได้ ได้ห้องเดิมเสมอ */
+  z.object({ action: z.literal('dm'), userId: z.uuid() }),
+  /* ห้องกลุ่ม */
+  z.object({
+    action: z.literal('group'),
+    title: z.string().trim().min(1, 'common.required').max(60),
+    members: z.array(z.uuid()).min(1, 'valid.needMembers').max(50),
+  }),
+])
+
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  assertSameOrigin(request)
+
+  const body = await parseJsonBody(request, schema)
+  const actor = await requireOfficeUser()
+  await enforceRateLimit('chatAction', actor.id)
+
+  const admin = getSupabaseAdminClient()
+
+  if (body.action === 'dm') {
+    const { data, error } = await admin.rpc('open_office_dm', {
+      p_actor: actor.id,
+      p_other: body.userId,
+    })
+    if (error) throw fromPostgresError(error)
+    return ok({ roomId: data })
+  }
+
+  const { data, error } = await admin.rpc('create_office_group', {
+    p_actor: actor.id,
+    p_title: body.title,
+    p_members: body.members,
+  })
+  if (error) throw fromPostgresError(error)
+  return ok({ roomId: data })
+})

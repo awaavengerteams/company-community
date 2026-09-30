@@ -828,6 +828,50 @@ export type Database = {
         Relationships: []
       }
 
+      /* ── แชทออฟฟิศ (0038) ─────────────────────────────────────── */
+
+      office_chat_rooms: {
+        Row: {
+          id: string
+          kind: 'DM' | 'GROUP'
+          title: string | null
+          created_by: string
+          pair_key: string | null
+          last_message_at: string
+          created_at: string
+        }
+        Insert: { kind?: 'DM' | 'GROUP'; title?: string | null; created_by: string; pair_key?: string | null }
+        Update: { title?: string | null; last_message_at?: string }
+        Relationships: []
+      }
+
+      office_chat_members: {
+        Row: {
+          room_id: string
+          user_id: string
+          last_read_at: string
+          muted: boolean
+          joined_at: string
+        }
+        Insert: { room_id: string; user_id: string }
+        Update: { last_read_at?: string; muted?: boolean }
+        Relationships: []
+      }
+
+      office_chat_messages: {
+        Row: {
+          id: string
+          room_id: string
+          sender_id: string
+          text: string
+          deleted_at: string | null
+          created_at: string
+        }
+        Insert: { room_id: string; sender_id: string; text: string }
+        Update: { deleted_at?: string | null }
+        Relationships: []
+      }
+
       audit_log: {
         Row: {
           id: number
@@ -1357,6 +1401,17 @@ export type Database = {
       office_usage_stats: { Args: { p_actor: string; p_days?: number }; Returns: Json }
       my_music_rooms: { Args: { p_actor: string; p_limit?: number }; Returns: Json }
       office_home_summary: { Args: { p_actor: string }; Returns: Json }
+
+      open_office_dm: { Args: { p_actor: string; p_other: string }; Returns: string }
+      create_office_group: {
+        Args: { p_actor: string; p_title: string; p_members: string[] }
+        Returns: string
+      }
+      send_office_chat: { Args: { p_actor: string; p_room: string; p_text: string }; Returns: string }
+      read_office_chat: { Args: { p_actor: string; p_room: string }; Returns: void }
+      mute_office_chat: { Args: { p_actor: string; p_room: string; p_muted: boolean }; Returns: void }
+      leave_office_group: { Args: { p_actor: string; p_room: string }; Returns: void }
+      my_office_chats: { Args: { p_actor: string }; Returns: Json }
 
       report_listing: {
         Args: { p_actor: string; p_id: string; p_reason?: string | null }

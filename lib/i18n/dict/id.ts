@@ -687,6 +687,8 @@ export const id: Dict = {
   "hub.funDetail": "Roda nama, bagi tim, bagan turnamen",
   "hub.market": "Pasar kantor",
   "hub.marketDetail": "Lepas barang tak terpakai, cari barang bekas",
+  "hub.chat": "Obrolan",
+  "hub.chatDetail": "Grup atau pribadi — pesan sampai seketika",
   "hub.more": "Lihat semua",
   "hub.moreDetail": "Halaman kumpulan aktivitas kantor",
 }

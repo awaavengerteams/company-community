@@ -770,6 +770,8 @@ export const th = {
   "hub.funDetail": "วงล้อสุ่มชื่อ จับทีม สายแข่งขัน",
   "hub.market": "ตลาดนัด",
   "hub.marketDetail": "ปล่อยของที่ไม่ใช้ หาของมือสอง",
+  "hub.chat": "แชท",
+  "hub.chatDetail": "คุยกลุ่มหรือคุยส่วนตัว ข้อความถึงทันที",
   "hub.more": "ดูทั้งหมด",
   "hub.moreDetail": "หน้ารวมกิจกรรมออฟฟิศ",
 } as const
