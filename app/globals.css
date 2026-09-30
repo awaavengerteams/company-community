@@ -1253,6 +1253,22 @@ html[data-theme='light'] .cta-glow { box-shadow: 0 8px 18px -12px rgb(0 0 0 / 0.
   background: color-mix(in oklab, var(--color-page) 55%, transparent);
 }
 
+/*
+ * ★★ กล่องเดโมรับสีประจำโมดูลจากแถวที่ครอบมันอยู่
+ *    ★ กล่องสีดำสี่ใบเรียงลงมาอ่านเป็น "ช่องว่างสี่ช่อง" ไม่ใช่หน้าจอสี่หน้าจอ
+ *      ★★ ขอบกับแสงมุมบนทำให้มันดูเป็นจอเล็ก ๆ ที่กำลังแสดงอะไรอยู่
+ * ★ ใช้ --tint ที่สืบทอดมา จึงไม่ต้องส่งสีเข้ามาซ้ำที่นี่
+ */
+.demo-box.tinted {
+  border-color: rgb(var(--tint) / 0.28);
+  background:
+    radial-gradient(110% 80% at 50% -10%, rgb(var(--tint) / 0.12), transparent 62%),
+    color-mix(in oklab, var(--color-page) 62%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 18px 40px -26px rgb(var(--tint) / 0.85);
+}
+
 /* ── วงล้อสุ่มร้าน: แถบชื่อเลื่อนขึ้นวนไม่รู้จบ ─────────────────────────── */
 .demo-roll {
   animation: demo-roll 5.5s cubic-bezier(0.35, 0, 0.2, 1) infinite;

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/cn'
 import { getT } from '@/lib/i18n/server'
@@ -29,12 +30,15 @@ type Feature = {
   bulletKeys: DictKey[]
   icon: string
   demo: DemoKind
+  /* ★ สีประจำโมดูล — ชุดเดียวกับการ์ดพอร์ทัลและกล่องแจ้งเตือน */
+  tint: string
 }
 
 const FEATURES: Feature[] = [
   {
     href: '/office/food/random',
     demo: 'food',
+    tint: '255 149 0',
     titleKey: 'hub.food',
     detailKey: 'hub.foodDetail',
     bulletKeys: ['feat.food.b1', 'feat.food.b2', 'feat.food.b3'],
@@ -43,6 +47,7 @@ const FEATURES: Feature[] = [
   {
     href: '/office/wallet/owed',
     demo: 'wallet',
+    tint: '52 199 123',
     titleKey: 'hub.wallet',
     detailKey: 'hub.walletDetail',
     bulletKeys: ['feat.wallet.b1', 'feat.wallet.b2', 'feat.wallet.b3'],
@@ -51,6 +56,7 @@ const FEATURES: Feature[] = [
   {
     href: '/office/fun/name',
     demo: 'fun',
+    tint: '175 82 222',
     titleKey: 'hub.fun',
     detailKey: 'hub.funDetail',
     bulletKeys: ['feat.fun.b1', 'feat.fun.b2', 'feat.fun.b3'],
@@ -59,6 +65,7 @@ const FEATURES: Feature[] = [
   {
     href: '/office/market',
     demo: 'market',
+    tint: '10 132 255',
     titleKey: 'hub.market',
     detailKey: 'hub.marketDetail',
     bulletKeys: ['feat.market.b1', 'feat.market.b2', 'feat.market.b3'],
@@ -244,20 +251,44 @@ function FeatureRow({ feature, index, t }: { feature: Feature; index: number; t:
   return (
     <Link
       href={feature.href}
+      style={{ '--tint': feature.tint } as CSSProperties}
       className={cn(
-        'glow-border lift sheen group relative flex flex-col gap-5 overflow-hidden rounded-3xl border border-line',
-        'bg-elevated/40 p-6 backdrop-blur-md transition-colors hover:border-line-strong sm:p-8',
+        'tint-card lift sheen group relative isolate flex flex-col gap-5 overflow-hidden rounded-3xl',
+        'border border-line bg-elevated/40 p-6 backdrop-blur-md sm:p-8',
         'lg:flex-row lg:items-center lg:gap-10',
         flipped && 'lg:flex-row-reverse',
       )}
     >
+      <span className="tint-glow" aria-hidden="true" />
+
+      {/*
+        * ★★ สีประจำโมดูลติดแถวไว้ตลอด ไม่ใช่โผล่ตอนชี้
+        *    ★ สี่แถวที่เป็นสีดำเหมือนกันหมดคือสี่แถวที่ตาไถผ่านโดยไม่หยุด
+        *      ★★ การสลับซ้าย-ขวาอย่างเดียวช่วยได้ระดับหนึ่ง แต่สีคือสิ่งที่
+        *         บอกว่า "นี่คนละเรื่องกับแถวบน" ได้เร็วกว่าตำแหน่ง
+        */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background: flipped
+            ? 'radial-gradient(90% 120% at 8% 50%, rgb(var(--tint) / 0.09), transparent 62%)'
+            : 'radial-gradient(90% 120% at 92% 50%, rgb(var(--tint) / 0.09), transparent 62%)',
+        }}
+      />
       <div className="lg:w-[38%]">
         <span
           aria-hidden="true"
           className={cn(
-            'grid size-12 place-items-center rounded-2xl transition-colors',
-            'bg-surface text-ink group-hover:bg-accent group-hover:text-accent-ink',
+            'float-slow grid size-14 place-items-center rounded-2xl',
+            'text-[rgb(var(--tint))] ring-1 ring-[rgb(var(--tint)/0.3)]',
+            'shadow-[0_12px_30px_-16px] shadow-[rgb(var(--tint)/0.9)]',
+            'transition-transform duration-500 group-hover:scale-110',
           )}
+          style={{
+            background:
+              'linear-gradient(145deg, rgb(var(--tint) / 0.24), rgb(var(--tint) / 0.10))',
+          }}
         >
           <svg
             viewBox="0 0 24 24"
@@ -266,27 +297,32 @@ function FeatureRow({ feature, index, t }: { feature: Feature; index: number; t:
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="size-6"
+            className="size-7"
           >
             <path d={feature.icon} />
           </svg>
         </span>
 
-        <h3 className="mt-4 text-xl font-semibold tracking-tight">{t(feature.titleKey)}</h3>
+        <h3 className="mt-5 text-[26px] font-bold leading-tight tracking-tight sm:text-[30px]">
+          {t(feature.titleKey)}
+        </h3>
         <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{t(feature.detailKey)}</p>
       </div>
 
       <ul className="flex flex-col gap-2.5 lg:w-[34%]">
         {feature.bulletKeys.map((key) => (
-          <li key={key} className="flex items-start gap-2.5">
-            <svg
-              viewBox="0 0 24 24"
-              className="mt-0.5 size-4 shrink-0 text-accent"
-              fill="currentColor"
+          /* ★ ติ๊กถูกอยู่ในวงกลมสีประจำโมดูล ★★ ติ๊กเปล่า ๆ สีแดงเหมือนกันทั้งสี่แถว
+               ทำให้รายการทั้ง 12 ข้อดูเป็นกองเดียวกัน ไม่ได้แยกว่าเป็นของโมดูลไหน */
+          <li key={key} className="flex items-start gap-3">
+            <span
               aria-hidden="true"
+              className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full"
+              style={{ background: 'rgb(var(--tint) / 0.18)' }}
             >
-              <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" />
-            </svg>
+              <svg viewBox="0 0 24 24" className="size-3 text-[rgb(var(--tint))]" fill="currentColor">
+                <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" />
+              </svg>
+            </span>
             <span className="text-sm leading-relaxed text-ink">{t(key)}</span>
           </li>
         ))}
@@ -312,7 +348,7 @@ function FeatureRow({ feature, index, t }: { feature: Feature; index: number; t:
 function FeatureDemo({ kind, t }: { kind: DemoKind; t: Translate }) {
   if (kind === 'food') {
     return (
-      <div className="demo-box h-32 px-4" aria-hidden="true">
+      <div className="demo-box tinted h-36 px-4" aria-hidden="true">
         {/* เข็มชี้ตรงกลาง เหมือนวงล้อจริงในหน้าสุ่มอาหาร */}
         <div className="absolute inset-x-0 top-0 z-10 mx-auto h-0 w-0 border-x-6 border-t-8 border-x-transparent border-t-accent" />
         <div className="absolute inset-x-0 top-1/2 z-10 h-px -translate-y-1/2 bg-accent/25" />
@@ -333,7 +369,7 @@ function FeatureDemo({ kind, t }: { kind: DemoKind; t: Translate }) {
 
   if (kind === 'wallet') {
     return (
-      <div className="demo-box grid h-32 place-items-center px-4" aria-hidden="true">
+      <div className="demo-box tinted grid h-36 place-items-center px-4" aria-hidden="true">
         <div className="w-full max-w-[220px]">
           <p className="text-center text-lg font-bold tabular-nums text-ink">฿1,200.00</p>
           <div className="demo-split mt-2.5 flex justify-center gap-1.5">
@@ -353,7 +389,7 @@ function FeatureDemo({ kind, t }: { kind: DemoKind; t: Translate }) {
 
   if (kind === 'fun') {
     return (
-      <div className="demo-box grid h-32 place-items-center px-4" aria-hidden="true">
+      <div className="demo-box tinted grid h-36 place-items-center px-4" aria-hidden="true">
         <div className="flex w-full max-w-[200px] gap-2">
           {[0, 1].map((team) => (
             <div key={team} className="flex flex-1 flex-col gap-1.5">
@@ -376,7 +412,7 @@ function FeatureDemo({ kind, t }: { kind: DemoKind; t: Translate }) {
   }
 
   return (
-    <div className="demo-box grid h-32 place-items-center px-4" aria-hidden="true">
+    <div className="demo-box tinted grid h-36 place-items-center px-4" aria-hidden="true">
       <div className="flex w-full max-w-[220px] items-center gap-3 rounded-xl bg-surface/70 p-2.5">
         <span className="size-10 shrink-0 rounded-lg bg-line" />
         <span className="min-w-0 flex-1">
