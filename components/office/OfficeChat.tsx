@@ -525,6 +525,37 @@ export function OfficeChat() {
                 </span>
               </button>
 
+              {/*
+                * ★★★ ปุ่มขีดสามขีดสำหรับเปิดข้อมูลกลุ่ม
+                *
+                *     ★ เดิมกดที่ชื่อห้องได้อยู่แล้ว แต่ไม่มีอะไรบอกว่ากดได้ —
+                *       ผู้ใช้จริงถามว่า "ทำตรงไหน" ทั้งที่ปุ่มอยู่ตรงหน้า
+                *     ★★ ความสามารถที่มองไม่เห็นเท่ากับไม่มี ไอคอนที่มีรูปร่าง
+                *        ชัดเจนตรงมุมขวาคือที่ที่คนเปิดเมนูห้องไปหาอยู่แล้ว
+                *     ★ ยังคงกดที่ชื่อได้เหมือนเดิม — สองทางไปที่เดียวกัน
+                */}
+              {thread.room?.kind === 'GROUP' ? (
+                <button
+                  type="button"
+                  onClick={() => setPanel(true)}
+                  title={ot('chat.groupInfo')}
+                  aria-label={ot('chat.groupInfo')}
+                  className="grid size-9 shrink-0 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface hover:text-ink"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    className="size-5"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 7h16M4 12h16M4 17h16" />
+                  </svg>
+                </button>
+              ) : null}
+
               {/* ★ ปิดเสียงห้อง — สิ่งแรกที่คนหาเมื่อกลุ่มเริ่มคุยเยอะ */}
               <button
                 type="button"
