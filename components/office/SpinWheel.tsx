@@ -86,6 +86,16 @@ export function SpinWheel({
   const [phase, setPhase] = useState<'idle' | 'spinning' | 'done'>('idle')
   const [winner, setWinner] = useState<WheelSlot | null>(null)
   const [muted, setMutedState] = useState(false)
+  /** ★ นับครั้งที่ช่องผ่านเข็ม — เปลี่ยนค่าแล้วเข็มเล่นอนิเมชันสะบัดหนึ่งครั้ง */
+  const [kick, setKick] = useState(0)
+  /**
+   * ★★ ผลโผล่ช้ากว่าการหยุด
+   *
+   *    วงล้อหยุดแล้วโชว์ชื่อทันที = จบเรื่องทันที ★ ช่วงเงียบสั้น ๆ
+   *    ก่อนเฉลยคือช่วงที่คนในห้องหันมามองพร้อมกัน — เป็นจังหวะเดียวกับที่
+   *    RandomWheel ใช้อยู่ (หัวข้อ 4.1) จึงต้องมีที่นี่ด้วย
+   */
+  const [revealed, setRevealed] = useState(false)
 
   const frameRef = useRef<number | null>(null)
   const startRef = useRef(0)
@@ -125,6 +135,7 @@ export function SpinWheel({
     lastSlotRef.current = -1
     drumRef.current = false
     setWinner(null)
+    setRevealed(false)
     setPhase('spinning')
 
     const tick = (now: number) => {
@@ -145,7 +156,11 @@ export function SpinWheel({
       const slotNow = Math.floor((((360 - (current % 360)) % 360) / seg))
       if (slotNow !== lastSlotRef.current) {
         lastSlotRef.current = slotNow
-        if (!reduced) playTick()
+        if (!reduced) {
+          playTick()
+          /* ★ เข็มถูกซี่วงล้อดีด — ตอนช้าลงจะเห็นชัดว่ามันสะบัดทีละครั้ง */
+          setKick((k) => k + 1)
+        }
       }
 
       if (!drumRef.current && t > 0.72) {
@@ -163,9 +178,17 @@ export function SpinWheel({
       const won = slots[plan.winner]!
       setWinner(won)
       setPhase('done')
-      playCelebrate()
       vibrate([30, 40, 60])
-      onResult?.(won)
+
+      /* ★ เงียบไว้ก่อน แล้วค่อยเฉลย — เสียงฉลองมาพร้อมชื่อ ไม่ใช่ตอนหยุด */
+      window.setTimeout(
+        () => {
+          setRevealed(true)
+          playCelebrate()
+          onResult?.(won)
+        },
+        prefersReducedMotion() ? 120 : 780,
+      )
     }
 
     frameRef.current = requestAnimationFrame(tick)
@@ -177,8 +200,16 @@ export function SpinWheel({
 
   return (
     <div className={cn('relative flex flex-col items-center gap-6', preview && 'opacity-45 saturate-50')}>
+      {/* ★ เวทีมืดลงทั้งจอตอนหมุน — ตาถูกบังคับให้อยู่ที่วงล้อ */}
+      {phase === 'spinning' && !preview ? (
+        <span aria-hidden="true" className="stage-dim" />
+      ) : null}
       {/* ── วงล้อ ──────────────────────────────────────────────── */}
-      <div className="relative">
+      <div className={cn('relative z-40 transition-transform duration-500', phase === 'spinning' && 'scale-[1.04]')}>
+        {/* ★ วงแหวนพลังงานหมุนรอบขอบตอนกำลังหมุน */}
+        {phase === 'spinning' && !preview ? (
+          <span aria-hidden="true" className="energy-ring" />
+        ) : null}
         {/* ★ แสงใต้วงล้อ ทำให้มันลอยออกจากพื้นหลัง ไม่ใช่แปะติด */}
         <div
           aria-hidden="true"
@@ -253,8 +284,21 @@ export function SpinWheel({
 
               return (
                 <g key={slot.id}>
-                  <path d={d} fill={`rgb(${tint} / ${i % 2 === 0 ? 0.88 : 0.68})`} />
-                  <path d={d} fill="none" stroke="#000" strokeOpacity="0.25" strokeWidth="1" />
+                  {/*
+                    * ★★ สีทึบ ไม่ใช่สีจาง
+                    *
+                    *    เดิมใช้ opacity 0.88/0.68 ซึ่งในโหมดมืดดูโอเค
+                    *    ★ แต่ในโหมดสว่างสีจะจางลงไปกับพื้นขาวจนกลายเป็นพาสเทล
+                    *      และตัวหนังสือขาวบนพื้นพาสเทลก็อ่านไม่ออก
+                    *    ★★ สลับความเข้มด้วยการผสมดำแทน — ได้ความต่างของช่อง
+                    *       เหมือนเดิมโดยไม่พึ่งสีพื้นหลังของธีม
+                    */}
+                  <path
+                    d={d}
+                    fill={`rgb(${tint})`}
+                    style={i % 2 === 1 ? { filter: 'brightness(0.78)' } : undefined}
+                  />
+                  <path d={d} fill="none" stroke="#000" strokeOpacity="0.28" strokeWidth="1.2" />
                   <text
                     x={tx}
                     y={ty}
@@ -282,15 +326,17 @@ export function SpinWheel({
           <circle cx={SIZE / 2} cy={SIZE / 2} r={HUB} fill="none" stroke="var(--color-line)" strokeWidth="1.5" />
         </svg>
 
-        {/* ★ เข็มชี้อยู่บนสุด ชี้ลง — ตำแหน่งเดียวกับวงล้อจริงทุกใบในโลก */}
+        {/* ★ เข็มชี้อยู่บนสุด ชี้ลง — ตำแหน่งเดียวกับวงล้อจริงทุกใบในโลก
+            ★★ key เปลี่ยนทุกครั้งที่ช่องผ่าน เพื่อให้อนิเมชันสะบัดเริ่มใหม่ */}
         <div
+          key={kick}
           aria-hidden="true"
           className={cn(
-            'absolute inset-x-0 top-0 mx-auto h-0 w-0 -translate-y-1',
+            'pointer-kick absolute inset-x-0 top-0 mx-auto h-0 w-0 -translate-y-1',
             'border-x-[13px] border-t-[26px] border-x-transparent border-t-accent',
-            'drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] transition-transform',
-            phase === 'spinning' && 'animate-pulse',
+            'drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)]',
           )}
+          style={{ transformOrigin: '50% 0' }}
         />
 
         {/* ข้อความตรงกลางดุม */}
@@ -298,10 +344,16 @@ export function SpinWheel({
           <span
             className={cn(
               'max-w-[92px] text-center text-[11px] font-medium leading-tight',
-              phase === 'done' ? 'text-accent' : 'text-ink-faint',
+              phase === 'done' && revealed ? 'winner-pop text-accent' : 'text-ink-faint',
             )}
           >
-            {phase === 'spinning' ? '…' : phase === 'done' ? winner?.label.slice(0, 18) : spinLabel}
+            {phase === 'spinning'
+              ? '…'
+              : phase === 'done'
+                ? revealed
+                  ? winner?.label.slice(0, 18)
+                  : 'และคนนั้นก็คือ…'
+                : spinLabel}
           </span>
         </div>
       </div>
@@ -350,7 +402,7 @@ export function SpinWheel({
       </div>
       )}
 
-      {phase === 'done' ? <Confetti /> : null}
+      {phase === 'done' && revealed ? <Confetti /> : null}
     </div>
   )
 }

@@ -278,18 +278,38 @@ export function FunNameWheel() {
               </Button>
             </div>
 
-            <label className="mt-3 flex cursor-pointer items-start gap-2">
-              <input
-                type="checkbox"
-                checked={noRepeat}
-                onChange={(e) => setNoRepeat(e.target.checked)}
-                className="mt-0.5 size-4 accent-[var(--color-accent)]"
-              />
-              <span>
-                <span className="text-sm text-ink">{ot('fun.name.noRepeat')}</span>
+            {/*
+              * ★ สวิตช์ ไม่ใช่ช่องติ๊ก
+              *   ★★ ช่องติ๊กสื่อว่า "เลือกหลายอย่างจากรายการ" ส่วนสวิตช์สื่อว่า
+              *      "เปิด/ปิดโหมดนี้" ซึ่งตรงกับสิ่งที่ปุ่มนี้ทำจริง
+              *   ★ ใช้ชุดเดียวกับสวิตช์ในหน้าโปรไฟล์ ทั้งระบบจึงเป็นภาษาเดียวกัน
+              */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={noRepeat}
+              onClick={() => setNoRepeat((v) => !v)}
+              className="mt-3 flex w-full items-start gap-3 rounded-xl p-1 text-start transition-colors hover:bg-surface/60"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm text-ink">{ot('fun.name.noRepeat')}</span>
                 <span className="block text-xs text-ink-faint">{ot('fun.name.noRepeatHint')}</span>
               </span>
-            </label>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors',
+                  noRepeat ? 'bg-accent' : 'bg-surface-hover',
+                )}
+              >
+                <span
+                  className={cn(
+                    'absolute top-0.5 size-4 rounded-full bg-elevated shadow transition-[inset-inline-start]',
+                    noRepeat ? 'start-4.5' : 'start-0.5',
+                  )}
+                />
+              </span>
+            </button>
 
             <button
               type="button"
