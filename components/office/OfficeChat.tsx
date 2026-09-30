@@ -9,6 +9,7 @@ import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
 import { ChatAvatar } from './ChatAvatar'
 import { ChatGroupPanel } from './ChatGroupPanel'
+import { useChatTyping } from './useChatTyping'
 
 /**
  * แชทออฟฟิศ — แชทส่วนตัวและแชทกลุ่ม
@@ -51,6 +52,8 @@ type Message = {
   senderAvatar: string | null
   createdAt: string
   read: boolean
+  /** คนอื่นที่อ่านข้อความนี้แล้วกี่คน (เฉพาะข้อความของเราเอง) */
+  readers: number
 }
 
 type Member = {
@@ -99,8 +102,12 @@ export function OfficeChat() {
   const [uploading, setUploading] = useState(false)
 
   const endRef = useRef<HTMLDivElement | null>(null)
+  const wallRef = useRef<HTMLDivElement | null>(null)
   const photoRef = useRef<HTMLInputElement | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
+
+  const me = thread?.members.find((m) => m.isMe) ?? null
+  const { typing, notify } = useChatTyping(openId, me?.id ?? null, me?.name ?? '')
 
   /*
    * ★★★ ถามซ้ำทุก 5 วินาที แต่ห้าม setState ถ้าข้อมูลเหมือนเดิม
@@ -196,6 +203,25 @@ export function OfficeChat() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [thread?.messages.length])
+
+  /*
+   * ★★★ ฟอง "กำลังพิมพ์" ต้องเลื่อนตามด้วย ไม่งั้นมันโผล่ใต้ขอบจอ
+   *
+   *     ★ จับได้ตอนถ่ายภาพหน้าจอทดสอบ: ระบบทำงานถูกทุกอย่าง ฟองมีอยู่จริง
+   *       ในหน้าเว็บ ★★ แต่มันอยู่ต่ำกว่าที่ตามองเห็น — ฟีเจอร์ที่ไม่มีใคร
+   *       เห็นเท่ากับไม่ได้ทำ
+   *
+   * ★★ แต่เลื่อนเฉพาะตอนที่คนอ่านอยู่ท้ายห้องแล้วเท่านั้น
+   *    ★ ถ้าเลื่อนทุกครั้ง คนที่กำลังไล่อ่านข้อความเก่าจะโดนกระชากลงล่าง
+   *      ทุกครั้งที่มีใครสักคนแตะแป้นพิมพ์ ซึ่งแย่กว่าการไม่เห็นฟองมาก
+   */
+  useEffect(() => {
+    if (typing.length === 0) return
+    const wall = wallRef.current
+    if (!wall) return
+    const atBottom = wall.scrollHeight - wall.scrollTop - wall.clientHeight < 140
+    if (atBottom) endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [typing.length])
 
   async function send() {
     const body = text.trim()
@@ -640,7 +666,7 @@ export function OfficeChat() {
             </div>
 
             {/* ── ผนังห้องแชท ─────────────────────────────────────── */}
-            <div className="chat-wall flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
+            <div ref={wallRef} className="chat-wall flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
               {thread.messages.length === 0 ? (
                 <p className="chat-daypill m-auto">{ot('chat.sayHi')}</p>
               ) : (
@@ -683,8 +709,20 @@ export function OfficeChat() {
                             {/* ★★ "อ่านแล้ว" อยู่เหนือเวลา ทางซ้ายของฟองเรา — ตำแหน่งเดียวกับต้นฉบับ */}
                             {m.mine ? (
                               <span className="flex flex-col items-end">
-                                {m.read && last ? (
-                                  <span className="chat-meta font-medium">{ot('chat.read')}</span>
+                                {/*
+                                  * ★★ ในกลุ่มบอกเป็นจำนวนคน ไม่ใช่รอให้ครบทุกคนแล้วค่อยขึ้น
+                                  *
+                                  *    ★ เดิมขึ้น "อ่านแล้ว" ต่อเมื่อทุกคนอ่านครบ ★★ กลุ่มสิบคน
+                                  *      ที่มีคนลาหนึ่งคนจะไม่ขึ้นคำว่าอ่านแล้วเลยทั้งวัน
+                                  *      ทั้งที่อีกเก้าคนอ่านไปตั้งนานแล้ว
+                                  *    ★ ตัวเลขตอบคำถามที่คนถามจริง ๆ ว่า "มีคนเห็นหรือยัง กี่คน"
+                                  */}
+                                {m.readers > 0 && last ? (
+                                  <span className="chat-meta font-medium">
+                                    {thread.room?.kind === 'GROUP'
+                                      ? ot('chat.readCount', { n: m.readers })
+                                      : ot('chat.read')}
+                                  </span>
                                 ) : null}
                                 {last ? <span className="chat-meta">{shortTime(m.createdAt)}</span> : null}
                               </span>
@@ -702,6 +740,24 @@ export function OfficeChat() {
                   )
                 })
               )}
+              {/* ★ ฟองจุดเต้นอยู่ท้ายบทสนทนา ไม่ใช่แถบลอยด้านล่าง
+                  ★★ มันคือข้อความที่กำลังจะมาถึง จึงควรอยู่ตรงที่ข้อความนั้นจะโผล่ */}
+              {typing.length > 0 ? (
+                <div className="mt-2 flex items-end gap-2">
+                  {/* ★ ช่องว่างกว้างเท่ารูปโปรไฟล์ ให้ฟองนี้ตรงแนวกับฟองอื่นของฝั่งซ้าย
+                      ★★ เยื้องไป 34px อ่านเป็น "จัดวางพลาด" ไม่ใช่ดีไซน์ */}
+                  <span className="size-8.5 shrink-0" />
+                  <span className="flex flex-col items-start">
+                    <span className="chat-meta mb-1 ps-1">{typingLabel(typing)}</span>
+                    <span className="bubble bubble-you chat-typing" aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                  </span>
+                </div>
+              ) : null}
+
               <div ref={endRef} />
             </div>
 
@@ -804,7 +860,11 @@ export function OfficeChat() {
 
               <textarea
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(e) => {
+                  setText(e.target.value)
+                  /* ★ ส่งสัญญาณเฉพาะตอนมีอะไรอยู่ในช่อง — ลบทิ้งจนว่างคือเลิกพิมพ์ */
+                  if (e.target.value.trim()) notify()
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
@@ -978,6 +1038,20 @@ function keepLoadedUrls(prev: Thread | null, next: Thread): Thread {
     ...next,
     messages: next.messages.map((m) => (had.has(m.id) ? { ...m, fileUrl: had.get(m.id)! } : m)),
   }
+}
+
+/**
+ * ข้อความ "ใครกำลังพิมพ์"
+ *
+ * ★ สามคนขึ้นไปไม่ไล่ชื่อทั้งหมด — บรรทัดจะยาวจนดันฟองข้อความหลุดจอ
+ *   ★★ ชื่อแรกคนเดียวพอ ที่เหลือเป็นตัวเลข
+ */
+function typingLabel(names: string[]): string {
+  const clean = names.map((n) => n.trim()).filter(Boolean)
+  if (clean.length === 0) return ''
+  if (clean.length === 1) return ot('chat.typingOne', { name: clean[0]! })
+  if (clean.length === 2) return ot('chat.typingTwo', { name: clean[0]!, other: clean[1]! })
+  return ot('chat.typingMany', { name: clean[0]!, n: clean.length - 1 })
 }
 
 /** ขนาดไฟล์แบบอ่านออก — ไม่ใช้ทศนิยมเมื่อเป็นหน่วยเล็ก */

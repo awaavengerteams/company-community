@@ -67,6 +67,27 @@ export const GET = withErrorHandling(async (_request: NextRequest, ctx: Ctx) => 
     .map((m) => Date.parse(m.last_read_at))
   const readUpTo = othersRead.length > 0 ? Math.min(...othersRead) : 0
 
+  /*
+   * ★★ นับ "อ่านแล้วกี่คน" ที่เซิร์ฟเวอร์ ไม่ใช่ส่งเวลาอ่านของทุกคนไปให้หน้าเว็บนับ
+   *
+   *    ★ เวลาอ่านล่าสุดของแต่ละคนเป็นข้อมูลที่บอกได้ว่าใครเปิดแชทตอนกี่โมง
+   *      ซึ่งละเอียดเกินกว่าที่หน้าจอต้องใช้ — หน้าจอต้องการแค่ตัวเลข
+   *    ★★ ส่งเท่าที่ต้องใช้ ไม่ส่งเผื่อ
+   */
+  const readTimes = othersRead.slice().sort((a, b) => a - b)
+  const readersOf = (createdAt: string): number => {
+    const t = Date.parse(createdAt)
+    /* ★ readTimes เรียงแล้ว หาตำแหน่งแรกที่ >= t แล้วที่เหลือคือคนที่อ่านผ่านไปแล้ว */
+    let lo = 0
+    let hi = readTimes.length
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1
+      if (readTimes[mid]! < t) lo = mid + 1
+      else hi = mid
+    }
+    return readTimes.length - lo
+  }
+
   /* ★ เปิดห้องแล้วถือว่าอ่านทันที หน้าเว็บไม่ต้องยิงซ้ำ */
   await admin.rpc('read_office_chat', { p_actor: actor.id, p_room: id })
 
@@ -150,6 +171,8 @@ export const GET = withErrorHandling(async (_request: NextRequest, ctx: Ctx) => 
         senderAvatar: byId.get(m.sender_id)?.avatar_url ?? null,
         createdAt: m.created_at,
         read: m.sender_id === actor.id && Date.parse(m.created_at) <= readUpTo,
+        /* ★ จำนวนคนอื่นที่อ่านข้อความนี้แล้ว — ใช้กับห้องกลุ่มเป็นหลัก */
+        readers: m.sender_id === actor.id ? readersOf(m.created_at) : 0,
       }
     }),
   })
