@@ -62,6 +62,14 @@ export function OfficeChat() {
   const [people, setPeople] = useState<Person[]>([])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
+  /*
+   * ★★ แยก error สองก้อน
+   *
+   *    ★ ตอนแรกใช้ตัวเดียวกัน แล้ว error จากการ "กดเปิดแชท" ไปโผล่ในช่อง
+   *      รายการห้องว่า "ระบบขัดข้อง" ★ ซึ่งชี้ไปผิดที่จนหาสาเหตุไม่เจอ
+   *    ★★ error ต้องโผล่ตรงที่การกระทำเกิด ไม่ใช่ที่ไหนก็ได้ในหน้า
+   */
+  const [listError, setListError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [composer, setComposer] = useState<'none' | 'dm' | 'group'>('none')
   const [groupTitle, setGroupTitle] = useState('')
@@ -73,8 +81,9 @@ export function OfficeChat() {
     try {
       const d = await apiFetch<{ rooms: Room[] }>('/api/office/chat')
       setRooms(d.rooms)
+      setListError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setListError(e instanceof Error ? e.message : ot('common.error'))
     }
   }, [])
 
@@ -249,6 +258,12 @@ export function OfficeChat() {
               })}
             </div>
 
+            {error ? (
+              <p role="alert" className="mt-2 text-xs text-danger">
+                {error}
+              </p>
+            ) : null}
+
             <div className="mt-3 flex items-center gap-2">
               {composer === 'group' ? (
                 <Button
@@ -281,9 +296,9 @@ export function OfficeChat() {
              *      API ตอบ 500 เพราะฐานข้อมูลยังไม่มีตาราง — หลงคิดว่าระบบปกติ
              *    ★★ สถานะว่างกับสถานะพังต้องหน้าตาไม่เหมือนกันเสมอ
              */
-            error ? (
+            listError ? (
               <p role="alert" className="px-4 py-10 text-center text-sm text-danger">
-                {error}
+                {listError}
               </p>
             ) : (
               <p className="py-12 text-center text-sm text-ink-faint">{ot('chat.empty')}</p>
