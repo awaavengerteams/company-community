@@ -167,7 +167,7 @@ export function DrawRoom({ roomId }: { roomId: string }) {
   const showResultOnly = late && room.winnerLabel !== null
 
   return (
-    <div className="mx-auto max-w-2xl py-2">
+    <div className="max-w-2xl py-2">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" onClick={() => router.push('/office/fun/room')}>
           ‹ {ot('room.back')}

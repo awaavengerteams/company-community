@@ -108,7 +108,7 @@ export function FunLottery() {
     : null
 
   return (
-    <div className="mx-auto max-w-2xl py-2">
+    <div className="max-w-2xl py-2">
 
       {/* ── นับถอยหลัง (FR-C11) ─────────────────────────────────── */}
       <p className="mt-1 text-sm text-ink-soft">

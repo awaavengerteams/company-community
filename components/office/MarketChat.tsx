@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Input } from '@/components/ui/Input'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/cn'
@@ -153,7 +154,7 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
 
         <div className="mt-3 flex-1 overflow-y-auto rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-3">
           {room.messages.length === 0 ? (
-            <p className="py-10 text-center text-sm text-ink-faint">{ot('market.chat.empty')}</p>
+            <EmptyState icon={'M20 4H4a1 1 0 0 0-1 1v12l4-3h13a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z'} title={ot('market.chat.empty')} />
           ) : (
             <div className="flex flex-col gap-2">
               {room.messages.map((m) => (
@@ -203,7 +204,7 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
 
   /* ── กล่องข้อความ ──────────────────────────────────────────── */
   return (
-    <div className="mx-auto max-w-2xl py-2">
+    <div className="max-w-2xl py-2">
 
       <div className="mt-4 flex flex-col gap-2">
         {threads.length === 0 ? (

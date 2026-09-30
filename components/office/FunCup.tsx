@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
 import { playCelebrate, vibrate } from '@/lib/office/sound'
@@ -112,7 +113,7 @@ export function FunCup() {
   /* ── รายการทัวร์นาเมนต์ ────────────────────────────────────── */
   if (!open) {
     return (
-      <div className="mx-auto max-w-3xl py-2">
+      <div className="max-w-3xl py-2">
 
         {error ? (
           <p role="alert" className="mt-3 text-sm text-danger">
@@ -122,7 +123,7 @@ export function FunCup() {
 
         <div className="mt-5 flex flex-col gap-2">
           {list.length === 0 ? (
-            <p className="py-8 text-center text-sm text-ink-faint">{ot('fun.cup.empty')}</p>
+            <EmptyState icon={'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 3'} title={ot('fun.cup.empty')} />
           ) : (
             list.map((t) => (
               <button

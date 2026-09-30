@@ -128,7 +128,7 @@ export function FoodPicks() {
 
   if (adding) {
     return (
-      <div className="mx-auto max-w-lg py-2">
+      <div className="max-w-lg py-2">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-ink">{ot('food.picks.add')}</h2>
           <Button variant="ghost" onClick={() => setAdding(false)}>

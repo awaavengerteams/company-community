@@ -2244,6 +2244,118 @@ html[data-theme='dark'] {
 }
 
 /*
+ * ══════════════════════════════════════════════════════════════════════════
+ * ผืนหลังและท้ายหน้าของระบบออฟฟิศ
+ *
+ * ★★★ ปัญหาที่เห็นตอนไล่ถ่ายภาพทั้ง 22 หน้า: ทุกหน้าที่เนื้อหาสั้น
+ *     (ยอดค้าง · ผู้ใช้งาน · กล่องข้อความ · ร้านเด็ด …) จบลงกลางจอ
+ *     แล้วเหลือพื้นเรียบยาวลงไปจนสุด
+ *
+ *     ★ แก้ทีละหน้าด้วยการ "ใส่ของเพิ่ม" จะได้ 22 หน้าที่หน้าตาไม่เหมือนกัน
+ *       และของบางอย่างจะเป็นของประดับที่ไม่มีใครใช้
+ *     ★★ แก้ที่ชั้นร่วมทีเดียว — ทุกหน้าได้พื้นหลังกับท้ายหน้าชุดเดียวกัน
+ *        แล้วค่อยไปเติมเนื้อหาจริงเฉพาะหน้าที่ขาดจริง ๆ
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.office-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      120% 60% at 50% -10%,
+      color-mix(in oklab, var(--color-accent) 7%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(90% 50% at 100% 0%, rgb(120 90 255 / 0.07), transparent 58%),
+    radial-gradient(70% 45% at 0% 100%, rgb(255 60 110 / 0.05), transparent 62%);
+}
+
+/* ★ ลายจุดจาง ๆ ทับอีกชั้น — พื้นเรียบสนิทบนจอใหญ่อ่านเป็นพื้นที่ยังไม่ได้ใช้ */
+.office-canvas::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--color-ink-faint) 22%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 26px 26px;
+  mask-image: linear-gradient(180deg, transparent, #000 35%, #000 70%, transparent);
+}
+
+/*
+ * ── ความลึกของการ์ดในระบบออฟฟิศ ────────────────────────────────────────────
+ *
+ * ★★★ การ์ดทุกใบเดิมเป็นกล่องขอบเส้นบางบนพื้นสีใกล้เคียงกัน
+ *
+ *     ★ บนจอสว่างมันอ่านเป็น "ตารางสีเทา" ไม่ใช่ "การ์ด" ★★ ส่วนบนจอมืด
+ *       ขอบแทบมองไม่เห็นเลย การ์ดหลายใบเลยกลืนเป็นก้อนเดียวกัน
+ *     ★ เงาบาง ๆ กับขอบสว่างด้านในทำให้แต่ละใบแยกจากพื้นหลังได้โดยไม่ต้อง
+ *       เพิ่มเส้นขอบให้หนาขึ้น ซึ่งจะทำให้หน้าดูรก
+ *
+ * ★★ เขียนเป็นกฎเดียวครอบทั้งโมดูล แทนที่จะไล่ใส่คลาสทีละ 20 ไฟล์
+ *    ★ จำกัดขอบเขตด้วย .office-body ★★ ห้องฟังเพลงจึงไม่ถูกแตะแม้แต่พิกเซลเดียว
+ *      ซึ่งเป็นข้อกำหนดที่ห้ามพลาด
+ *
+ * ★ กฎนี้อยู่นอก @layer จึงชนะ utility ของ Tailwind ได้โดยไม่ต้องใส่ !important
+ *   (บทเรียนจากตอนที่ focus-visible:outline-none ใช้ไม่ได้เพราะเรื่องนี้)
+ */
+.office-body :is(.rounded-2xl, .rounded-3xl).border-line {
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.05) inset,
+    0 12px 32px -20px rgb(0 0 0 / 0.4);
+}
+
+/* ── การ์ดตัวเลขที่กดได้ ─────────────────────────────────────────────────── */
+.figure-card {
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2),
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.05) inset,
+    0 12px 32px -20px rgb(0 0 0 / 0.4);
+}
+
+.figure-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.06) inset,
+    0 18px 38px -20px rgb(0 0 0 / 0.5);
+}
+
+/* ── กล่องสถานะว่าง ─────────────────────────────────────────────────────── */
+.empty-state {
+  border: 1px dashed color-mix(in oklab, var(--color-line-strong) 85%, transparent);
+  background:
+    radial-gradient(
+      70% 80% at 50% 0%,
+      color-mix(in oklab, var(--color-accent) 5%, transparent),
+      transparent 70%
+    ),
+    color-mix(in oklab, var(--color-elevated) 45%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.empty-state-orb {
+  color: color-mix(in oklab, var(--color-accent) 80%, var(--color-ink-faint));
+  background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 18%, transparent);
+}
+
+.office-footer {
+  border-top: 1px solid var(--color-line);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in oklab, var(--color-elevated) 55%, transparent)
+  );
+}
+
+/*
  * ── หน้าที่กว้างกว่ามาตรฐาน ────────────────────────────────────────────────
  *
  * ★★★ ดันออกจากกรอบ 1000px ของ layout โดยไม่แก้ layout

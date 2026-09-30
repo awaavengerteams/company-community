@@ -102,7 +102,7 @@ export function OfficeProfile() {
   }
 
   return (
-    <div className="mx-auto max-w-xl py-2">
+    <div className="max-w-xl py-2">
 
       {/* ── ข้อมูลพนักงาน ────────────────────────────────────── */}
       <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">

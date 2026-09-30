@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
 import { formatBaht, statusLabel, type Debt, type WalletData } from '@/lib/office/wallet'
@@ -175,7 +176,11 @@ export function WalletOwed() {
         {!data ? (
           <p className="py-10 text-center text-sm text-ink-faint">{ot('common.loading')}</p>
         ) : active.length === 0 ? (
-          <p className="py-10 text-center text-sm text-ink-faint">{ot('wallet.owed.empty')}</p>
+          <EmptyState
+            icon={'M3 8a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2M3 8v9a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3M3 8h1m17 3h-4a2 2 0 0 0 0 4h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z'}
+            title={ot('wallet.owed.empty')}
+            description={ot('wallet.owed.emptyHint')}
+          />
         ) : (
           active.map((d) => (
             <Row
@@ -213,8 +218,8 @@ function SummaryCard({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'rounded-(--radius-card) border p-4 text-start transition-colors',
-        active ? 'border-line-strong bg-surface' : 'border-line bg-elevated hover:bg-surface',
+        'figure-card rounded-2xl border p-4 text-start',
+        active ? 'border-accent/45 bg-surface' : 'border-line bg-elevated hover:bg-surface',
       )}
     >
       <p className="text-sm text-ink-soft">{label}</p>

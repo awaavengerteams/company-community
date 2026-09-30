@@ -56,7 +56,7 @@ export function WalletQr() {
   }
 
   return (
-    <div className="mx-auto max-w-md py-2">
+    <div className="max-w-md py-2">
       <p className="mt-1 text-sm text-ink-soft">{ot('wallet.qr.hint')}</p>
 
       <div className="mt-5 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">

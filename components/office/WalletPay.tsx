@@ -82,7 +82,7 @@ export function WalletPay({
   }
 
   return (
-    <div className="mx-auto max-w-md py-2">
+    <div className="max-w-md py-2">
       <p className="mt-1 text-sm text-ink-soft">
         {description ?? '—'}
         {files?.creditorName ? ` · ${files.creditorName}` : ''}

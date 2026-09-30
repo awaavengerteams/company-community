@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
@@ -81,7 +82,7 @@ export function DrawRoomList() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl py-2">
+    <div className="max-w-2xl py-2">
       <p className="mt-1 text-sm text-ink-soft">{ot('room.hint')}</p>
 
       {/* ── เปิดห้องใหม่ ───────────────────────────────────────── */}
@@ -148,7 +149,7 @@ export function DrawRoomList() {
       {/* ── ห้องที่มีอยู่ ──────────────────────────────────────── */}
       <div className="mt-5 flex flex-col gap-2">
         {rooms.length === 0 ? (
-          <p className="py-8 text-center text-sm text-ink-faint">{ot('room.empty')}</p>
+          <EmptyState icon={'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 3'} title={ot('room.empty')} description={ot('room.emptyHint')} />
         ) : (
           rooms.map((r) => (
             <Link

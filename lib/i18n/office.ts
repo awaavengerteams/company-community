@@ -186,6 +186,7 @@ export const OFFICE_TH = {
   'wallet.owed.owedToMe': 'คนอื่นค้างฉัน',
   'wallet.owed.pendingConfirm': 'รอฉันยืนยัน {n} รายการ',
   'wallet.owed.empty': 'ไม่มีรายการค้าง',
+  'wallet.owed.emptyHint': 'เคลียร์หมดแล้ว — ถ้าออกเงินให้ใครไว้ กด “สร้างรายการเงิน” เพื่อบันทึก',
   'wallet.owed.days': 'ค้างมา {n} วัน',
   'wallet.owed.today': 'วันนี้',
   'wallet.owed.create': 'สร้างรายการเงิน',
@@ -290,6 +291,7 @@ export const OFFICE_TH = {
   'market.post': 'ลงประกาศ',
   'market.mine': 'ของฉัน',
   'market.empty': 'ยังไม่มีประกาศ — ลงชิ้นแรกเลยไหม',
+  'market.emptyHint': 'ของที่ไม่ได้ใช้แล้วอาจเป็นของที่คนอื่นกำลังตามหาอยู่',
   'market.searchPlaceholder': 'ค้นหาชื่อสินค้า',
   'market.allKinds': 'ทุกประเภท',
   'market.allCategories': 'ทุกหมวด',
@@ -368,6 +370,7 @@ export const OFFICE_TH = {
   'wallet.summary.byRestaurant': 'ร้านที่ใช้จ่ายมากสุด',
   'wallet.summary.byDay': 'รายวัน',
   'wallet.summary.empty': 'ช่วงนี้ยังไม่มีรายการ',
+  'wallet.summary.emptyHint': 'ลองเปลี่ยนช่วงเวลา หรือเริ่มบันทึกค่าข้าวมื้อแรกของเดือนนี้',
   'wallet.summary.export': 'ส่งออก CSV',
   'wallet.summary.explain': 'นับเฉพาะส่วนที่เป็นของคุณจริง ๆ — เงินที่จ่ายไปก่อนแล้วเก็บคืนไม่ถูกนับ',
 
@@ -450,6 +453,7 @@ export const OFFICE_TH = {
   'room.typedPlaceholder': 'ใส่ทีละบรรทัด',
   'room.optionCount': '{n} ตัวเลือก',
   'room.empty': 'ยังไม่มีห้อง — เปิดห้องแรกเลยไหม',
+  'room.emptyHint': 'เปิดห้องแล้วส่งลิงก์ให้เพื่อน ทุกคนเห็นผลสุ่มพร้อมกันแบบเรียลไทม์',
   'room.open': 'รอสุ่ม',
   'room.spinning': 'กำลังสุ่ม',
   'room.done': 'สุ่มแล้ว',
@@ -687,6 +691,8 @@ export const OFFICE_TH = {
   'chat.featFileHint': 'สูงสุด 20 MB ต่อไฟล์ เก็บในที่เก็บส่วนตัวของบริษัท',
 
   'pdesc.chat': 'คุยกันเป็นกลุ่มหรือคุยส่วนตัว ข้อความถึงทันทีแบบเรียลไทม์',
+
+  'footer.office': '© {year} FrameRoom · ระบบกิจกรรมภายในออฟฟิศ',
 
   /* ── ทั่วไป ──────────────────────────────────────────────────── */
   'common.save': 'บันทึก',

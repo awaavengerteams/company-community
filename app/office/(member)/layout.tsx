@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getOfficeViewer } from '@/lib/office/session'
 import { OfficePageChrome } from '@/components/office/OfficePageChrome'
+import { OfficeFooter } from '@/components/office/OfficeFooter'
 
 /**
  * ด่าน "ต้องผูกรหัสพนักงานก่อน" + หัวหน้าของทุกหน้าในระบบออฟฟิศ (NFR-11)
@@ -25,11 +26,31 @@ export default async function OfficeMemberLayout({ children }: LayoutProps<'/off
 
   return (
     <>
+      {/*
+       * ★★★ ผืนหลังที่ไหลต่อจากแถบออโรราลงมาทั้งหน้า
+       *
+       *     ★ เดิมแถบสีจบตรงแถวแท็บพอดี แล้วที่เหลือเป็นพื้นเรียบ ๆ
+       *       ★★ หน้าที่เนื้อหาสั้นจึงกลายเป็นพื้นว่างครึ่งจอซึ่งอ่านเป็น
+       *          "หน้ายังโหลดไม่เสร็จ" ไม่ใช่ "หน้านี้มีแค่นี้"
+       *     ★ แสงจาง ๆ ที่ค่อย ๆ จางลงทำให้พื้นที่ว่างเป็นส่วนหนึ่งของดีไซน์
+       */}
+      <div className="office-canvas" aria-hidden="true" />
+
       <OfficePageChrome isAdmin={viewer.isAdmin} />
 
-      {/* ★ กว้าง 1000px เท่าหัวหน้า — เนื้อหากับหัวเรื่องต้องชิดขอบซ้ายตรงกัน
-          ไม่งั้นทุกหน้าจะดูเหมือนวางเยื้องกันทีละนิด */}
-      <div className="mx-auto w-full max-w-[1000px] px-4 pb-16">{children}</div>
+      {/*
+       * ★ กว้าง 1000px เท่าหัวหน้า — เนื้อหากับหัวเรื่องต้องชิดขอบซ้ายตรงกัน
+       *   ไม่งั้นทุกหน้าจะดูเหมือนวางเยื้องกันทีละนิด
+       *
+       * ★★ min-h ดันท้ายหน้าลงไปอยู่ขอบล่างของจอเสมอ
+       *    ★ ไม่ได้ทำให้เนื้อหาเยอะขึ้น แต่ทำให้ "พื้นที่ว่าง" มีจุดจบ
+       *      แทนที่จะหล่นหายไปเฉย ๆ
+       */}
+      <div className="office-body mx-auto flex w-full max-w-[1000px] flex-col px-4 pb-10 [min-height:calc(100vh-19rem)]">
+        {children}
+      </div>
+
+      <OfficeFooter />
     </>
   )
 }

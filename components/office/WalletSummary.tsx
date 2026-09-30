@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
 import { categoryLabel, formatBaht } from '@/lib/office/wallet'
@@ -117,7 +118,7 @@ export function WalletSummary() {
       : anchor.toLocaleDateString('th-TH', { year: 'numeric' })
 
   return (
-    <div className="mx-auto max-w-3xl py-2">
+    <div className="max-w-3xl py-2">
       <p className="mt-1 text-xs text-ink-faint">{ot('wallet.summary.explain')}</p>
 
       {/* ── เลือกช่วง ────────────────────────────────────────────── */}
@@ -149,7 +150,11 @@ export function WalletSummary() {
       {loading ? (
         <p className="py-10 text-center text-sm text-ink-faint">{ot('common.loading')}</p>
       ) : !data || data.total === 0 ? (
-        <p className="py-10 text-center text-sm text-ink-faint">{ot('wallet.summary.empty')}</p>
+        <EmptyState
+          icon={'M4 19V9m5 10V5m5 14v-7m5 7V8'}
+          title={ot('wallet.summary.empty')}
+          description={ot('wallet.summary.emptyHint')}
+        />
       ) : (
         <>
           {/* ── ยอดรวม ───────────────────────────────────────────── */}
@@ -168,12 +173,18 @@ export function WalletSummary() {
                   ข้อมูลเป็นชุดเดียว แกนเดียว ★ ไลบรารีกราฟที่เล็กที่สุด
                   ยังใหญ่กว่าโค้ดทั้งหน้านี้หลายเท่า
               */}
-              <div className="mt-3 flex h-32 items-end gap-0.5 overflow-x-auto">
+              {/*
+                ★★ จำกัดความกว้างสูงสุดของแท่ง
+                   ★ flex-1 อย่างเดียวทำให้เดือนที่มีรายการวันเดียว ได้แท่งเดียว
+                     กว้างเต็มกล่อง ★★ ซึ่งอ่านเป็น "แผ่นสีแดง" ไม่ใช่กราฟ
+                   ★ เดือนที่มีข้อมูลครบยังบีบลงพอดีเหมือนเดิม
+              */}
+              <div className="mt-3 flex h-32 items-end justify-start gap-0.5 overflow-x-auto">
                 {data.byDay.map((d) => (
                   <div
                     key={d.date}
                     title={`${d.date} · ฿${formatBaht(Number(d.amount))}`}
-                    className="min-w-1.5 flex-1 rounded-t-sm bg-accent/70 transition-colors hover:bg-accent"
+                    className="min-w-1.5 max-w-[42px] flex-1 rounded-t-sm bg-accent/70 transition-colors hover:bg-accent"
                     style={{ height: `${Math.max(4, (Number(d.amount) / maxDay) * 100)}%` }}
                   />
                 ))}

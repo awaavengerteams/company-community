@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { ListingImage } from './ListingImage'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
@@ -143,9 +145,13 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
             {ot('common.loading')}
           </p>
         ) : shown.length === 0 ? (
-          <p className="col-span-full py-10 text-center text-sm text-ink-faint">
-            {ot('market.empty')}
-          </p>
+          <div className="col-span-full">
+            <EmptyState
+              icon={'M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 7V5a3 3 0 0 1 6 0v2'}
+              title={ot('market.empty')}
+              description={ot('market.emptyHint')}
+            />
+          </div>
         ) : (
           shown.map((l) => (
             <Card
@@ -187,10 +193,7 @@ function Card({
         l.hidden && 'border-danger',
       )}
     >
-      {l.images[0] ? (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={l.images[0]} alt={l.title} className="aspect-4/3 w-full object-cover" />
-      ) : null}
+      {l.images[0] ? <ListingImage src={l.images[0]} alt={l.title} /> : null}
 
       <div className="flex flex-1 flex-col p-4">
         {l.hidden ? (

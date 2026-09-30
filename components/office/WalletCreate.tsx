@@ -90,7 +90,7 @@ export function WalletCreate({ selfId }: { selfId: string }) {
     (split === 'EQUAL' || (customSum > 0 && customSum <= totalNum))
 
   return (
-    <form onSubmit={submit} className="mx-auto max-w-2xl py-2">
+    <form onSubmit={submit} className="max-w-2xl py-2">
 
       <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
         <Field label={ot('wallet.create.billTitle')} required>
