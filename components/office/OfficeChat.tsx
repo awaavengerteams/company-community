@@ -411,7 +411,7 @@ export function OfficeChat() {
           *    เวลาอยู่ขวาบน · ป้ายยังไม่อ่านอยู่ขวาล่าง
           *    ★ ตำแหน่งพวกนี้คนไทยจำได้หมดแล้ว การวางให้ตรงแปลว่าไม่ต้องเรียนใหม่
           */}
-        <div className="overflow-hidden rounded-2xl border border-line bg-elevated/40 backdrop-blur-md">
+        <div className="chat-shell overflow-hidden bg-elevated/40 backdrop-blur-md">
           {rooms.length === 0 ? (
             /*
              * ★★ โหลดรายการไม่สำเร็จ ต้องบอกว่าพัง ไม่ใช่บอกว่า "ยังไม่มีห้อง"
@@ -434,9 +434,9 @@ export function OfficeChat() {
                 type="button"
                 onClick={() => setOpenId(room.id)}
                 className={cn(
-                  'flex w-full items-center gap-3 px-3 py-2.5 text-start transition-colors',
+                  'chat-row flex w-full items-center gap-3 px-3 py-2.5 text-start',
                   i > 0 && 'border-t border-line/60',
-                  room.id === openId ? 'bg-accent/10' : 'hover:bg-surface/70',
+                  room.id === openId ? 'chat-row-on' : 'hover:bg-surface/70',
                 )}
               >
                 <ChatAvatar
@@ -498,7 +498,7 @@ export function OfficeChat() {
       {/* ═══ ห้องแชท ═══════════════════════════════════════════════ */}
       <section
         className={cn(
-          'relative flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-line',
+          'chat-shell relative flex min-h-[70vh] flex-col overflow-hidden',
           !openId && 'hidden lg:flex',
         )}
       >
@@ -535,7 +535,7 @@ export function OfficeChat() {
             ) : null}
 
             {/* ── หัวห้อง ──────────────────────────────────────────── */}
-            <div className="flex items-center gap-2 border-b border-line bg-elevated/80 px-3 py-2 backdrop-blur-md">
+            <div className="chat-bar flex items-center gap-2 border-b border-line px-3 py-2">
               <button
                 type="button"
                 onClick={() => {
@@ -726,7 +726,7 @@ export function OfficeChat() {
               *    ★ ปุ่มที่กดไม่ได้ค้างอยู่ตลอดเวลาเป็นสิ่งรบกวนสายตา
               *      ส่วนปุ่มที่โผล่มาตอนพิมพ์เสร็จคือการยืนยันว่า "พร้อมส่งแล้ว"
               */}
-            <div className="flex items-end gap-2 border-t border-line bg-elevated/90 px-3 py-2.5 backdrop-blur-md">
+            <div className="chat-bar flex items-end gap-2 border-t border-line px-3 py-2.5">
               {/*
                 * ★★ ปุ่มรูปกับปุ่มไฟล์แยกกัน ไม่ยุบเป็นปุ่ม "+" อันเดียว
                 *    ★ การส่งรูปเป็นสิ่งที่ทำบ่อยที่สุดรองจากพิมพ์ข้อความ
@@ -815,28 +815,38 @@ export function OfficeChat() {
                 placeholder={ot('chat.placeholder')}
                 maxLength={2000}
                 aria-label={ot('chat.placeholder')}
-                /* ★ ปิดทั้ง outline และ ring ของเบราว์เซอร์ — ไม่งั้นได้ขอบสองชั้น
-                   สีแดงจากธีมซ้อนกับสีฟ้าของระบบ ซึ่งอ่านเป็นช่องกรอกผิดพลาด */
+                /*
+                 * ★★★ สีขอบตอนโฟกัสคุมจาก .chat-input ใน globals.css ไม่ใช่ที่นี่
+                 *
+                 *     ★ เดิมเขียน `focus-visible:outline-none` ไว้ตรงนี้ ★★ แล้ว
+                 *       มันไม่เคยทำงานเลย — กฎ focus กลางของเว็บอยู่นอก @layer
+                 *       ส่วน utility ของ Tailwind อยู่ใน layer ★ สิ่งที่อยู่นอก
+                 *       layer ชนะสิ่งที่อยู่ใน layer เสมอ ไม่เกี่ยวกับ specificity
+                 *     ★★ วัดจากเบราว์เซอร์จริงได้ rgb(6 95 212) คือสีฟ้าของลิงก์
+                 *        ทั้งที่โค้ดตรงนี้สั่งปิดไปแล้ว
+                 */
                 className={cn(
-                  'max-h-28 min-h-10 flex-1 resize-none rounded-2xl border border-line bg-surface px-4 py-2.5',
+                  'chat-input max-h-28 min-h-10 flex-1 resize-none rounded-2xl border border-line bg-surface px-4 py-2.5',
                   'text-[15px] text-ink placeholder:text-ink-faint',
-                  'outline-none focus:outline-none focus-visible:outline-none',
-                  'focus:border-accent/70',
                 )}
               />
 
+              {/*
+                * ★★★ ปุ่มส่งอยู่ตลอดเวลา แค่หรี่ลงเมื่อยังไม่มีอะไรให้ส่ง
+                *
+                *     ★ เดิมทำให้จางหายไปเลยตอนช่องว่าง เลียนแบบ LINE
+                *       ★★ แต่ LINE เอาปุ่มไมค์มาวางแทนที่ ช่องนั้นจึงไม่เคยว่าง
+                *          ของเราไม่มีไมค์ ผลคือมุมขวาโล่ง ๆ ซึ่งคนอ่านว่า
+                *          "ปุ่มส่งหายไปไหน" ไม่ใช่ "ยังไม่พร้อมส่ง"
+                *     ★ ปุ่มที่หรี่อยู่บอกสองอย่างพร้อมกัน: ส่งตรงนี้ · ยังกดไม่ได้
+                */}
               <button
                 type="button"
                 onClick={send}
                 disabled={!text.trim() || busy}
                 aria-label={ot('chat.send')}
-                className={cn(
-                  'grid size-10 shrink-0 place-items-center rounded-full transition-all',
-                  text.trim()
-                    ? 'scale-100 text-white opacity-100'
-                    : 'pointer-events-none scale-75 opacity-0',
-                )}
-                style={{ background: '#06c755' }}
+                title={ot('chat.send')}
+                className={cn('chat-send', text.trim() && !busy && 'chat-send-on')}
               >
                 <svg viewBox="0 0 24 24" className="size-5 rtl:-scale-x-100" fill="currentColor" aria-hidden="true">
                   <path d="M3 20.5 21 12 3 3.5 3 10l12 2-12 2z" />
