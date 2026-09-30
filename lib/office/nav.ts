@@ -205,6 +205,21 @@ export function pageMetaOf(pathname: string): PageMeta | null {
   return best ? PAGE_META[best]! : null
 }
 
+/*
+ * หน้าที่ขอกว้างกว่ามาตรฐาน 1000px
+ *
+ * ★★ ประกาศไว้ที่เดียว เพราะมีสองที่ต้องรู้: หัวหน้า กับ ตัวเนื้อหา
+ *    ★ ถ้าเนื้อหากว้างแต่หัวเรื่องไม่กว้างตาม ชื่อหน้าจะเยื้องเข้ามาจาก
+ *      ขอบซ้ายของเนื้อหา ซึ่งอ่านเป็นการจัดวางพลาด ไม่ใช่ดีไซน์
+ *    ★★ แชทเป็นหน้าเดียวที่ต้องอ่านสองบานพร้อมกัน — หน้าอื่นเป็นฟอร์มหรือ
+ *       รายการซึ่งกว้างไปกลับอ่านยากขึ้นเพราะบรรทัดยาวเกิน
+ */
+const WIDE_PAGES = new Set(['/office/chat'])
+
+export function isWidePage(pathname: string): boolean {
+  return WIDE_PAGES.has(pathname)
+}
+
 /** เมนูพี่น้องของหมวดนี้ — ใช้วาดชิปใต้หัวหน้า */
 export function siblingsOf(pathname: string, isAdmin: boolean): NavChild[] {
   const meta = pageMetaOf(pathname)

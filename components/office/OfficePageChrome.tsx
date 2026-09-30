@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
-import { pageMetaOf, siblingsOf, activeHref } from '@/lib/office/nav'
+import { pageMetaOf, siblingsOf, activeHref, isWidePage } from '@/lib/office/nav'
 
 /**
  * หัวหน้าของทุกหน้าในระบบออฟฟิศ
@@ -43,7 +43,13 @@ export function OfficePageChrome({ isAdmin }: { isAdmin: boolean }) {
         <div className="aurora-blob aurora-blob-2" />
       </div>
 
-      <div className="relative mx-auto w-full max-w-[1000px] px-4 pb-6 pt-6 sm:pb-8 sm:pt-10">
+      {/* ★ หัวเรื่องกว้างตามเนื้อหา ไม่งั้นชื่อหน้าจะเยื้องจากขอบซ้ายของเนื้อหา */}
+      <div
+        className={cn(
+          'relative mx-auto w-full px-4 pb-6 pt-6 sm:pb-8 sm:pt-10',
+          isWidePage(pathname) ? 'max-w-[1340px]' : 'max-w-[1000px]',
+        )}
+      >
         <Link
           href="/"
           className={cn(

@@ -10,6 +10,7 @@ import { ot } from '@/lib/i18n/office'
 import { ChatAvatar } from './ChatAvatar'
 import { ChatGroupPanel } from './ChatGroupPanel'
 import { useChatTyping } from './useChatTyping'
+import { ChatQuickStart, ChatStats, ChatUnreadCard, ChatWelcome } from './ChatSideExtras'
 
 /**
  * แชทออฟฟิศ — แชทส่วนตัวและแชทกลุ่ม
@@ -83,6 +84,7 @@ export function OfficeChat() {
   const [openId, setOpenId] = useState<string | null>(null)
   const [thread, setThread] = useState<Thread | null>(null)
   const [people, setPeople] = useState<Person[]>([])
+  const [meId, setMeId] = useState<string | null>(null)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   /*
@@ -109,6 +111,9 @@ export function OfficeChat() {
   const me = thread?.members.find((m) => m.isMe) ?? null
   const { typing, notify } = useChatTyping(openId, me?.id ?? null, me?.name ?? '')
 
+  /* ★ ทุกที่ที่ให้เลือก "คน" ต้องไม่มีตัวเราเอง — ทั้งแชทด่วน เปิดแชทส่วนตัว และสร้างกลุ่ม */
+  const others = useMemo(() => people.filter((p) => p.id !== meId), [people, meId])
+
   /*
    * ★★★ ถามซ้ำทุก 5 วินาที แต่ห้าม setState ถ้าข้อมูลเหมือนเดิม
    *
@@ -126,12 +131,13 @@ export function OfficeChat() {
 
   const loadRooms = useCallback(async () => {
     try {
-      const d = await apiFetch<{ rooms: Room[] }>('/api/office/chat')
+      const d = await apiFetch<{ rooms: Room[]; meId: string }>('/api/office/chat')
       const key = JSON.stringify(d.rooms)
       if (key !== roomsRef.current) {
         roomsRef.current = key
         setRooms(d.rooms)
       }
+      setMeId(d.meId)
       setListError(null)
     } catch (e) {
       setListError(e instanceof Error ? e.message : ot('common.error'))
@@ -199,6 +205,22 @@ export function OfficeChat() {
       document.removeEventListener('visibilitychange', tick)
     }
   }, [openId, loadRooms, loadThread])
+
+  /*
+   * ★★ จำนวนที่ยังไม่อ่านขึ้นบนแท็บเบราว์เซอร์ด้วย
+   *
+   *    ★ คนไม่ได้จ้องหน้าแชททั้งวัน เขาเปิดค้างไว้แล้วไปทำอย่างอื่น
+   *      ★★ ตัวเลขที่อยู่ในหน้าเว็บจึงไม่มีใครเห็น ส่วนชื่อแท็บเห็นตลอด
+   *    ★ คืนชื่อเดิมตอนออกจากหน้า — ไม่งั้นเลขค้างอยู่บนแท็บหน้าอื่น
+   */
+  useEffect(() => {
+    const total = rooms.reduce((sum, r) => sum + r.unread, 0)
+    const base = ot('chat.title')
+    document.title = total > 0 ? `(${total > 99 ? '99+' : total}) ${base}` : base
+    return () => {
+      document.title = base
+    }
+  }, [rooms])
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -348,7 +370,12 @@ export function OfficeChat() {
   const current = useMemo(() => rooms.find((r) => r.id === openId) ?? null, [rooms, openId])
 
   return (
-    <div className="grid gap-4 py-2 lg:grid-cols-[22rem_1fr]">
+    /*
+     * ★★ หน้านี้กว้างกว่าหน้าอื่นโดยตั้งใจ (page-wide)
+     *    ★ สองบานที่ต้องอ่านพร้อมกันบีบอยู่ใน 1000px แล้วฟองข้อความขึ้น
+     *      บรรทัดละไม่กี่คำ ★★ แชทคือหน้าเดียวในระบบที่ยิ่งกว้างยิ่งใช้ง่าย
+     */
+    <div className="page-wide grid gap-4 py-2 lg:grid-cols-[23rem_1fr]">
       {/* ═══ รายการห้อง ═══════════════════════════════════════════ */}
       <aside className={cn('flex flex-col gap-3', openId && 'hidden lg:flex')}>
         <div className="flex items-center gap-2">
@@ -379,7 +406,7 @@ export function OfficeChat() {
             </p>
 
             <div className="mt-2 flex max-h-56 flex-wrap gap-1.5 overflow-y-auto">
-              {people.map((p) => {
+              {others.map((p) => {
                 const on = picked.has(p.id)
                 return (
                   <button
@@ -431,6 +458,9 @@ export function OfficeChat() {
             </div>
           </div>
         ) : null}
+
+        {/* ★ สรุปที่ค้างอยู่ก่อนรายการห้อง — ตอบคำถามแรกที่คนเปิดหน้านี้ถาม */}
+        <ChatUnreadCard rooms={rooms} />
 
         {/*
           * ★★ แถวรายการแบบ LINE: รูป 56px · ชื่อหนา · ข้อความล่าสุดสีจาง ·
@@ -507,8 +537,8 @@ export function OfficeChat() {
                     {room.unread > 0 ? (
                       /* ★ ป้ายเขียวของ LINE — กลมเสมอ ไม่ใช่สี่เหลี่ยมมน */
                       <span
-                        className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-[11px] font-bold text-white"
-                        style={{ background: '#06c755' }}
+                        className="chat-badge grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-[11px] font-bold text-white tabular-nums"
+                        title={ot('chat.unreadHere', { n: room.unread })}
                       >
                         {room.unread > 99 ? '99+' : room.unread}
                       </span>
@@ -519,19 +549,21 @@ export function OfficeChat() {
             ))
           )}
         </div>
+
+        {/* ★ ของสองอย่างนี้ไม่ใช่ของประดับ — เติมพื้นที่ว่างด้วยสิ่งที่กดต่อได้ */}
+        <ChatQuickStart people={others} onPick={openDm} />
+        <ChatStats rooms={rooms} />
       </aside>
 
       {/* ═══ ห้องแชท ═══════════════════════════════════════════════ */}
       <section
         className={cn(
-          'chat-shell relative flex min-h-[70vh] flex-col overflow-hidden',
+          'chat-shell relative flex min-h-[78vh] flex-col overflow-hidden',
           !openId && 'hidden lg:flex',
         )}
       >
         {!openId || !thread ? (
-          <div className="chat-wall m-0 flex flex-1 items-center justify-center">
-            <p className="chat-daypill">{ot('chat.pickRoom')}</p>
-          </div>
+          <ChatWelcome />
         ) : (
           <>
             {/* ★ แผงข้อมูลกลุ่มทับอยู่ข้างบน ปิดแล้วเจอบทสนทนาที่เดิมเป๊ะ */}
@@ -541,7 +573,7 @@ export function OfficeChat() {
                 title={current?.title ?? thread.room.title ?? ''}
                 avatarUrl={thread.room.avatarUrl}
                 members={thread.members}
-                people={people}
+                people={others}
                 iAmOwner={thread.room.iAmOwner}
                 onClose={() => setPanel(false)}
                 onChanged={() => {

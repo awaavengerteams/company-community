@@ -2244,6 +2244,207 @@ html[data-theme='dark'] {
 }
 
 /*
+ * ── หน้าที่กว้างกว่ามาตรฐาน ────────────────────────────────────────────────
+ *
+ * ★★★ ดันออกจากกรอบ 1000px ของ layout โดยไม่แก้ layout
+ *
+ *     ★ ถ้าไปขยาย max-width ของ layout ทุกหน้าในระบบจะกว้างตาม แล้วหน้า
+ *       ที่เป็นฟอร์มหรือรายการจะอ่านยากขึ้นเพราะบรรทัดยาวเกินไป
+ *     ★★ หน้าไหนอยากกว้างก็ติดคลาสนี้เอง — หน้าอื่นไม่รู้สึกอะไรเลย
+ *
+ * ★ margin-inline ติดลบวัดจากความกว้างของกล่องแม่ (50%) จึงยืดออกทั้งสองข้าง
+ *   เท่ากันเสมอ และเมื่อจอแคบกว่า 1000px ค่าจะกลายเป็น 0 เองโดยไม่ต้องมี
+ *   media query
+ */
+.page-wide {
+  /*
+   * ★★ ลบ 2rem ออกจากความกว้างเต็ม เพราะหัวเรื่องมี px-4 อยู่ข้างใน
+   *    ★ วัดจากเบราว์เซอร์จริงตอนแรกได้หัวเรื่องที่ x=102 แต่เนื้อหาที่ x=86
+   *      — เยื้องกัน 16px พอดีกับ padding ข้างเดียวของหัวเรื่อง
+   *    ★★ ใช้ min(...) กับ 100vw เฉย ๆ แล้วค่อยลบ เพื่อให้จอแคบได้ค่าเท่ากับ
+   *       ความกว้างของหัวเรื่องพอดีด้วย ไม่ใช่แคบกว่าอีก 2rem
+   */
+  --page-wide: calc(min(1340px, 100vw) - 2rem);
+  width: var(--page-wide);
+  margin-inline: calc(50% - var(--page-wide) / 2);
+}
+
+/* ── ป้ายจำนวนที่ยังไม่อ่าน ──────────────────────────────────────────────── */
+.chat-badge {
+  background: #06c755;
+  box-shadow: 0 2px 8px rgb(6 199 85 / 0.45);
+}
+
+/*
+ * ── การ์ดสรุปข้อความค้าง ───────────────────────────────────────────────────
+ */
+.chat-unread-card {
+  border: 1px solid color-mix(in oklab, #06c755 35%, transparent);
+  background:
+    linear-gradient(135deg, rgb(6 199 85 / 0.16), transparent 62%),
+    color-mix(in oklab, var(--color-elevated) 70%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.chat-unread-ring {
+  position: relative;
+  background: #06c755;
+  box-shadow: 0 6px 18px rgb(6 199 85 / 0.4);
+  animation: chat-unread-beat 2.4s ease-in-out infinite;
+}
+
+/* ★ วงคลื่นที่แผ่ออกแล้วจาง — ไม่ใช่การกะพริบซึ่งกวนสายตาเมื่อเปิดค้างทั้งวัน */
+.chat-unread-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid #06c755;
+  animation: chat-unread-wave 2.4s ease-out infinite;
+}
+
+@keyframes chat-unread-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  8% {
+    transform: scale(1.07);
+  }
+  16% {
+    transform: scale(1);
+  }
+}
+
+@keyframes chat-unread-wave {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70%,
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+/*
+ * ── หน้าต้อนรับบานขวา ──────────────────────────────────────────────────────
+ *
+ * ★ ฟองสามใบไล่กันขึ้นมาเหมือนมีคนกำลังคุยกันอยู่ — เป็นภาพประกอบที่บอกว่า
+ *   หน้านี้คืออะไรโดยไม่ต้องมีไฟล์รูป
+ */
+.chat-welcome-art {
+  position: relative;
+  width: 190px;
+  height: 92px;
+}
+
+.chat-welcome-bubble {
+  position: absolute;
+  border-radius: 16px;
+  animation: chat-welcome-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+
+.chat-welcome-bubble-you {
+  inset-inline-start: 0;
+  top: 0;
+  width: 96px;
+  height: 30px;
+  border-bottom-left-radius: 4px;
+  background: var(--chat-bubble-you);
+  animation-delay: 0.05s;
+}
+
+.chat-welcome-bubble-me {
+  inset-inline-end: 0;
+  top: 32px;
+  width: 116px;
+  height: 30px;
+  border-bottom-right-radius: 4px;
+  background: var(--chat-bubble-me);
+  animation-delay: 0.18s;
+}
+
+.chat-welcome-bubble-you2 {
+  inset-inline-start: 0;
+  top: 64px;
+  width: 68px;
+  height: 28px;
+  border-bottom-left-radius: 4px;
+  background: var(--chat-bubble-you);
+  animation-delay: 0.31s;
+}
+
+@keyframes chat-welcome-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* การ์ดคุณสมบัติบนผนังห้อง — โปร่งพอให้เห็นผนังข้างหลัง */
+.chat-feat {
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.1);
+  backdrop-filter: blur(6px);
+  animation: chat-stat-in 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+/* ── ชิปเริ่มแชทด่วน ─────────────────────────────────────────────────────── */
+.chat-quick {
+  transition:
+    transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.3),
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.chat-quick:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--color-accent) 55%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+}
+
+.chat-quick:active {
+  transform: translateY(0);
+}
+
+/* ── การ์ดตัวเลขสรุป ─────────────────────────────────────────────────────── */
+.chat-stat {
+  animation: chat-stat-in 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes chat-stat-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-unread-ring,
+  .chat-unread-ring::after {
+    animation: none;
+  }
+  .chat-unread-ring::after {
+    opacity: 0;
+  }
+  .chat-stat,
+  .chat-feat,
+  .chat-welcome-bubble {
+    animation: none;
+  }
+}
+
+/*
  * ── ฟอง "กำลังพิมพ์" ───────────────────────────────────────────────────────
  *
  * ★ จุดเต้นสามจุด เหลื่อมกันทีละ 0.16 วินาที
