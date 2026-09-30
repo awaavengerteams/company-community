@@ -35,19 +35,41 @@ import { useT } from '@/lib/i18n/client'
  *   ต้นไม้ทั้งหน้าไปวาดใหม่ (บทเรียนเดิมจากกล่องโปรไฟล์)
  */
 /** ★ ไอคอนวาดตรงนี้เลย ไม่ดึงไลบรารีมาเพื่อสามรูป */
+/*
+ * ★★★ จุดขายบนหน้าล็อกอินต้องเป็น "ทั้งระบบ" ไม่ใช่ห้องฟังเพลง
+ *
+ *     ★ เดิมโฆษณาซิงก์เพลง · แชทสติกเกอร์ · คิวร่วม พร้อมพาดหัวว่า
+ *       "ฟังเพลงด้วยกันแบบวินาทีต่อวินาที"
+ *       ★★ ซึ่งเป็นหน้าตาของเว็บเวอร์ชันก่อนทั้งหน้า — คนเปิดเข้ามาแล้ว
+ *          อ่านว่ามาผิดที่ ทั้งที่ของที่เขาจะมาใช้คือหารบิลหรือสุ่มร้านข้าว
+ *     ★ ห้องฟังเพลงยังอยู่ แต่อยู่ในฐานะหนึ่งในห้าโมดูล — จึงวางไว้ท้ายสุด
+ *
+ * ★★ ใช้คีย์ hub.* ชุดเดียวกับการ์ดบนหน้าพอร์ทัล
+ *    ★ คีย์พวกนี้แปลครบ 16 ภาษาอยู่แล้วตั้งแต่ตอนทำพอร์ทัล จึงไม่ต้อง
+ *      แปลเพิ่มสักคำ และวันที่แก้คำโฆษณาก็แก้ที่เดียวได้ทั้งสองหน้า
+ */
 const FEATURES = [
   {
-    title: 'home.feature.sync',
-    detail: 'home.feature.syncDetail',
+    title: 'hub.food',
+    detail: 'hub.foodDetail',
     icon: (
-      <svg viewBox="0 0 24 24" className="size-[18px]" fill="currentColor">
-        <path d="M12 4V1L8 5l4 4V6a6 6 0 0 1 6 6c0 1.1-.3 2.1-.8 3l1.5 1.5A7.9 7.9 0 0 0 20 12a8 8 0 0 0-8-8zm0 14a6 6 0 0 1-6-6c0-1.1.3-2.1.8-3L5.3 7.5A7.9 7.9 0 0 0 4 12a8 8 0 0 0 8 8v3l4-4-4-4v3z" />
+      <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7 3v8a3 3 0 0 0 3 3v7M7 3v5M10 3v5M17 3c-1.5 2-2 4-2 6s.5 3 2 3v9" />
       </svg>
     ),
   },
   {
-    title: 'home.feature.chat',
-    detail: 'home.feature.chatDetail',
+    title: 'hub.wallet',
+    detail: 'hub.walletDetail',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 8a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2M3 8v9a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3M3 8h1m17 3h-4a2 2 0 0 0 0 4h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'hub.chat',
+    detail: 'hub.chatDetail',
     icon: (
       <svg viewBox="0 0 24 24" className="size-[18px]" fill="currentColor">
         <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 9h10v2H7V9zm7 5H7v-2h7v2zm3-6H7V6h10v2z" />
@@ -55,11 +77,21 @@ const FEATURES = [
     ),
   },
   {
-    title: 'home.feature.queue',
-    detail: 'home.feature.queueDetail',
+    title: 'hub.market',
+    detail: 'hub.marketDetail',
     icon: (
-      <svg viewBox="0 0 24 24" className="size-[18px]" fill="currentColor">
-        <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.2a3 3 0 1 0 2 2.8V8h3V6h-5z" />
+      <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 7V5a3 3 0 0 1 6 0v2" />
+      </svg>
+    ),
+  },
+  /* ★ ห้องฟังเพลงอยู่ท้ายสุด — ยังอยู่ครบ แต่ไม่ใช่ตัวเว็บอีกแล้ว */
+  {
+    title: 'hub.music',
+    detail: 'hub.musicDetail',
+    icon: (
+      <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 18V6l10-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm10-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
       </svg>
     ),
   },
@@ -182,17 +214,17 @@ export function SignInScreen() {
             className="hero-in mt-6 text-[32px] font-bold leading-[1.15] tracking-tight sm:text-[42px]"
             style={{ '--d': '80ms' } as CSSProperties}
           >
-            {t('home.hero.title1')}
-            <span className="text-aurora">{t('home.hero.title2')}</span>
+            {t('hub.hero1')}
+            <span className="text-aurora">{t('hub.hero2')}</span>
             <br />
-            {t('home.hero.title3')}
+            {t('hub.hero3')}
           </h1>
 
           <p
             className="hero-in mx-auto mt-4 max-w-[440px] text-[15px] leading-relaxed text-ink-soft lg:mx-0"
             style={{ '--d': '170ms' } as CSSProperties}
           >
-            {t('auth.what')}
+            {t('hub.heroDetail')}
           </p>
 
           {/* ── สามอย่างที่ได้ ─────────────────────────────────── */}
