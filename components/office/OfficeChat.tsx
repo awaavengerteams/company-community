@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/Input'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/cn'
 import { ot } from '@/lib/i18n/office'
+import { ChatAvatar } from './ChatAvatar'
+import { ChatGroupPanel } from './ChatGroupPanel'
 
 /**
  * แชทออฟฟิศ — แชทส่วนตัวและแชทกลุ่ม
@@ -46,11 +48,24 @@ type Message = {
   read: boolean
 }
 
-type Member = { id: string; name: string; avatarUrl: string | null; isMe: boolean }
+type Member = {
+  id: string
+  name: string
+  avatarUrl: string | null
+  isOwner: boolean
+  isMe: boolean
+}
 type Person = { id: string; name: string; department: string | null }
 
 type Thread = {
-  room: { id: string; kind: 'DM' | 'GROUP'; title: string | null } | null
+  room: {
+    id: string
+    kind: 'DM' | 'GROUP'
+    title: string | null
+    avatarUrl: string | null
+    pinnedMessageId: string | null
+    iAmOwner: boolean
+  } | null
   members: Member[]
   messages: Message[]
 }
@@ -74,6 +89,8 @@ export function OfficeChat() {
   const [composer, setComposer] = useState<'none' | 'dm' | 'group'>('none')
   const [groupTitle, setGroupTitle] = useState('')
   const [picked, setPicked] = useState<Set<string>>(new Set())
+  /** เปิดแผงข้อมูลกลุ่มทับห้องแชทอยู่หรือไม่ */
+  const [panel, setPanel] = useState(false)
 
   const endRef = useRef<HTMLDivElement | null>(null)
 
@@ -129,6 +146,7 @@ export function OfficeChat() {
   useEffect(() => {
     /* ★ เปลี่ยนห้องต้องล้างลายเซ็นเดิม ไม่งั้นห้องใหม่จะถูกมองว่า "ไม่เปลี่ยน" */
     threadRef.current = ''
+    setPanel(false)
     if (openId) void loadThread(openId)
   }, [openId, loadThread])
 
@@ -365,7 +383,12 @@ export function OfficeChat() {
                   room.id === openId ? 'bg-accent/10' : 'hover:bg-surface/70',
                 )}
               >
-                <Avatar name={room.title} url={room.avatar} group={room.kind === 'GROUP'} size={52} />
+                <ChatAvatar
+                  name={room.title}
+                  url={room.kind === 'GROUP' ? null : room.avatar}
+                  group={room.kind === 'GROUP'}
+                  size={52}
+                />
 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline gap-2">
@@ -419,7 +442,7 @@ export function OfficeChat() {
       {/* ═══ ห้องแชท ═══════════════════════════════════════════════ */}
       <section
         className={cn(
-          'flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-line',
+          'relative flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-line',
           !openId && 'hidden lg:flex',
         )}
       >
@@ -429,6 +452,32 @@ export function OfficeChat() {
           </div>
         ) : (
           <>
+            {/* ★ แผงข้อมูลกลุ่มทับอยู่ข้างบน ปิดแล้วเจอบทสนทนาที่เดิมเป๊ะ */}
+            {panel && thread.room?.kind === 'GROUP' ? (
+              <ChatGroupPanel
+                roomId={thread.room.id}
+                title={current?.title ?? thread.room.title ?? ''}
+                avatarUrl={thread.room.avatarUrl}
+                members={thread.members}
+                people={people}
+                iAmOwner={thread.room.iAmOwner}
+                onClose={() => setPanel(false)}
+                onChanged={() => {
+                  threadRef.current = ''
+                  roomsRef.current = ''
+                  void loadThread(openId)
+                  void loadRooms()
+                }}
+                onLeft={() => {
+                  setPanel(false)
+                  setOpenId(null)
+                  setThread(null)
+                  roomsRef.current = ''
+                  void loadRooms()
+                }}
+              />
+            ) : null}
+
             {/* ── หัวห้อง ──────────────────────────────────────────── */}
             <div className="flex items-center gap-2 border-b border-line bg-elevated/80 px-3 py-2 backdrop-blur-md">
               <button
@@ -445,23 +494,36 @@ export function OfficeChat() {
                 </svg>
               </button>
 
-              <Avatar
-                name={current?.title ?? ''}
-                url={current?.avatar ?? null}
-                group={thread.room?.kind === 'GROUP'}
-                size={36}
-              />
+              {/* ★ กดที่ชื่อ/รูปเพื่อเปิดข้อมูลกลุ่ม — ตำแหน่งเดียวกับแอปแชททั่วไป
+                  ★★ แชทส่วนตัวไม่มีข้อมูลให้แก้ จึงไม่ทำให้กดได้ (ปุ่มที่กดแล้ว
+                     ไม่เกิดอะไรขึ้นแย่กว่าไม่มีปุ่ม) */}
+              <button
+                type="button"
+                disabled={thread.room?.kind !== 'GROUP'}
+                onClick={() => setPanel(true)}
+                className={cn(
+                  'flex min-w-0 flex-1 items-center gap-2 rounded-xl px-1 py-1 text-start',
+                  thread.room?.kind === 'GROUP' && 'transition-colors hover:bg-surface',
+                )}
+              >
+                <ChatAvatar
+                  name={current?.title ?? ''}
+                  url={thread.room?.avatarUrl ?? current?.avatar ?? null}
+                  group={thread.room?.kind === 'GROUP'}
+                  size={36}
+                />
 
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-semibold text-ink">
-                  {current?.title ?? thread.room?.title ?? '—'}
-                </span>
-                {thread.room?.kind === 'GROUP' ? (
-                  <span className="block text-[11px] text-ink-faint">
-                    {ot('chat.memberCount', { n: thread.members.length })}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-semibold text-ink">
+                    {current?.title ?? thread.room?.title ?? '—'}
                   </span>
-                ) : null}
-              </span>
+                  {thread.room?.kind === 'GROUP' ? (
+                    <span className="block text-[11px] text-ink-faint">
+                      {ot('chat.memberCount', { n: thread.members.length })}
+                    </span>
+                  ) : null}
+                </span>
+              </button>
 
               {/* ★ ปิดเสียงห้อง — สิ่งแรกที่คนหาเมื่อกลุ่มเริ่มคุยเยอะ */}
               <button
@@ -520,7 +582,7 @@ export function OfficeChat() {
                       >
                         {!m.mine ? (
                           <span className={cn('shrink-0', !first && 'invisible')}>
-                            <Avatar name={m.senderName} url={m.senderAvatar} size={34} />
+                            <ChatAvatar name={m.senderName} url={m.senderAvatar} size={34} />
                           </span>
                         ) : null}
 
@@ -627,54 +689,6 @@ export function OfficeChat() {
         )}
       </section>
     </div>
-  )
-}
-
-/**
- * รูปโปรไฟล์
- *
- * ★ ไม่มีรูปก็ใช้ตัวอักษรแรกบนพื้นสีที่คงที่ต่อชื่อ
- *   ★★ สีสุ่มจากชื่อ ไม่ใช่สุ่มตอน render — ไม่งั้นคนเดิมจะเปลี่ยนสีทุกครั้ง
- *      ที่หน้าวาดใหม่ แล้วคนจะจำสีของใครไม่ได้เลย
- */
-function Avatar({
-  name,
-  url,
-  group = false,
-  size = 40,
-}: {
-  name: string
-  url: string | null
-  group?: boolean
-  size?: number
-}) {
-  if (url) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- รูปจาก Storage ที่ไม่ได้ตั้ง remotePatterns ไว้
-      <img
-        src={url}
-        alt=""
-        className="shrink-0 rounded-full object-cover"
-        style={{ width: size, height: size }}
-      />
-    )
-  }
-
-  const hue = [...name].reduce((a, c) => a + c.charCodeAt(0), 0) % 360
-
-  return (
-    <span
-      aria-hidden="true"
-      className="grid shrink-0 place-items-center rounded-full font-medium text-white"
-      style={{
-        width: size,
-        height: size,
-        fontSize: size * 0.4,
-        background: `linear-gradient(140deg, hsl(${hue} 62% 52%), hsl(${(hue + 40) % 360} 62% 42%))`,
-      }}
-    >
-      {group ? '#' : (name.trim()[0] ?? '?')}
-    </span>
   )
 }
 
