@@ -251,4 +251,30 @@ for (const bucket of BUCKETS) {
   console.log(`    ${bucket.padEnd(24)} ลบ ${n(removed)} ไฟล์`)
 }
 
+/*
+ * ══ 4. ล้างคอลัมน์ที่ชี้ไปหาไฟล์ที่เพิ่งลบ ══════════════════════════════
+ *
+ * ★★★ ลบไฟล์แล้วปล่อย path ไว้ = ลิงก์เสียที่ไม่มีใครรู้ว่าเสีย
+ *
+ *     ★ อาการที่เจอจริงหลังรันรอบแรก: หน้าจ่ายเงินค้างที่ "กำลังโหลด…"
+ *       ตลอดกาล เพราะ profiles.payment_qr_path ยังชี้ไปหาไฟล์ที่ถูกลบ
+ *       ★★ แล้ว createSignedUrl ล้ม → ทั้ง endpoint ตอบ 500
+ *
+ *     ★ ตารางที่เก็บ path ส่วนใหญ่ถูกลบทั้งแถวอยู่แล้ว (debts · expense_bills)
+ *       ★★ แต่ profiles ไม่ถูกลบโดยตั้งใจ — คอลัมน์ของมันจึงต้องล้างเอง
+ *          ไม่งั้นข้อมูลที่ "ตั้งใจเก็บไว้" กลายเป็นข้อมูลเสีย
+ */
+console.log('\n  ── ล้างคอลัมน์ที่ชี้ไปหาไฟล์ ──')
+{
+  const { data, error } = await db
+    .from('profiles')
+    .update({ payment_qr_path: null })
+    .not('payment_qr_path', 'is', null)
+    .select('id')
+
+  console.log(
+    `    profiles.payment_qr_path ${error ? '✗ ' + error.message : 'ล้าง ' + n(data?.length ?? 0) + ' แถว'}`,
+  )
+}
+
 console.log('\n  เสร็จแล้ว — ห้องฟังเพลงและบัญชีผู้ใช้ยังอยู่ครบ\n')

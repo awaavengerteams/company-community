@@ -91,6 +91,38 @@ export async function uploadPrivate(
  *    เขียนไว้ให้ชัดเพราะมันดูเหมือนฟังก์ชันที่ปลอดภัยในตัว ★ ซึ่งไม่ใช่
  *    มันออกลิงก์ให้ทุก path ที่ส่งมา — ด่านอยู่ที่คนเรียกเสมอ
  */
+/**
+ * ลิงก์ชั่วคราว — คืน null ถ้าสร้างไม่ได้ แทนการโยน error
+ *
+ * ★★★ ใช้ตอน "อ่าน" ไฟล์ที่อาจไม่มีอยู่แล้ว
+ *
+ *     ★ อาการที่เจอจริง: หน้าจ่ายเงินค้างที่ "กำลังโหลด…" ตลอดกาล
+ *       เพราะ QR ของเจ้าหนี้ชี้ไปหาไฟล์ที่ถูกลบไปแล้ว
+ *       ★★ แล้ว createSignedUrl ล้ม → ทั้ง endpoint ตอบ 500 →
+ *          ทั้งหน้าไม่มีอะไรแสดงเลย แม้แต่ยอดเงินกับปุ่ม "โอนแล้ว"
+ *          ที่ไม่ได้เกี่ยวกับไฟล์นั้นเลยสักนิด
+ *
+ *     ★★ ไฟล์หายหนึ่งไฟล์ไม่ควรทำให้ทั้งหน้าใช้ไม่ได้ —
+ *        ★ ของที่มีก็แสดงไป ของที่หายก็ว่างไว้ แล้วคนยังทำงานต่อได้
+ *
+ * ★ ยังมี signedUrl() ตัวที่โยน error อยู่ สำหรับตอน "เพิ่งอัปเสร็จ"
+ *   ★★ ตรงนั้นถ้าสร้างลิงก์ไม่ได้แปลว่าการอัปโหลดมีปัญหาจริง ต้องรู้
+ */
+export async function signedUrlOrNull(
+  bucket: BucketName,
+  path: string | null | undefined,
+): Promise<string | null> {
+  if (!path) return null
+
+  const admin = getSupabaseAdminClient()
+  const { data, error } = await admin.storage
+    .from(bucket)
+    .createSignedUrl(path, SIGNED_TTL_SECONDS)
+
+  if (error || !data?.signedUrl) return null
+  return data.signedUrl
+}
+
 export async function signedUrl(bucket: BucketName, path: string): Promise<string> {
   const admin = getSupabaseAdminClient()
   const { data, error } = await admin.storage

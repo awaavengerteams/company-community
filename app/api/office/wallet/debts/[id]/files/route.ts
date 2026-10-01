@@ -6,7 +6,7 @@ import { assertSameOrigin } from '@/lib/http/guard'
 import { ok, withErrorHandling } from '@/lib/http/respond'
 import { enforceRateLimit } from '@/lib/ratelimit'
 import { requireOfficeUser } from '@/lib/office/guard'
-import { BUCKETS, signedUrl, uploadPrivate } from '@/lib/office/storage'
+import { BUCKETS, signedUrl, signedUrlOrNull, uploadPrivate } from '@/lib/office/storage'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,11 +78,12 @@ export const GET = withErrorHandling(
 
     return ok({
       creditorName: creditor?.nickname || creditor?.display_name || null,
-      qrUrl: creditor?.payment_qr_path
-        ? await signedUrl(BUCKETS.qr, creditor.payment_qr_path)
-        : null,
-      slipUrl: debt.slip_path ? await signedUrl(BUCKETS.slips, debt.slip_path) : null,
-      receiptUrl: receiptPath ? await signedUrl(BUCKETS.receipts, receiptPath) : null,
+      /* ★★ ทั้งสามตัวใช้ signedUrlOrNull — ไฟล์ใดหายก็แค่ตัวนั้นเป็น null
+         ★ เดิมใช้ signedUrl ที่โยน error ทำให้ไฟล์หายหนึ่งไฟล์
+           ล้มทั้ง endpoint แล้วหน้าจ่ายเงินค้างที่ "กำลังโหลด…" */
+      qrUrl: await signedUrlOrNull(BUCKETS.qr, creditor?.payment_qr_path),
+      slipUrl: await signedUrlOrNull(BUCKETS.slips, debt.slip_path),
+      receiptUrl: await signedUrlOrNull(BUCKETS.receipts, receiptPath),
     })
   },
 )
