@@ -16,7 +16,8 @@ export default async function AdminLayout({ children }: LayoutProps<'/office/adm
   const viewer = await getOfficeViewer()
 
   if (!viewer) redirect('/')
-  if (!viewer.employeeCode) redirect('/office/link')
+  /* ★ ไม่บังคับรหัสพนักงานแล้ว (0043) — ด่านของหน้า admin คือ isAdmin
+     ★★ ซึ่งตรวจอยู่แล้วบรรทัดถัดไป และเป็นด่านที่ถูกต้องสำหรับหน้านี้ */
   if (!viewer.isAdmin) redirect('/office')
 
   return <>{children}</>
