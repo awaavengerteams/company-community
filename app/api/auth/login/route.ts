@@ -26,23 +26,25 @@ const bodySchema = z.object({
     .trim()
     .toLowerCase()
     .regex(/^[a-z0-9._]{3,20}$/, 'valid.usernameRule'),
-  password: z.string().max(72).optional().default(''),
+  /* ★ บังคับทุกคน ★★ ไม่มี optional อีกแล้ว — เหตุผลเต็มอยู่ใต้ POST */
+  password: z.string().min(1, 'valid.passwordRequired').max(72),
 })
 
 /**
  * POST /api/auth/login — เข้าสู่ระบบด้วยชื่อผู้ใช้ + รหัสผ่าน
  *
- * ★★★ บัญชีรุ่นเก่าที่ไม่มีรหัสผ่านต้องเข้าได้เหมือนเดิม
+ * ★★★ ทุกบัญชีต้องมีรหัสผ่าน ไม่มีข้อยกเว้นอีกแล้ว
  *
- *     ★ ระบบนี้เปิดใช้มาก่อนโดยไม่มีรหัสผ่านเลย (ดู 0017) มีบัญชีที่ใช้งาน
- *       อยู่จริงรวมถึงบัญชี Admin
- *       ★★ ถ้าบังคับรหัสผ่านกับทุกคนทันที ทุกคนจะเข้าไม่ได้พร้อมกัน
- *          และไม่มีใครเหลืออยู่ในระบบที่จะแก้ให้ได้
+ *     ★ เดิมยอมให้บัญชีรุ่นเก่าเข้าได้โดยเว้นช่องว่าง เพราะตอนนั้น
+ *       บัญชีที่ใช้งานอยู่ทั้งหมดยังไม่มีรหัสผ่าน รวมถึง Admin ทุกคน
+ *       ★★ บังคับตอนนั้น = ทุกคนเข้าไม่ได้พร้อมกันและไม่เหลือใครแก้ได้
  *
- *     ★★ จึงแยกตามว่าบัญชีนั้น "เคยตั้งรหัสผ่านไว้หรือยัง"
- *        มีแล้ว → ต้องกรอกให้ถูก · ยังไม่มี → เข้าได้เลยแบบเดิม
- *        ★ ไม่ใช่ "ถ้ากรอกรหัสผ่านมาก็ตรวจ ถ้าไม่กรอกก็ปล่อยผ่าน"
- *          ซึ่งจะกลายเป็นว่ารหัสผ่านข้ามได้ด้วยการไม่กรอก
+ *     ★★ ตอนนี้เงื่อนไขนั้นหมดไปแล้ว — บัญชีที่เหลือทุกตัวตั้งรหัสผ่านแล้ว
+ *        ★ ทางผ่อนผันจึงกลายเป็นช่องโหว่ล้วน ๆ ที่ไม่มีใครได้ประโยชน์
+ *
+ * ★★ ถ้ามีบัญชีที่ไม่มีรหัสผ่านหลุดมาได้อีก (เช่นสร้างจากสคริปต์)
+ *    มันจะเข้าไม่ได้เลยแทนที่จะเข้าได้ฟรี ★ ซึ่งเป็นฝั่งที่ถูกของความผิดพลาด
+ *    — Admin รีเซ็ตรหัสให้ได้ แต่ถ้าปล่อยผ่านจะไม่มีใครรู้ว่าเกิดขึ้น
  */
 export const POST = withErrorHandling(async (request: NextRequest) => {
   assertSameOrigin(request)
@@ -66,38 +68,24 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     throw new AppError('FORBIDDEN', { messageKey: 'account.suspended' })
   }
 
-  const { data: authUser } = await admin.auth.admin.getUserById(profile.id)
   /*
-   * ★ GoTrue ไม่คืน encrypted_password ผ่าน Admin API
-   *   ★★ ดูจาก identities แทน: บัญชีที่สมัครด้วยรหัสผ่านจะมี provider 'email'
-   *      ส่วนบัญชีรุ่นเก่าที่เกิดจาก magiclink ล้วน ๆ ก็มี 'email' เหมือนกัน
-   *      — จึงเชื่อไม่ได้ ★ ใช้คอลัมน์ที่เราคุมเองแทน (ดู has_password ด้านล่าง)
+   * ★★ ตรวจรหัสผ่านด้วย GoTrue เอง ไม่เทียบ hash เอง
+   *    ★ ใช้ client ธรรมดา (publishable key) เพราะ signInWithPassword
+   *      ไม่ใช่คำสั่งฝั่ง admin ★★ และ session ที่ได้ทิ้งไปเลย —
+   *      เราต้องการแค่คำตอบว่า "รหัสผ่านถูกไหม"
+   *
+   * ★★★ นี่คือด่านเดียวแล้ว ไม่มีทางอื่นที่ข้ามมันได้
+   *     ★ ก่อนหน้านี้มี /api/auth/username ที่ออก session ให้ใครก็ได้
+   *       ที่พิมพ์ชื่อมา โดยสร้างบัญชีให้ด้วยถ้ายังไม่มี — ถูกลบทิ้งแล้ว
    */
-  const { data: hasPwRow } = await admin.rpc('user_has_password', { p_user: profile.id })
-  const hasPassword = hasPwRow === true
+  const anon = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  )
 
-  if (!authUser?.user) throw new AppError('VALIDATION_FAILED', { messageKey: 'valid.loginFailed' })
-
-  if (hasPassword) {
-    if (!body.password) {
-      throw new AppError('VALIDATION_FAILED', { messageKey: 'valid.passwordRequired' })
-    }
-
-    /*
-     * ★★ ตรวจรหัสผ่านด้วย GoTrue เอง ไม่เทียบ hash เอง
-     *    ★ ใช้ client ธรรมดา (publishable key) เพราะ signInWithPassword
-     *      ไม่ใช่คำสั่งฝั่ง admin ★★ และ session ที่ได้ทิ้งไปเลย —
-     *      เราต้องการแค่คำตอบว่า "รหัสผ่านถูกไหม"
-     */
-    const anon = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    )
-
-    const { error } = await anon.auth.signInWithPassword({ email, password: body.password })
-    if (error) throw new AppError('VALIDATION_FAILED', { messageKey: 'valid.loginFailed' })
-  }
+  const { error: pwError } = await anon.auth.signInWithPassword({ email, password: body.password })
+  if (pwError) throw new AppError('VALIDATION_FAILED', { messageKey: 'valid.loginFailed' })
 
   /* ── ออก token ให้ client แลกเป็น session (ทางเดียวกับของเดิม) ── */
   const { data: link } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
@@ -105,5 +93,5 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   if (!tokenHash) throw new AppError('DATABASE_ERROR', { messageKey: 'srvErr.signInFailed' })
 
-  return ok({ username: body.username, tokenHash, hadPassword: hasPassword })
+  return ok({ username: body.username, tokenHash })
 })

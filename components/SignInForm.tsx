@@ -193,14 +193,8 @@ export function SignInForm({
           <p className="mt-1.5 text-[11px] text-ink-faint">{t('auth.rule')}</p>
         </div>
 
-        {/*
-          * ★★ ช่องรหัสผ่านไม่บังคับที่ฟอร์ม แต่บังคับที่เซิร์ฟเวอร์
-          *
-          *    ★ บัญชีรุ่นเก่าไม่มีรหัสผ่าน ถ้าทำช่องนี้เป็น required ทุกคน
-          *      ที่ใช้อยู่เดิมจะเข้าไม่ได้ทันที
-          *    ★★ ส่วนคนที่ตั้งรหัสผ่านไว้ เซิร์ฟเวอร์จะปฏิเสธถ้าเว้นว่าง —
-          *       การไม่บังคับที่ฟอร์มจึงไม่ใช่ช่องโหว่ แค่ไม่เดาแทนผู้ใช้
-          */}
+        {/* ★ บังคับทั้งที่ฟอร์มและที่เซิร์ฟเวอร์ — ทุกบัญชีมีรหัสผ่านแล้ว
+            ★★ required ที่ฟอร์มช่วยให้รู้ตั้งแต่ก่อนกดส่ง ไม่ต้องรอเน็ต */}
         <div className="mt-3">
           <label className="mb-1.5 block text-xs text-ink-soft" htmlFor="password">
             {t('auth.password')}
@@ -216,12 +210,12 @@ export function SignInForm({
             maxLength={72}
             autoComplete="current-password"
             aria-label={t('auth.password')}
+            required
             disabled={pending}
             invalid={Boolean(error)}
             focusTone="accent"
             className="h-12 rounded-xl text-[15px] sm:text-[15px]"
           />
-          <p className="mt-1.5 text-[11px] text-ink-faint">{t('auth.passwordOptional')}</p>
         </div>
 
         {error ? (
