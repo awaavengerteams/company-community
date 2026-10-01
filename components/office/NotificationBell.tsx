@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { apiFetch } from '@/lib/api/client'
 import { cn } from '@/lib/cn'
-import { ot, OFFICE_TH, type OfficeKey } from '@/lib/i18n/office'
+import { useOt, type OfficeKey, type Ot } from '@/lib/i18n/office'
 
 /**
  * กระดิ่งแจ้งเตือน (FR-X04)
@@ -34,6 +34,7 @@ type Item = {
 type Payload = { items: Item[]; unread: number }
 
 export function NotificationBell({ userId }: { userId: string }) {
+  const ot = useOt()
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Item[]>([])
   const [unread, setUnread] = useState(0)
@@ -237,15 +238,21 @@ const KIND_OF: Record<string, (typeof KINDS)[keyof typeof KINDS]> = {
 }
 
 function Row({ item, onGo }: { item: Item; onGo: () => void }) {
+  const ot = useOt()
   /*
    * ★ title_key ที่เก็บในฐานข้อมูลอาจเป็นคีย์ที่โค้ดรุ่นนี้ไม่รู้จัก
    *   (แจ้งเตือนเก่าจากฟีเจอร์ที่ถูกถอดออก) — ต้องไม่ทำให้ทั้งกล่องพัง
    *   ถ้าแปลไม่ได้ ให้แสดงคีย์ดิบไปก่อน ดีกว่าหน้าขาว
    */
-  const known = item.titleKey in OFFICE_TH
-  const text = known
-    ? ot(item.titleKey as OfficeKey, item.params as Record<string, string | number>)
-    : item.titleKey
+  /*
+   * ★★★ เดิมเช็ก `item.titleKey in OFFICE_TH` ก่อนแปล
+   *
+   *     ★ ทำแบบนั้นต่อไม่ได้แล้ว — ตารางข้อความอยู่ฝั่ง server และการ import
+   *       มันเข้ามาที่นี่จะลากข้อความทั้ง 16 ภาษาเข้าบันเดิลของ browser
+   *     ★★ ไม่จำเป็นด้วย: makeOt() คืนชื่อกุญแจเองเมื่อแปลไม่เจอ
+   *        ซึ่งเป็นผลเดียวกันเป๊ะกับที่โค้ดเดิมเขียนไว้สองทาง
+   */
+  const text = ot(item.titleKey as OfficeKey, item.params as Record<string, string | number>)
 
   const kind = KIND_OF[item.titleKey] ?? KINDS.other
 
@@ -294,7 +301,7 @@ function Row({ item, onGo }: { item: Item; onGo: () => void }) {
           {text}
         </p>
         <time dateTime={item.createdAt} className="mt-0.5 block text-[11px] text-ink-faint">
-          {formatWhen(item.createdAt)}
+          {formatWhen(ot, item.createdAt)}
         </time>
       </div>
 
@@ -322,12 +329,12 @@ function Row({ item, onGo }: { item: Item; onGo: () => void }) {
  *   server กับ browser อยู่คนละเขตเวลาและคนละวินาที → hydration mismatch
  *   (บทเรียนเดียวกับที่ระบบเดิมเจอกับนาฬิกาของเพลง)
  */
-function formatWhen(iso: string): string {
+function formatWhen(ot: Ot, iso: string): string {
   const diff = Date.now() - Date.parse(iso)
   const min = Math.floor(diff / 60_000)
-  if (min < 1) return 'เมื่อสักครู่'
-  if (min < 60) return `${min} นาทีที่แล้ว`
+  if (min < 1) return ot('time.justNow')
+  if (min < 60) return ot('time.minutesAgo', { n: min })
   const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr} ชั่วโมงที่แล้ว`
-  return `${Math.floor(hr / 24)} วันที่แล้ว`
+  if (hr < 24) return ot('time.hoursAgo', { n: hr })
+  return ot('time.daysAgo', { n: Math.floor(hr / 24) })
 }

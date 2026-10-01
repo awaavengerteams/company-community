@@ -5,7 +5,9 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { splitList } from '@/lib/i18n/office-format'
+import { departmentLabel } from '@/lib/office/departments'
+import { useOt } from '@/lib/i18n/office'
 import { RandomWheel } from './RandomWheel'
 import { SpinWheel, SEGMENT_TINTS } from './SpinWheel'
 import type { Member } from '@/lib/office/teams'
@@ -30,9 +32,10 @@ type Person = { id: string; name: string; department: string | null }
 const WHEEL_MAX = 14
 
 /** ชื่อตัวอย่างในวงล้อจาง ๆ ตอนยังไม่มีใคร */
-const PREVIEW = ['เฟรม', 'ปอนด์', 'บีม', 'มิ้นท์', 'โอ๊ต', 'นิว']
+
 
 export function FunNameWheel() {
+  const ot = useOt()
   const [topic, setTopic] = useState('')
   const [members, setMembers] = useState<Member[]>([])
   const [typed, setTyped] = useState('')
@@ -158,7 +161,10 @@ export function FunNameWheel() {
               <div className="grid place-items-center">
                 <SpinWheel
                   preview
-                  slots={PREVIEW.map((label, i) => ({ id: `preview-${i}`, label }))}
+                  slots={splitList(ot('fun.name.previewNames')).map((label, i) => ({
+                    id: `preview-${i}`,
+                    label,
+                  }))}
                   spinLabel={ot('fun.name.spin')}
                 />
                 <p className="mt-4 max-w-xs text-center text-sm text-ink-soft">
@@ -217,7 +223,9 @@ export function FunNameWheel() {
                 {last.label}
               </p>
               {last.department ? (
-                <p className="mt-0.5 text-xs text-ink-faint">{last.department}</p>
+                <p className="mt-0.5 text-xs text-ink-faint" dir="auto">
+                  {departmentLabel(ot, last.department)}
+                </p>
               ) : null}
 
               <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -333,7 +341,7 @@ export function FunNameWheel() {
                         : 'bg-surface text-ink-soft hover:bg-surface-hover',
                     )}
                   >
-                    {p.name}
+                    <span dir="auto">{p.name}</span>
                   </button>
                 ))}
               </div>
@@ -370,7 +378,7 @@ export function FunNameWheel() {
                           className="size-2 rounded-full"
                           style={{ background: out ? 'currentColor' : `rgb(${tintOf(m.id)})` }}
                         />
-                        {m.label}
+                        <span dir="auto">{m.label}</span>
                         <span className="text-ink-faint group-hover:text-danger">✕</span>
                       </button>
                     )

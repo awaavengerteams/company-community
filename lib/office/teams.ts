@@ -24,11 +24,15 @@ export type Team = {
  * ★ ชื่อทีมและสีสุ่มจากชุดที่เตรียมไว้ ไม่ใช่ "ทีม 1 / ทีม 2"
  *   ชื่อที่มีบุคลิกทำให้คนจำได้ว่าตัวเองอยู่ทีมไหนระหว่างเล่น
  *   ★ ทั้งคู่แก้ได้ทีหลังตามที่ FR-C04 กำหนด
+ *
+ * ★★★ ชื่อย้ายไปอยู่ในดิกชันนารี (fun.team.names) แล้ว ไฟล์นี้ไม่รู้จักภาษา
+ *
+ *     ★ คนเรียกส่ง teamNames เข้ามาทาง SplitOptions ★★ ไฟล์นี้ถูกเรียก
+ *       จากทั้งฝั่ง client และฝั่งทดสอบ การให้มันไปหยิบคำแปลเองหมายถึง
+ *       มันต้องรู้ภาษาของคนอ่าน ซึ่งไม่ใช่เรื่องของตัวแบ่งทีม
+ *     ★ ค่าสำรองเป็นชุดว่าง — ไม่มีชื่อก็ตกไปที่ชื่อที่คนเรียกส่งมาเป็น
+ *       teamFallback แทน (เช่น "Team 3")
  */
-const TEAM_NAMES = [
-  'เสือ', 'มังกร', 'พายุ', 'ดาวตก', 'ภูเขาไฟ', 'สายฟ้า',
-  'ฉลาม', 'เหยี่ยว', 'หมาป่า', 'ราชสีห์', 'คลื่นยักษ์', 'อุกกาบาต',
-]
 
 /** ★ สีจากจานเดียวกับ confetti เพื่อให้ทั้งโมดูลดูเป็นชุดเดียวกัน */
 const TEAM_COLORS = [
@@ -52,6 +56,10 @@ export type SplitOptions = {
   value: number
   /** FR-C05 — ให้แต่ละทีมมีคนจากหลายฝ่ายปนกัน */
   mixDepartments: boolean
+  /** ★ ชื่อทีมที่แปลแล้ว — คนเรียกหยิบจาก ot('fun.team.names') มาให้ */
+  teamNames?: string[]
+  /** ★ ชื่อสำรองเมื่อทีมเยอะกว่าชื่อที่มี — รับ index แล้วคืนชื่อ */
+  teamFallback?: (index: number) => string
 }
 
 /**
@@ -79,11 +87,11 @@ export function splitTeams(members: Member[], options: SplitOptions): Team[] {
     : shuffle(members)
 
   /* ★ ชื่อและสีสุ่มโดยไม่ซ้ำกันในรอบเดียว */
-  const names = shuffle(TEAM_NAMES).slice(0, teamCount)
+  const names = shuffle(options.teamNames ?? []).slice(0, teamCount)
   const colors = shuffle(TEAM_COLORS).slice(0, teamCount)
 
   const teams: Team[] = Array.from({ length: teamCount }, (_, i) => ({
-    name: names[i] ?? `ทีม ${i + 1}`,
+    name: names[i] ?? options.teamFallback?.(i) ?? `#${i + 1}`,
     color: colors[i] ?? TEAM_COLORS[i % TEAM_COLORS.length]!,
     members: [],
   }))

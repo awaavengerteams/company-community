@@ -5,7 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import { ChatAvatar } from './ChatAvatar'
 
 /**
@@ -52,6 +52,7 @@ export function ChatGroupPanel({
   onChanged: () => void
   onLeft: () => void
 }) {
+  const ot = useOt()
   const [name, setName] = useState(title)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
@@ -199,7 +200,7 @@ export function ChatGroupPanel({
                     onClick={() => void act({ action: 'addMembers', members: [p.id] })}
                     className="h-8 rounded-full bg-elevated px-3 text-xs text-ink-soft transition-colors hover:bg-accent hover:text-accent-ink disabled:opacity-50"
                   >
-                    + {p.name}
+                    + <span dir="auto">{p.name}</span>
                   </button>
                 ))}
               </div>

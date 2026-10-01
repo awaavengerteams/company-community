@@ -5,7 +5,8 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { departmentLabel } from '@/lib/office/departments'
+import { useOt } from '@/lib/i18n/office'
 import type { AccountStatus } from '@/types/database'
 
 type Row = {
@@ -31,6 +32,7 @@ type Row = {
 
 /** หน้าจัดการผู้ใช้งาน (FR-X09 · หัวข้อ 8.6) */
 export function AdminUsers({ selfId }: { selfId: string }) {
+  const ot = useOt()
   const [rows, setRows] = useState<Row[]>([])
   const [query, setQuery] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
@@ -98,13 +100,12 @@ export function AdminUsers({ selfId }: { selfId: string }) {
 
       {temp ? (
         <div className="mt-4 rounded-(--radius-card) border border-warn/40 bg-warn/10 p-4">
-          <p className="text-sm font-medium text-ink">รหัสผ่านชั่วคราว</p>
+          <p className="text-sm font-medium text-ink">{ot('admin.users.tempPassword')}</p>
           <p className="mt-1 font-mono text-lg tracking-wider text-ink">{temp.password}</p>
           {/* ★ บอกให้ชัดว่ามันโผล่ครั้งเดียว — ถ้าปิดไปแล้วต้องรีเซ็ตใหม่
               เพราะเราไม่เก็บรหัสนี้ไว้ที่ไหนเลยโดยตั้งใจ */}
           <p className="mt-2 text-xs text-ink-soft">
-            คัดลอกส่งให้ผู้ใช้ทันที — รหัสนี้แสดงครั้งเดียวและไม่ถูกเก็บไว้ในระบบ
-            ผู้ใช้ต้องเปลี่ยนรหัสเมื่อเข้าสู่ระบบครั้งแรก
+            {ot('admin.users.tempPasswordHint')}
           </p>
           <Button size="sm" className="mt-3" onClick={() => setTemp(null)}>
             {ot('common.close')}
@@ -125,10 +126,10 @@ export function AdminUsers({ selfId }: { selfId: string }) {
         <table className="w-full min-w-[920px] text-sm">
           <thead className="bg-surface text-xs text-ink-soft">
             <tr>
-              <Th>ชื่อ</Th>
+              <Th>{ot('admin.users.colName')}</Th>
               <Th>{ot('admin.codes.code')}</Th>
-              <Th>ฝ่าย</Th>
-              <Th>สถานะ</Th>
+              <Th>{ot('admin.users.colDept')}</Th>
+              <Th>{ot('admin.users.colStatus')}</Th>
               <Th> </Th>
             </tr>
           </thead>
@@ -152,7 +153,7 @@ export function AdminUsers({ selfId }: { selfId: string }) {
                     <Td>
                       <span className="block font-medium text-ink">
                         {row.nickname || row.displayName}
-                        {self ? <span className="ms-1 text-xs text-ink-faint">(คุณ)</span> : null}
+                        {self ? <span className="ms-1 text-xs text-ink-faint">{ot('admin.users.you')}</span> : null}
                       </span>
                       {row.username ? (
                         <span className="mt-0.5 block font-mono text-[11px] text-ink-faint">
@@ -163,13 +164,17 @@ export function AdminUsers({ selfId }: { selfId: string }) {
                     <Td className="whitespace-nowrap font-mono text-ink-soft">
                       {row.employeeCode ?? '—'}
                     </Td>
-                    <Td className="text-ink-soft">{row.department ?? '—'}</Td>
+                    <Td className="text-ink-soft">
+                      <span dir="auto">{departmentLabel(ot, row.department) ?? '—'}</span>
+                    </Td>
                     {/* ★ บทบาทกับสถานะรวมช่องเดียว — ทั้งคู่เป็นป้ายสั้น ๆ
                         ★★ และ whitespace-nowrap กัน "ใช้งาน" ถูกตัดเป็นสองบรรทัด */}
                     <Td className="whitespace-nowrap">
                       <span className="flex flex-wrap items-center gap-1.5">
                         <Badge tone={row.accountStatus === 'ACTIVE' ? 'ok' : 'danger'}>
-                          {row.accountStatus === 'ACTIVE' ? 'ใช้งาน' : 'ถูกระงับ'}
+                          {row.accountStatus === 'ACTIVE'
+                  ? ot('admin.users.statusActive')
+                  : ot('admin.users.statusSuspended')}
                         </Badge>
                         {row.isAdmin ? <Badge tone="accent">Admin</Badge> : null}
                       </span>
@@ -256,6 +261,7 @@ function RowMenu({
   busy: boolean
   onAct: (body: Record<string, unknown>) => void | Promise<void>
 }) {
+  const ot = useOt()
   const [open, setOpen] = useState(false)
   const boxRef = useRef<HTMLDivElement | null>(null)
 
@@ -371,6 +377,7 @@ function UserDetail({
   busy: boolean
   onSave: (patch: Record<string, string>) => void | Promise<void>
 }) {
+  const ot = useOt()
   const [prefix, setPrefix] = useState(row.prefix ?? '')
   const [firstName, setFirstName] = useState(row.firstName ?? '')
   const [lastName, setLastName] = useState(row.lastName ?? '')

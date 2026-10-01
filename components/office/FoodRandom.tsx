@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import {
   DISTANCE_OPTIONS,
   PRICE_OPTIONS,
@@ -28,6 +28,7 @@ import { SpinWheel, type WheelSlot } from './SpinWheel'
  *      ตามที่ FR-X05 ต้องการ ★ ต่างกันแค่รูปร่างที่มองเห็น
  */
 export function FoodRandom() {
+  const ot = useOt()
   const [data, setData] = useState<RestaurantList>({ items: [], cuisines: [] })
   const [filters, setFilters] = useState<Filters>(emptyFilters)
   const [winner, setWinner] = useState<Restaurant | null>(null)
@@ -143,7 +144,7 @@ export function FoodRandom() {
             active={filters.distance === d}
             onClick={() => setFilters((f) => ({ ...f, distance: f.distance === d ? null : d }))}
           >
-            {distanceLabel(d)}
+            {distanceLabel(ot, d)}
           </Chip>
         ))}
       </div>
@@ -184,7 +185,7 @@ export function FoodRandom() {
           <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-ink-faint">
             {winner.cuisine ? <Tag>{winner.cuisine}</Tag> : null}
             {winner.priceRange ? <Tag>{winner.priceRange}</Tag> : null}
-            {winner.distance ? <Tag>{distanceLabel(winner.distance)}</Tag> : null}
+            {winner.distance ? <Tag>{distanceLabel(ot, winner.distance)}</Tag> : null}
           </div>
 
           {winner.note ? (
@@ -220,7 +221,7 @@ export function FoodRandom() {
                 setWinner(null)
               }}
             >
-              ไม่เอาร้านนี้
+              {ot('food.random.exclude')}
             </Button>
           </div>
         </div>
@@ -229,7 +230,7 @@ export function FoodRandom() {
       {/* ★ แสดงร้านที่ถูกตัดออก พร้อมทางเอากลับ — ไม่งั้นคนจะงงว่าร้านหายไปไหน */}
       {filters.excluded.size > 0 ? (
         <div className="mx-auto mt-4 max-w-md">
-          <p className="text-xs text-ink-faint">ตัดออกชั่วคราว:</p>
+          <p className="text-xs text-ink-faint">{ot('food.random.excludedLabel')}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {[...filters.excluded].map((id) => {
               const r = data.items.find((x) => x.id === id)
@@ -241,7 +242,7 @@ export function FoodRandom() {
                   onClick={() => toggleExcluded(id)}
                   className="h-7 rounded-full bg-surface px-2.5 text-xs text-ink-soft hover:bg-surface-hover hover:text-ink"
                 >
-                  {r.name} ✕
+                  <span dir="auto">{r.name}</span> ✕
                 </button>
               )
             })}

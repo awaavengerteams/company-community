@@ -6,7 +6,7 @@ import { apiFetch, apiUpload } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import {
   CATEGORIES,
   CONDITIONS,
@@ -19,6 +19,7 @@ import type { ListingCategory, ListingCondition, ListingKind } from '@/types/dat
 
 /** ฟอร์มลงประกาศ (FR-D01 / D02 / D06 / D10) */
 export function MarketPost() {
+  const ot = useOt()
   const router = useRouter()
   const [images, setImages] = useState<string[]>([])
   const [title, setTitle] = useState('')
@@ -118,14 +119,14 @@ export function MarketPost() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={url}
-                  alt={`รูปที่ ${i + 1}`}
+                  alt={ot('market.post.photoAlt', { n: i + 1 })}
                   className="size-28 rounded-2xl border border-line object-cover"
                 />
                 <button
                   type="button"
                   onClick={() => setImages((p) => p.filter((x) => x !== url))}
                   className="absolute -end-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-danger text-xs text-white"
-                  aria-label="ลบรูป"
+                  aria-label={ot('market.post.removePhoto')}
                 >
                   ✕
                 </button>
@@ -183,7 +184,7 @@ export function MarketPost() {
           <div className="flex flex-wrap gap-1.5">
             {KINDS.map((k) => (
               <Chip key={k} active={kind === k} onClick={() => setKind(k)}>
-                {kindLabel(k)}
+                {kindLabel(ot, k)}
               </Chip>
             ))}
           </div>
@@ -215,7 +216,7 @@ export function MarketPost() {
           <div className="flex flex-wrap gap-1.5">
             {CATEGORIES.map((c) => (
               <Chip key={c} active={category === c} onClick={() => setCategory(c)}>
-                {categoryLabel(c)}
+                {categoryLabel(ot, c)}
               </Chip>
             ))}
           </div>
@@ -229,7 +230,7 @@ export function MarketPost() {
                 active={condition === c}
                 onClick={() => setCondition(condition === c ? null : c)}
               >
-                {conditionLabel(c)}
+                {conditionLabel(ot, c)}
               </Chip>
             ))}
           </div>

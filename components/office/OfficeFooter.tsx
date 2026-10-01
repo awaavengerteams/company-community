@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import { OFFICE_NAV, isWidePage } from '@/lib/office/nav'
 
 /**
@@ -20,6 +20,7 @@ import { OFFICE_NAV, isWidePage } from '@/lib/office/nav'
  *    ★ วันที่เพิ่มโมดูลใหม่ ท้ายหน้าจะมีตามเองโดยไม่ต้องจำ
  */
 export function OfficeFooter() {
+  const ot = useOt()
   const pathname = usePathname()
 
   /* ★ พอร์ทัลกับหน้าผูกรหัสมีท้ายหน้าของตัวเองอยู่แล้ว */

@@ -4,7 +4,7 @@ import type {
   ListingKind,
   ListingStatus,
 } from '@/types/database'
-import { ot, type OfficeKey } from '@/lib/i18n/office'
+import type { OfficeKey, Ot } from '@/lib/i18n/office-format'
 
 /** ชนิดข้อมูลและชุดตัวเลือกของตลาดนัด (FR-D01–D06) */
 
@@ -37,19 +37,44 @@ export const CATEGORIES: ListingCategory[] = [
 export const CONDITIONS: ListingCondition[] = ['NEW', 'GOOD', 'FLAWED']
 export const STATUSES: ListingStatus[] = ['AVAILABLE', 'RESERVED', 'SOLD']
 
-export const kindLabel = (k: ListingKind): string => ot(`market.kind.${k}` as OfficeKey)
-export const categoryLabel = (c: ListingCategory): string =>
+/*
+ * ★★★ ป้ายพวกนี้รับ `ot` เป็นพารามิเตอร์ ไม่เรียก ot() เอง
+ *
+ *     ★ มันถูกเรียกทั้งจาก client component (ที่ ot มาจาก useOt()) และจาก
+ *       โค้ดฝั่ง server (ที่ ot มาจาก getOt()) ★★ ไฟล์นี้จึงไม่มีทางรู้ว่า
+ *       ภาษาของคนอ่านคืออะไร และไม่ควรรู้
+ *     ★ ทางที่ผิดคือเก็บภาษาไว้ในตัวแปรระดับโมดูล — ★★ server เรนเดอร์
+ *       หลายคำขอพร้อมกัน คนละภาษา บนตัวแปรก้อนเดียวกัน แล้วภาษาจะสลับ
+ *       กันเองแบบสุ่มโดยไม่มีอะไรฟ้อง
+ */
+export const kindLabel = (ot: Ot, k: ListingKind): string =>
+  ot(`market.kind.${k}` as OfficeKey)
+export const categoryLabel = (ot: Ot, c: ListingCategory): string =>
   ot(`market.category.${c}` as OfficeKey)
-export const conditionLabel = (c: ListingCondition): string =>
+export const conditionLabel = (ot: Ot, c: ListingCondition): string =>
   ot(`market.condition.${c}` as OfficeKey)
-export const statusLabel = (s: ListingStatus): string => ot(`market.status.${s}` as OfficeKey)
+export const statusLabel = (ot: Ot, s: ListingStatus): string =>
+  ot(`market.status.${s}` as OfficeKey)
 
 /** ราคาที่แสดง — แจกฟรีกับหาซื้อไม่แสดงตัวเลข (FR-D02) */
-export function priceLabel(listing: Pick<Listing, 'kind' | 'price'>): string {
+export function priceLabel(
+  ot: Ot,
+  locale: string,
+  listing: Pick<Listing, 'kind' | 'price'>,
+): string {
   if (listing.kind === 'FREE') return ot('market.kind.FREE')
   if (listing.kind === 'WANTED') return ot('market.kind.WANTED')
   if (listing.kind === 'TRADE') return ot('market.kind.TRADE')
-  return `฿${new Intl.NumberFormat('th-TH', { maximumFractionDigits: 2 }).format(listing.price)}`
+  /*
+   * ★★ ฿ ไม่เปลี่ยนตามภาษา — มันคือสกุลเงินของเงินก้อนนั้น ไม่ใช่คำแปล
+   *    ★ สินค้าชิ้นนี้ตั้งราคาเป็นบาท คนเยอรมันที่เปิดดูก็ต้องจ่ายเป็นบาท
+   *      ★★ การแปลงเป็น € จะเป็นการบอกตัวเลขที่ไม่มีใครรับจริง
+   *
+   * ★ แต่ "วิธีเขียนตัวเลข" เปลี่ยน — 1,234.50 · 1.234,50 · ١٢٣٤٫٥٠
+   *   ★★ ตัวคั่นหลักพันที่ผิดภาษาทำให้คนอ่านราคาผิดหลัก ซึ่งแพงกว่า
+   *      ความสวยงามมาก
+   */
+  return `฿${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(listing.price)}`
 }
 
 /** จุดนัดรับแบบอ่านง่าย (FR-D06) */

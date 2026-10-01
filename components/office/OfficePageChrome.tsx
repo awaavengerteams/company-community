@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import { pageMetaOf, siblingsOf, activeHref, isWidePage } from '@/lib/office/nav'
 
 /**
@@ -24,6 +24,7 @@ import { pageMetaOf, siblingsOf, activeHref, isWidePage } from '@/lib/office/nav
  *   ทุกหน้าจึงมีหัวขนาดเดียวกัน ระยะเท่ากัน และมีคำอธิบายใต้หัวเหมือนกันหมด
  */
 export function OfficePageChrome({ isAdmin }: { isAdmin: boolean }) {
+  const ot = useOt()
   const pathname = usePathname()
   const meta = pageMetaOf(pathname)
 

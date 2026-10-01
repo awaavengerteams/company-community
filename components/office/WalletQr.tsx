@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch, apiUpload } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 
 /** หน้า QR รับเงินของฉัน (FR-B03 · หัวข้อ 8.1) */
 export function WalletQr() {
+  const ot = useOt()
   const [url, setUrl] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -43,7 +44,7 @@ export function WalletQr() {
   }
 
   async function remove() {
-    if (!window.confirm('ลบรูป QR รับเงิน?')) return
+    if (!window.confirm(ot('confirm.deleteQr'))) return
     setBusy(true)
     try {
       await apiFetch('/api/office/wallet/qr', { method: 'DELETE' })
@@ -105,8 +106,7 @@ export function WalletQr() {
       {/* ★ บอกขอบเขตการมองเห็นให้ชัด — เป็นข้อมูลที่ PDPA กำหนดให้แจ้ง
           และเป็นสิ่งที่คนลังเลจะอัปโหลดอยากรู้ก่อนกดปุ่ม */}
       <p className="mt-4 rounded-xl border border-line p-3 text-xs leading-relaxed text-ink-soft">
-        {ot('wallet.qr.privacy')} — เก็บในที่เก็บส่วนตัว
-        ไม่เปิดเป็นลิงก์สาธารณะ และแสดงผ่านลิงก์ชั่วคราวอายุ 5 นาทีเท่านั้น
+        {ot('wallet.qr.privacy')} {ot('wallet.qr.privacyMore')}
       </p>
     </div>
   )

@@ -5,7 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import type { EmployeeCodeStatus } from '@/types/database'
 
 type Row = {
@@ -18,6 +18,7 @@ type Row = {
 
 /** หน้าจัดการรหัสพนักงาน (FR-X09 · หัวข้อ 8.6) */
 export function AdminCodes() {
+  const ot = useOt()
   const [rows, setRows] = useState<Row[]>([])
   const [query, setQuery] = useState('')
   const [newCode, setNewCode] = useState('')
@@ -49,7 +50,7 @@ export function AdminCodes() {
         method: 'POST',
         body: { codes },
       })
-      setMessage(`เพิ่ม/อัปเดตแล้ว ${res.added} รหัส`)
+      setMessage(ot('admin.codes.imported', { n: res.added }))
       setNewCode('')
       await load()
     } catch (e) {
@@ -105,7 +106,11 @@ export function AdminCodes() {
   return (
     <div className="py-2">
       <p className="mt-1 text-sm text-ink-soft">
-        ทั้งหมด {rows.length} รหัส · สมัครแล้ว {claimed} · ว่าง {rows.length - claimed}
+        {ot('admin.codes.summary', {
+          all: rows.length,
+          claimed,
+          free: rows.length - claimed,
+        })}
       </p>
 
       {/* ── เพิ่มรหัส ─────────────────────────────────────────────── */}
@@ -229,8 +234,7 @@ export function AdminCodes() {
       {/* ★ เตือนให้ชัดว่าปุ่ม "ลาออก" ทำอะไรมากกว่าเปลี่ยนป้าย
           เพราะมันระงับบัญชีคนนั้นทันที ซึ่งกู้คืนได้แต่ทำให้ตกใจได้ */}
       <p className="mt-3 text-xs text-ink-faint">
-        เปลี่ยนสถานะเป็น “{ot('admin.codes.resigned')}” จะระงับบัญชีที่ผูกกับรหัสนั้นทันที
-        และกลับเป็นใช้งานได้เมื่อเปลี่ยนกลับ
+        {ot('admin.codes.resignedHint', { resigned: ot('admin.codes.resigned') })}
       </p>
     </div>
   )

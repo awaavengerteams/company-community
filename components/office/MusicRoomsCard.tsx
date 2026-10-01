@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api/client'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 
 type MusicRoom = {
   code: string
@@ -22,6 +22,7 @@ type MusicRoom = {
  *   ★ ถ้าดึงใน server component หน้าแรกทั้งหน้าจะรอ query ของห้องเพลง
  */
 export function MusicRoomsCard() {
+  const ot = useOt()
   const [rooms, setRooms] = useState<MusicRoom[] | null>(null)
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export function MusicRoomsCard() {
             )}
 
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm text-ink">{r.name}</span>
+              <span className="block truncate text-sm text-ink" dir="auto">{r.name}</span>
               <span className="block truncate text-xs text-ink-faint">
                 {r.playing && r.track
                   ? `▶ ${r.track}`

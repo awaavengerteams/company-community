@@ -5,8 +5,17 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
-import { pickCaptain, splitTeams, type Member, type Team } from '@/lib/office/teams'
+import { useLocale } from '@/lib/i18n/client'
+import { splitList } from '@/lib/i18n/office-format'
+import { departmentLabel } from '@/lib/office/departments'
+import { useOt } from '@/lib/i18n/office'
+import {
+  pickCaptain,
+  splitTeams,
+  type Member,
+  type SplitOptions,
+  type Team,
+} from '@/lib/office/teams'
 import {
   checkFeasible,
   splitTeamsWithRules,
@@ -24,6 +33,8 @@ type NameSet = { id: string; name: string; members: Member[] }
 
 /** สุ่มทีม (FR-C03 / C04 / C05 / C07) */
 export function FunTeams() {
+  const ot = useOt()
+  const locale = useLocale()
   const router = useRouter()
   const [people, setPeople] = useState<Person[]>([])
   const [sets, setSets] = useState<NameSet[]>([])
@@ -96,7 +107,18 @@ export function FunTeams() {
   function draw(isRedraw = false) {
     if (members.length < 2) return
 
-    const opts = { mode, value, mixDepartments: mix }
+    /*
+     * ★★ ชื่อทีมมาจากดิกชันนารี ไม่ได้ฝังอยู่ใน lib/office/teams.ts แล้ว
+     *    ★ แต่ละภาษาเลือกชื่อที่ฟังดูเท่ในภาษาตัวเองได้ และไม่ต้องมี
+     *      จำนวนเท่าไทย — splitTeams() ตกไปที่ teamFallback เมื่อชื่อไม่พอ
+     */
+    const opts = {
+      mode,
+      value,
+      mixDepartments: mix,
+      teamNames: splitList(ot('fun.team.names')),
+      teamFallback: (i: number) => ot('fun.team.teamN', { n: i + 1 }),
+    }
     const teamCount =
       mode === 'BY_TEAMS'
         ? Math.max(1, Math.min(value, members.length))
@@ -109,7 +131,11 @@ export function FunTeams() {
      */
     const feasible = checkFeasible(members, teamCount, rules)
     if (!feasible.ok) {
-      setRuleError(ot('fun.rules.impossible', { reason: feasible.reason }))
+      setRuleError(
+        ot('fun.rules.impossible', {
+          reason: ot(feasible.reason.key, feasible.reason.params),
+        }),
+      )
       return
     }
     setRuleError(null)
@@ -121,13 +147,13 @@ export function FunTeams() {
      *      โดยไม่ต้องเขียน logic ผสมสองอย่างขึ้นมาใหม่
      */
     const splitFn = useSkill
-      ? (m: Member[], o: typeof opts) => {
+      ? (m: Member[], o: SplitOptions) => {
           const n =
             o.mode === 'BY_TEAMS'
               ? Math.max(1, Math.min(o.value, m.length))
               : Math.max(1, Math.ceil(m.length / Math.max(1, o.value)))
           return splitBalanced(m, n, skills).map((group, i) => ({
-            name: `ทีม ${i + 1}`,
+            name: ot('fun.team.teamN', { n: i + 1 }),
             color: ['#ff0033', '#3ea6ff', '#ffd24d', '#4ade80', '#c084fc', '#fb923c'][i % 6]!,
             members: group,
           }))
@@ -175,7 +201,7 @@ export function FunTeams() {
       const res = await apiFetch<{ id: string }>('/api/office/fun/tournaments', {
         method: 'POST',
         body: {
-          name: `แข่ง ${new Date().toLocaleDateString('th-TH')}`,
+          name: ot('fun.team.matchOn', { date: new Date().toLocaleDateString(locale) }),
           teams: ordered.map((t) => ({
             name: t.name,
             color: t.color,
@@ -254,8 +280,12 @@ export function FunTeams() {
                       : 'bg-surface text-ink-soft hover:bg-surface-hover hover:text-ink',
                   )}
                 >
-                  {p.name}
-                  {p.department ? <span className="ms-1 opacity-60">· {p.department}</span> : null}
+                  <span dir="auto">{p.name}</span>
+                  {p.department ? (
+                    <span className="ms-1 opacity-60" dir="auto">
+                      · {departmentLabel(ot, p.department)}
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -290,7 +320,7 @@ export function FunTeams() {
                       onClick={() => setMembers((x) => x.filter((y) => y.id !== m.id))}
                       className="h-7 rounded-full bg-surface px-2.5 text-xs text-ink hover:bg-danger/15 hover:text-danger"
                     >
-                      {m.label} ✕
+                      <span dir="auto">{m.label}</span> ✕
                     </button>
                   ))}
               </div>
@@ -428,7 +458,7 @@ export function FunTeams() {
                             type="button"
                             onClick={() => setRules((p) => p.filter((_, j) => j !== i))}
                             className="text-ink-faint hover:text-danger"
-                            aria-label="ลบเงื่อนไข"
+                            aria-label={ot('fun.team.removeRule')}
                           >
                             ✕
                           </button>
@@ -503,7 +533,7 @@ export function FunTeams() {
                       >
                         {show ? m.label : '···'}
                         {show && captains[t.name] === m.id ? (
-                          <span className="ms-1.5" title="กัปตัน">
+                          <span className="ms-1.5" title={ot('fun.team.captainBadge')}>
                             👑
                           </span>
                         ) : null}
@@ -602,6 +632,7 @@ function PersonSelect({
   value: string
   onChange: (v: string) => void
 }) {
+  const ot = useOt()
   return (
     <select
       value={value}
@@ -614,7 +645,7 @@ function PersonSelect({
       <option value="">{ot('fun.rules.pick')}</option>
       {members.map((m) => (
         <option key={m.id} value={m.id}>
-          {m.label}
+          <span dir="auto">{m.label}</span>
         </option>
       ))}
     </select>

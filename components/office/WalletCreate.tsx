@@ -6,7 +6,9 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useLocale } from '@/lib/i18n/client'
+import { departmentLabel } from '@/lib/office/departments'
+import { useOt } from '@/lib/i18n/office'
 import { CATEGORIES, categoryLabel, formatBaht, previewEqualSplit } from '@/lib/office/wallet'
 import type { ExpenseCategory, SplitMode } from '@/types/database'
 
@@ -14,6 +16,8 @@ type Person = { id: string; name: string; department: string | null }
 
 /** หน้าสร้างรายการเงิน (FR-B01 / FR-B02) */
 export function WalletCreate({ selfId }: { selfId: string }) {
+  const ot = useOt()
+  const locale = useLocale()
   const router = useRouter()
   const [people, setPeople] = useState<Person[]>([])
   const [title, setTitle] = useState('')
@@ -138,7 +142,7 @@ export function WalletCreate({ selfId }: { selfId: string }) {
             <div className="flex flex-wrap gap-1.5">
               {CATEGORIES.map((c) => (
                 <Chip key={c} active={category === c} onClick={() => setCategory(c)}>
-                  {categoryLabel(c)}
+                  {categoryLabel(ot, c)}
                 </Chip>
               ))}
             </div>
@@ -197,9 +201,11 @@ export function WalletCreate({ selfId }: { selfId: string }) {
             ) : (
               shownPeople.map((p) => (
                 <Chip key={p.id} active={picked.includes(p.id)} onClick={() => toggle(p.id)}>
-                  {p.name}
+                  <span dir="auto">{p.name}</span>
                   {p.department ? (
-                    <span className="ms-1 opacity-60">· {p.department}</span>
+                    <span className="ms-1 opacity-60" dir="auto">
+                      · {departmentLabel(ot, p.department)}
+                    </span>
                   ) : null}
                 </Chip>
               ))
@@ -213,7 +219,7 @@ export function WalletCreate({ selfId }: { selfId: string }) {
 
         {/* ── วิธีหาร ────────────────────────────────────────────── */}
         <div>
-          <p className="text-sm font-medium text-ink">วิธีหาร</p>
+          <p className="text-sm font-medium text-ink">{ot('wallet.create.splitLabel')}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <Chip active={split === 'EQUAL'} onClick={() => setSplit('EQUAL')}>
               {ot('wallet.create.splitEqual')}
@@ -257,7 +263,7 @@ export function WalletCreate({ selfId }: { selfId: string }) {
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-xs text-ink-faint">{ot('wallet.create.perHead')}</span>
               <span className="text-[26px] font-bold tabular-nums text-ink">
-                ฿{formatBaht(preview.shares[0] ?? preview.myShare)}
+                ฿{formatBaht(locale, preview.shares[0] ?? preview.myShare)}
               </span>
             </div>
 
@@ -267,13 +273,13 @@ export function WalletCreate({ selfId }: { selfId: string }) {
                   <span className="text-ink-soft">
                     {people.find((p) => p.id === id)?.name ?? '—'}
                   </span>
-                  <span className="tabular-nums text-ink">฿{formatBaht(preview.shares[i] ?? 0)}</span>
+                  <span className="tabular-nums text-ink">฿{formatBaht(locale, preview.shares[i] ?? 0)}</span>
                 </div>
               ))}
               {includeSelf ? (
                 <div className="mt-1 flex justify-between border-t border-line pt-1 text-sm">
                   <span className="text-ink-soft">{ot('wallet.create.myShare')}</span>
-                  <span className="tabular-nums text-ink">฿{formatBaht(preview.myShare)}</span>
+                  <span className="tabular-nums text-ink">฿{formatBaht(locale, preview.myShare)}</span>
                 </div>
               ) : null}
             </div>
@@ -305,8 +311,11 @@ export function WalletCreate({ selfId }: { selfId: string }) {
                 customSum > totalNum ? 'text-danger' : 'text-ink-faint',
               )}
             >
-              รวม ฿{formatBaht(customSum)} จาก ฿{formatBaht(totalValid ? totalNum : 0)}
-              {customSum > totalNum ? ' — เกินยอดรวม' : ''}
+              {ot('wallet.create.customSum', {
+                sum: `฿${formatBaht(locale, customSum)}`,
+                total: `฿${formatBaht(locale, totalValid ? totalNum : 0)}`,
+              })}
+              {customSum > totalNum ? ` — ${ot('wallet.create.overTotal')}` : ''}
             </p>
           </div>
         ) : null}

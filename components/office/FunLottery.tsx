@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import { randomIndex } from '@/lib/office/draw'
 import { isMuted, playCelebrate, setMuted, vibrate } from '@/lib/office/sound'
 import { Confetti } from './Confetti'
@@ -23,6 +23,7 @@ const DIGIT_OPTIONS = [2, 3, 6] as const
  *    ★ หลักสุดท้ายหมุนนานที่สุดและมีจังหวะหลอกบ่อยกว่าปกติ
  */
 export function FunLottery() {
+  const ot = useOt()
   const [digits, setDigits] = useState<number>(2)
   const [target, setTarget] = useState<string[]>(['0', '0'])
   const [flash, setFlash] = useState(false)
@@ -181,7 +182,7 @@ export function FunLottery() {
                 digits === n ? 'bg-ink text-page' : 'bg-surface text-ink-soft hover:bg-surface-hover',
               )}
             >
-              {n} หลัก
+              {ot('fun.lottery.digitsN', { n })}
             </button>
           ))}
 
@@ -207,7 +208,7 @@ export function FunLottery() {
               setMuted(next)
               setMutedState(next)
             }}
-            aria-label={muted ? 'เปิดเสียง' : 'ปิดเสียง'}
+            aria-label={muted ? ot('wheel.soundOn') : ot('wheel.soundOff')}
             className="grid size-9 place-items-center rounded-full text-ink-soft hover:bg-surface hover:text-ink"
           >
             {muted ? '🔇' : '🔊'}
@@ -271,7 +272,7 @@ export function FunLottery() {
                 <button
                   type="button"
                   onClick={() => void remove(p.id)}
-                  title="กดเพื่อลบ"
+                  title={ot('fun.lottery.tapDelete')}
                   className="h-8 rounded-full bg-surface px-3 font-mono text-sm tabular-nums text-ink hover:bg-danger/15 hover:text-danger"
                 >
                   {p.number} ✕

@@ -1,4 +1,4 @@
-import type { OfficeKey } from '@/lib/i18n/office'
+import type { OfficeKey } from '@/lib/i18n/office-format'
 
 /**
  * โครงเมนูของระบบกิจกรรมออฟฟิศ (FR-X07 · หัวข้อ 8 ของเอกสาร)

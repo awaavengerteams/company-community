@@ -687,7 +687,7 @@ export function Avatar({
       }}
       title={name}
     >
-      {name.trim().charAt(0).toUpperCase() || '?'}
+      <span dir="auto">{name.trim().charAt(0).toUpperCase() || '?'}</span>
     </span>
   )
 }

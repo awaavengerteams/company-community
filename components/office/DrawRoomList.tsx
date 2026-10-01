@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 
 type Room = {
   id: string
@@ -23,6 +23,7 @@ type Restaurant = { id: string; name: string }
 
 /** รายการห้องสุ่มกลุ่ม + ฟอร์มเปิดห้อง (FR-A09) */
 export function DrawRoomList() {
+  const ot = useOt()
   const router = useRouter()
   const [rooms, setRooms] = useState<Room[]>([])
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])

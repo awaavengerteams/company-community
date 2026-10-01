@@ -5,7 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import { playCelebrate, vibrate } from '@/lib/office/sound'
 import { Confetti } from './Confetti'
 
@@ -33,6 +33,7 @@ type Stat = { userId: string; name: string; skill: number; matches: number }
 
 /** สายการแข่งขัน + สถิติ (FR-C08 / FR-C09) */
 export function FunCup() {
+  const ot = useOt()
   const [list, setList] = useState<ListItem[]>([])
   const [stats, setStats] = useState<Stat[]>([])
   const [open, setOpen] = useState<Bracket | null>(null)
@@ -81,7 +82,7 @@ export function FunCup() {
   }
 
   async function remove(id: string) {
-    if (!window.confirm('ลบการแข่งขันนี้?')) return
+    if (!window.confirm(ot('confirm.deleteCup'))) return
     try {
       await apiFetch(`/api/office/fun/tournaments/${id}`, { method: 'DELETE' })
       setOpen(null)
@@ -132,7 +133,7 @@ export function FunCup() {
                 onClick={() => void loadBracket(t.id)}
                 className="flex items-center gap-3 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4 text-start transition-colors hover:bg-surface"
               >
-                <span className="min-w-0 flex-1 truncate font-medium text-ink">{t.name}</span>
+                <span className="min-w-0 flex-1 truncate font-medium text-ink" dir="auto">{t.name}</span>
                 <span
                   className={cn(
                     'rounded-full px-2 py-0.5 text-xs',
@@ -258,6 +259,7 @@ function MatchCard({
   busy: boolean
   onPick: (winner: string) => void
 }) {
+  const ot = useOt()
   const a = match.team_a ? teams.get(match.team_a) : null
   const b = match.team_b ? teams.get(match.team_b) : null
   const ready = Boolean(a && b) && !match.winner

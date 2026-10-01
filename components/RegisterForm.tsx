@@ -8,7 +8,12 @@ import { rememberProfile, signInWithUsername } from '@/lib/auth/session'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import {
+  DEPARTMENTS,
+  DEPT_OTHER,
+  resolveDepartment,
+} from '@/lib/office/departments'
+import { useOt } from '@/lib/i18n/office'
 
 /**
  * ฟอร์มสมัครใช้งานระบบ
@@ -41,22 +46,8 @@ import { ot } from '@/lib/i18n/office'
  * ★★ ยังมี "อื่น ๆ" ให้พิมพ์เองได้ ★ รายการที่ปิดตายจะบล็อกคนที่อยู่ฝ่ายใหม่
  *    ซึ่งเกิดขึ้นจริงเสมอในบริษัทที่ยังโต — และคนนั้นจะสมัครไม่ได้เลย
  */
-const DEPARTMENTS = [
-  'ฝ่ายพัฒนาระบบ',
-  'ฝ่ายทดสอบระบบ',
-  'ฝ่ายวิเคราะห์ระบบ',
-  'ฝ่ายออกแบบ',
-  'ฝ่ายโครงสร้างพื้นฐานและระบบเครือข่าย',
-  'ฝ่ายบริหารโครงการ',
-  'ฝ่ายสนับสนุนและบริการลูกค้า',
-  'ฝ่ายขายและการตลาด',
-  'ฝ่ายบุคคล',
-  'ฝ่ายบัญชีและการเงิน',
-  'ฝ่ายบริหาร',
-  'อื่น ๆ',
-] as const
-
 export function RegisterForm() {
+  const ot = useOt()
   const router = useRouter()
 
   const [username, setUsername] = useState('')
@@ -77,7 +68,7 @@ export function RegisterForm() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const realDept = department === 'อื่น ๆ' ? customDept.trim() : department
+  const realDept = resolveDepartment(department, customDept)
 
   /* ★ ตรวจครบทุกช่องที่บังคับ ปุ่มจึงบอกได้ว่า "ยังกรอกไม่ครบ" ก่อนกด */
   const ready =
@@ -185,7 +176,7 @@ export function RegisterForm() {
           />
           {/* ★ บอกทันทีที่พิมพ์ ไม่รอกดส่ง — สองช่องอยู่ติดกัน เห็นได้ด้วยตา */}
           {confirm.length > 0 && confirm !== password ? (
-            <p className="mt-1.5 text-xs text-danger">รหัสผ่านทั้งสองช่องไม่ตรงกัน</p>
+            <p className="mt-1.5 text-xs text-danger">{ot('reg.passwordMismatch')}</p>
           ) : null}
         </Field>
       </Section>
@@ -257,13 +248,15 @@ export function RegisterForm() {
           >
             <option value="">{ot('reg.deptPick')}</option>
             {DEPARTMENTS.map((d) => (
-              <option key={d} value={d}>
-                {d}
+              <option key={d.value} value={d.value}>
+                {ot(d.labelKey)}
               </option>
             ))}
+            {/* ★ "อื่น ๆ" ใช้ค่าสัญลักษณ์ ไม่ใช่คำแปล — เหตุผลใน departments.ts */}
+            <option value={DEPT_OTHER}>{ot('dept.other')}</option>
           </select>
 
-          {department === 'อื่น ๆ' ? (
+          {department === DEPT_OTHER ? (
             <Input
               radius="round"
               value={customDept}
@@ -403,6 +396,7 @@ export function RegisterForm() {
  *      การอ่านจบไม่ได้แปลว่ายอมรับ
  */
 function TermsDialog({ onClose, onAgree }: { onClose: () => void; onAgree: () => void }) {
+  const ot = useOt()
   const items: { t: string; b: string }[] = [
     { t: ot('reg.t1'), b: ot('reg.t1b') },
     { t: ot('reg.t2'), b: ot('reg.t2b') },

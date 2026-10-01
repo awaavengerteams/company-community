@@ -1,9 +1,14 @@
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
+import { getOt } from '@/lib/i18n/office-server'
 import { MarketChat } from '@/components/office/MarketChat'
 import { getOfficeViewer } from '@/lib/office/session'
 
-export const metadata: Metadata = { title: 'ข้อความ' }
+/* ★ ชื่อแท็บก็ต้องตามภาษา — generateMetadata อ่าน cookie ได้เหมือน component */
+export async function generateMetadata(): Promise<Metadata> {
+  const { ot } = await getOt()
+  return { title: ot('market.chat.title') }
+}
 
 export default async function MarketChatPage({
   searchParams,

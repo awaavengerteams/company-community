@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { MAX_MS } from '@/lib/office/draw'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import { RandomWheel, type WheelItem } from './RandomWheel'
 
 type Room = {
@@ -29,6 +29,7 @@ type Member = { id: string; name: string; avatarUrl: string | null; isMe: boolea
  *    หน้านี้จึงไม่มีการสุ่มอะไรเลย — ไม่มีทางที่สองเครื่องจะเห็นผลต่างกัน
  */
 export function DrawRoom({ roomId }: { roomId: string }) {
+  const ot = useOt()
   const router = useRouter()
   const [room, setRoom] = useState<Room | null>(null)
   const [members, setMembers] = useState<Member[]>([])

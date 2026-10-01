@@ -5,7 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import {
   DISTANCE_OPTIONS,
   PRICE_OPTIONS,
@@ -20,6 +20,7 @@ import { AddRestaurantForm } from './AddRestaurantForm'
 
 /** หน้าร้านเด็ด (FR-A03–A06) */
 export function FoodPicks() {
+  const ot = useOt()
   const [data, setData] = useState<RestaurantList>({ items: [], cuisines: [] })
   const [filters, setFilters] = useState<Filters>(emptyFilters)
   const [sort, setSort] = useState<'votes' | 'new'>('votes')
@@ -96,7 +97,7 @@ export function FoodPicks() {
   }
 
   async function remove(id: string) {
-    if (!window.confirm('ลบร้านนี้ออกจากรายการ?')) return
+    if (!window.confirm(ot('confirm.deleteRestaurant'))) return
     try {
       await apiFetch(`/api/office/food/restaurants/${id}`, { method: 'DELETE' })
       await load()
@@ -201,7 +202,7 @@ export function FoodPicks() {
               active={filters.distance === d}
               onClick={() => setFilters((f) => ({ ...f, distance: f.distance === d ? null : d }))}
             >
-              {distanceLabel(d)}
+              {distanceLabel(ot, d)}
             </Chip>
           ))}
           <span className="mx-1 w-px self-stretch bg-line" />
@@ -263,6 +264,7 @@ function Card({
   onRemove: () => void
   onMarkOpen: () => void
 }) {
+  const ot = useOt()
   return (
     <article
       className={cn(
@@ -273,7 +275,7 @@ function Card({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <h2 className="font-medium text-ink">{r.name}</h2>
+        <h2 className="font-medium text-ink" dir="auto">{r.name}</h2>
         {r.maybeClosed ? (
           <span className="shrink-0 rounded-full bg-danger/15 px-2 py-0.5 text-xs text-danger">
             {ot('food.picks.maybeClosed')}
@@ -286,7 +288,7 @@ function Card({
       <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-ink-faint">
         {r.cuisine ? <Tag>{r.cuisine}</Tag> : null}
         {r.priceRange ? <Tag>{r.priceRange}</Tag> : null}
-        {r.distance ? <Tag>{distanceLabel(r.distance)}</Tag> : null}
+        {r.distance ? <Tag>{distanceLabel(ot, r.distance)}</Tag> : null}
       </div>
 
       {r.note ? <p className="mt-2 text-xs leading-relaxed text-ink-soft">{r.note}</p> : null}

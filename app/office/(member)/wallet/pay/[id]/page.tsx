@@ -1,10 +1,15 @@
 import { redirect, notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { getOt } from '@/lib/i18n/office-server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getOfficeViewer } from '@/lib/office/session'
 import { WalletPay } from '@/components/office/WalletPay'
 
-export const metadata: Metadata = { title: 'จ่ายเงิน' }
+/* ★ ชื่อแท็บก็ต้องตามภาษา — generateMetadata อ่าน cookie ได้เหมือน component */
+export async function generateMetadata(): Promise<Metadata> {
+  const { ot } = await getOt()
+  return { title: ot('title.pay') }
+}
 
 /**
  * ★ โหลดรายการฝั่ง server แล้วตรวจสิทธิ์ที่นี่ด้วย

@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOfficeViewer } from '@/lib/office/session'
 import { NotificationBell } from '@/components/office/NotificationBell'
-import { ot } from '@/lib/i18n/office'
+import { OfficeI18nProvider, type Ot } from '@/lib/i18n/office'
+import { getOt } from '@/lib/i18n/office-server'
 import { Logo } from '@/components/Logo'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { UserMenu } from '@/components/UserMenu'
@@ -26,15 +27,26 @@ export default async function OfficeLayout({ children }: LayoutProps<'/office'>)
   const viewer = await getOfficeViewer()
 
   /*
+   * ★★★ ภาษาของโมดูลออฟฟิศถูกหยิบที่นี่ที่เดียว แล้วส่งลงไปสองทาง
+   *
+   *     ★ `ot` ใช้แปลสิ่งที่ layout นี้เรนเดอร์เอง (แถบบน · จอบัญชีถูกระงับ)
+   *     ★ `dict` ส่งลงไปให้ลูกที่เป็น client component ทาง provider
+   *       ★★ ก้อนเดียวกันทั้งสองทาง — server จึงไม่มีทางเรนเดอร์ภาษาหนึ่ง
+   *          แล้วส่งอีกภาษาลงไปให้ browser ซึ่งจะทำให้ hydration ไม่ตรงทั้งหน้า
+   *
+   *     ★ อยู่ที่ layout ไม่ใช่แต่ละหน้า — หน้าใหม่ที่เพิ่มทีหลังได้ภาษาฟรี
+   *       เหตุผลเดียวกับที่ด่านตรวจสิทธิ์อยู่ที่ layout
+   */
+  const { ot, dict } = await getOt()
+
+  /*
    * ★ ยังไม่ได้เข้าระบบ → ส่งไปหน้าแรกของห้องเพลงซึ่งมีฟอร์มตั้งชื่อผู้ใช้อยู่แล้ว
    *   ไม่สร้างหน้า login ใหม่ เพราะตัวตนเป็นชุดเดียวกันทั้งสองระบบ
    */
   if (!viewer) redirect('/')
 
   if (viewer.accountStatus === 'SUSPENDED') {
-    return (
-      <SuspendedScreen />
-    )
+    return <SuspendedScreen ot={ot} />
   }
 
   return (
@@ -51,13 +63,17 @@ export default async function OfficeLayout({ children }: LayoutProps<'/office'>)
      */
     <div className="flex min-h-dvh flex-col overflow-x-clip bg-page text-ink">
       <OfficeHeader
+        ot={ot}
         isAdmin={viewer.isAdmin}
         displayName={viewer.displayName}
         userId={viewer.id}
         avatarUrl={viewer.avatarUrl}
       />
 
-      <main className="flex-1">{children}</main>
+      {/* ★ ครอบแค่ children — แถบบนแปลเสร็จแล้วฝั่ง server ไม่ต้องใช้ context */}
+      <main className="flex-1">
+        <OfficeI18nProvider dict={dict}>{children}</OfficeI18nProvider>
+      </main>
     </div>
   )
 }
@@ -70,11 +86,13 @@ export default async function OfficeLayout({ children }: LayoutProps<'/office'>)
  *   ★ หยิบเฉพาะชิ้นที่ใช้ร่วมกันได้จริงมาใช้ หน้าตาจึงยังเป็นชุดเดียวกัน
  */
 function OfficeHeader({
+  ot,
   isAdmin,
   displayName,
   userId,
   avatarUrl,
 }: {
+  ot: Ot
   isAdmin: boolean
   displayName: string
   userId: string
@@ -134,7 +152,7 @@ function OfficeHeader({
   )
 }
 
-function SuspendedScreen() {
+function SuspendedScreen({ ot }: { ot: Ot }) {
   return (
     <div className="grid min-h-dvh place-items-center bg-page px-6 text-center">
       <div className="max-w-md">

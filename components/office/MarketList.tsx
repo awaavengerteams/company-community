@@ -8,7 +8,8 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ListingImage } from './ListingImage'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useLocale } from '@/lib/i18n/client'
+import { useOt } from '@/lib/i18n/office'
 import {
   CATEGORIES,
   KINDS,
@@ -26,6 +27,7 @@ import {
 
 /** หน้าประกาศทั้งหมด / ของฉัน (FR-D03–D07, D10) */
 export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; selfId: string }) {
+  const ot = useOt()
   const [items, setItems] = useState<Listing[]>([])
   const [filters, setFilters] = useState<MarketFilters>(emptyMarketFilters)
   const [loading, setLoading] = useState(true)
@@ -73,7 +75,7 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
   }
 
   async function remove(id: string) {
-    if (!window.confirm('ลบประกาศนี้?')) return
+    if (!window.confirm(ot('confirm.deleteListing'))) return
     setBusy(id)
     try {
       await apiFetch(`/api/office/market/${id}`, { method: 'DELETE' })
@@ -117,7 +119,7 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
               active={filters.kind === k}
               onClick={() => setFilters((f) => ({ ...f, kind: f.kind === k ? null : k }))}
             >
-              {kindLabel(k)}
+              {kindLabel(ot, k)}
             </Chip>
           ))}
           <span className="mx-1 w-px self-stretch bg-line" />
@@ -127,7 +129,7 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
               active={filters.category === c}
               onClick={() => setFilters((f) => ({ ...f, category: f.category === c ? null : c }))}
             >
-              {categoryLabel(c)}
+              {categoryLabel(ot, c)}
             </Chip>
           ))}
         </div>
@@ -182,6 +184,9 @@ function Card({
   onAct: (body: Record<string, unknown>, msg?: string) => void
   onRemove: () => void
 }) {
+  const ot = useOt()
+  /* ★ ตัวคั่นหลักพันของราคาต้องเป็นของภาษาที่คนอ่านเลือก ไม่ใช่ th-TH ตายตัว */
+  const locale = useLocale()
   const meet = meetLabel(l.meet)
 
   return (
@@ -226,10 +231,10 @@ function Card({
 
         <span className="market-scrim" aria-hidden="true" />
 
-        <span className="market-status absolute end-2.5 top-2.5">{statusLabel(l.status)}</span>
+        <span className="market-status absolute end-2.5 top-2.5">{statusLabel(ot, l.status)}</span>
 
         <span className="absolute bottom-2.5 start-3 text-[19px] font-bold tabular-nums text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]">
-          {priceLabel(l)}
+          {priceLabel(ot, locale, l)}
         </span>
       </div>
 
@@ -243,9 +248,9 @@ function Card({
         <h2 className="text-[15px] font-semibold leading-snug text-ink">{l.title}</h2>
 
         <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-ink-faint">
-          <Tag>{kindLabel(l.kind)}</Tag>
-          <Tag>{categoryLabel(l.category)}</Tag>
-          {l.condition ? <Tag>{conditionLabel(l.condition)}</Tag> : null}
+          <Tag>{kindLabel(ot, l.kind)}</Tag>
+          <Tag>{categoryLabel(ot, l.category)}</Tag>
+          {l.condition ? <Tag>{conditionLabel(ot, l.condition)}</Tag> : null}
         </div>
 
         {l.description ? (

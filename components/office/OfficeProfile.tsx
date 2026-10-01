@@ -6,7 +6,8 @@ import { apiFetch, apiUpload } from '@/lib/api/client'
 import { shrinkImage } from '@/lib/image/shrink'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
-import { ot, type OfficeKey } from '@/lib/i18n/office'
+import { DEPARTMENTS } from '@/lib/office/departments'
+import { useOt, type OfficeKey } from '@/lib/i18n/office'
 
 type Profile = {
   displayName: string
@@ -24,23 +25,6 @@ type Profile = {
   company: string | null
   position: string | null
 }
-
-/* ★ รายการเดียวกับฟอร์มสมัคร — ฝ่ายต้องเขียนเหมือนกันทั้งสองที่
-   ★★ ถ้าที่นี่พิมพ์อิสระ คนจะแก้เป็น "IT" แล้วหลุดจากกลุ่ม "ฝ่ายพัฒนาระบบ"
-      ที่ตัวกรองใช้ — ปัญหาเดียวกับที่แก้ไปแล้วตอนทำฟอร์มสมัคร */
-const DEPARTMENTS = [
-  'ฝ่ายพัฒนาระบบ',
-  'ฝ่ายทดสอบระบบ',
-  'ฝ่ายวิเคราะห์ระบบ',
-  'ฝ่ายออกแบบ',
-  'ฝ่ายโครงสร้างพื้นฐานและระบบเครือข่าย',
-  'ฝ่ายบริหารโครงการ',
-  'ฝ่ายสนับสนุนและบริการลูกค้า',
-  'ฝ่ายขายและการตลาด',
-  'ฝ่ายบุคคล',
-  'ฝ่ายบัญชีและการเงิน',
-  'ฝ่ายบริหาร',
-] as const
 
 /**
  * ชนิดแจ้งเตือนที่ผู้ใช้ปิดได้
@@ -63,6 +47,7 @@ const NOTIFY_TYPES: { type: string; labelKey: OfficeKey }[] = [
 
 /** หน้าโปรไฟล์ + ตั้งค่าแจ้งเตือน (หัวข้อ 8.1) */
 export function OfficeProfile() {
+  const ot = useOt()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [off, setOff] = useState<Set<string>>(new Set())
   const [department, setDepartment] = useState('')
@@ -180,7 +165,9 @@ export function OfficeProfile() {
             />
           ) : (
             <span className="grid size-24 place-items-center rounded-full bg-accent text-3xl font-bold text-accent-ink ring-2 ring-accent/35">
-              {(profile.nickname || profile.displayName).trim().charAt(0) || '?'}
+              <span dir="auto">
+                {(profile.nickname || profile.displayName).trim().charAt(0) || '?'}
+              </span>
             </span>
           )}
 
@@ -231,7 +218,7 @@ export function OfficeProfile() {
 
         <div className="min-w-0 flex-1 text-center sm:text-start">
           <p className="text-[22px] font-bold leading-tight text-ink">
-            {profile.nickname || profile.displayName}
+            <span dir="auto">{profile.nickname || profile.displayName}</span>
           </p>
           <p className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-ink-soft sm:justify-start">
             {profile.username ? <span className="font-mono">@{profile.username}</span> : null}
@@ -309,14 +296,14 @@ export function OfficeProfile() {
           >
             <option value="">{ot('reg.deptPick')}</option>
             {DEPARTMENTS.map((d) => (
-              <option key={d} value={d}>
-                {d}
+              <option key={d.value} value={d.value}>
+                {ot(d.labelKey)}
               </option>
             ))}
             {/* ★ ฝ่ายเดิมที่ไม่อยู่ในรายการต้องไม่หายไปจากช่อง
                 ★★ คนที่ Admin ตั้งค่าให้เป็นฝ่ายอื่น หรือสมัครด้วย "อื่น ๆ"
                    จะเห็นช่องว่างเปล่าแล้วเผลอเซฟทับของเดิมทิ้ง */}
-            {department && !DEPARTMENTS.includes(department as never) ? (
+            {department && !DEPARTMENTS.some((d) => d.value === department) ? (
               <option value={department}>{department}</option>
             ) : null}
           </select>
@@ -387,6 +374,7 @@ function Row({
   mono?: boolean
   wide?: boolean
 }) {
+  const ot = useOt()
   return (
     <div className={cn('min-w-0', wide && 'sm:col-span-2')}>
       <dt className="text-[11px] text-ink-faint">{label}</dt>

@@ -1,7 +1,10 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
-import { ot } from "@/lib/i18n/office";
+import { type Ot } from "@/lib/i18n/office";
+import { departmentLabel } from "@/lib/office/departments";
+import { getOt } from "@/lib/i18n/office-server";
+import { getLocale } from "@/lib/i18n/server";
 import { visibleNav } from "@/lib/office/nav";
 import { formatBaht } from "@/lib/office/wallet";
 import { MusicRoomsCard } from "./MusicRoomsCard";
@@ -56,13 +59,15 @@ const TINTS: Record<string, string> = {
   "/office/admin": "142 142 147",
 };
 
-export function OfficePortal({
+export async function OfficePortal({
   displayName,
   department,
   employeeCode,
   isAdmin,
   summary,
 }: Props) {
+  const { ot } = await getOt();
+  const locale = await getLocale();
   const sections = visibleNav(isAdmin).filter((s) => s.href !== "/office");
 
   /*
@@ -72,7 +77,7 @@ export function OfficePortal({
    */
   const badge = summary
     ? summary.iOwe > 0
-      ? ot("portal.badge.owe", { amount: formatBaht(summary.iOwe) })
+      ? ot("portal.badge.owe", { amount: formatBaht(locale, summary.iOwe) })
       : summary.unreadChat > 0
         ? ot("portal.badge.chat", { n: summary.unreadChat })
         : summary.newListings > 0
@@ -185,8 +190,8 @@ export function OfficePortal({
               className="hero-in mt-6 text-xs text-ink-faint"
               style={{ "--d": "760ms" } as CSSProperties}
             >
-              {displayName}
-              {department ? ` · ${department}` : ""}
+              <span dir="auto">{displayName}</span>
+              {department ? <span dir="auto"> · {departmentLabel(ot, department)}</span> : null}
               {employeeCode ? ` · ${employeeCode}` : ""}
             </p>
           </div>
@@ -194,7 +199,7 @@ export function OfficePortal({
 
         <div className="relative mx-auto w-full max-w-[1000px] px-4 pb-8">
           {/* ═══ สรุปของฉัน ═════════════════════════════════════════ */}
-          {summary ? <PortalSummary data={summary} /> : null}
+          {summary ? <PortalSummary ot={ot} locale={locale} data={summary} /> : null}
 
           {/* ═══ ทางเข้าแต่ละโมดูล ═══════════════════════════════════ */}
           <h2 className="mt-12 text-center text-sm font-medium text-ink-soft">
@@ -440,7 +445,15 @@ function PortalDemo({ href }: { href: string }) {
  *   ★★ คนที่ไม่ค้างใครควรเห็นหน้าที่สะอาด ไม่ใช่การ์ดว่างเรียงกันสามใบ
  *      ซึ่งอ่านแล้วเหมือนระบบพัง มากกว่าเหมือน "คุณไม่มีอะไรค้าง"
  */
-function PortalSummary({ data }: { data: HomeSummaryData }) {
+function PortalSummary({
+  ot,
+  locale,
+  data,
+}: {
+  ot: Ot;
+  locale: string;
+  data: HomeSummaryData;
+}) {
   const cards: {
     href: string;
     label: string;
@@ -456,7 +469,7 @@ function PortalSummary({ data }: { data: HomeSummaryData }) {
     cards.push({
       href: "/office/wallet/owed",
       label: ot("home.iOwe"),
-      value: formatBaht(data.iOwe),
+      value: formatBaht(locale, data.iOwe),
       tint: TINTS["/office/wallet"]!,
       icon: "M12 2v20M17 6.5C17 4.6 14.8 4 12 4S7 4.8 7 7s2.6 2.8 5 3.3 5 1.3 5 3.7-2.2 3-5 3-5-.9-5-2.8",
       sub: data.stale > 0 ? ot("home.stale", { n: data.stale }) : undefined,
@@ -468,7 +481,7 @@ function PortalSummary({ data }: { data: HomeSummaryData }) {
     cards.push({
       href: "/office/wallet/summary",
       label: ot("home.owedToMe"),
-      value: formatBaht(data.owedToMe),
+      value: formatBaht(locale, data.owedToMe),
       tint: TINTS["/office/wallet"]!,
       icon: "M4 20V10M10 20V4M16 20v-7M22 20H2",
       sub:

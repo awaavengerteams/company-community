@@ -5,7 +5,8 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useLocale } from '@/lib/i18n/client'
+import { useOt } from '@/lib/i18n/office'
 import { categoryLabel, formatBaht } from '@/lib/office/wallet'
 import type { ExpenseCategory } from '@/types/database'
 
@@ -20,6 +21,8 @@ type Summary = {
 
 /** หน้าสรุปค่าข้าว (FR-B09 / FR-B10) */
 export function WalletSummary() {
+  const ot = useOt()
+  const locale = useLocale()
   const [mode, setMode] = useState<'month' | 'year'>('month')
   const [anchor, setAnchor] = useState(() => new Date())
   const [data, setData] = useState<Summary | null>(null)
@@ -77,23 +80,23 @@ export function WalletSummary() {
     if (!data) return
 
     const rows = [
-      ['ช่วงเวลา', `${range.from} ถึง ${range.to}`],
+      [ot('summary.csv.period'), ot('summary.csv.range', { from: range.from, to: range.to })],
       [],
-      ['สรุป', 'บาท'],
-      ['ใช้จ่ายทั้งหมด', data.total.toFixed(2)],
-      ['ส่วนของฉันในบิลที่จ่ายเอง', data.myShare.toFixed(2)],
-      ['ส่วนที่ค้างคนอื่น', data.owedOut.toFixed(2)],
+      [ot('summary.csv.section'), ot('summary.csv.baht')],
+      [ot('summary.csv.total'), data.total.toFixed(2)],
+      [ot('summary.csv.myShare'), data.myShare.toFixed(2)],
+      [ot('summary.csv.owedOut'), data.owedOut.toFixed(2)],
       [],
-      ['ประเภท', 'บาท'],
+      [ot('summary.csv.category'), ot('summary.csv.baht')],
       ...Object.entries(data.byCategory).map(([k, v]) => [
-        categoryLabel(k as ExpenseCategory),
+        categoryLabel(ot, k as ExpenseCategory),
         Number(v).toFixed(2),
       ]),
       [],
-      ['ร้าน', 'บาท'],
+      [ot('summary.csv.restaurant'), ot('summary.csv.baht')],
       ...data.byRestaurant.map((r) => [r.name, Number(r.amount).toFixed(2)]),
       [],
-      ['วันที่', 'บาท'],
+      [ot('summary.csv.date'), ot('summary.csv.baht')],
       ...data.byDay.map((d) => [d.date, Number(d.amount).toFixed(2)]),
     ]
 
@@ -106,7 +109,7 @@ export function WalletSummary() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `ค่าข้าว-${range.from}-ถึง-${range.to}.csv`
+    a.download = `${ot('summary.csv.filename')}-${range.from}-${range.to}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -133,11 +136,11 @@ export function WalletSummary() {
         </div>
 
         <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" onClick={() => shift(-1)} aria-label="ก่อนหน้า">
+          <Button size="sm" variant="ghost" onClick={() => shift(-1)} aria-label={ot('summary.prev')}>
             ‹
           </Button>
           <span className="min-w-32 text-center text-sm font-medium text-ink">{label}</span>
-          <Button size="sm" variant="ghost" onClick={() => shift(1)} aria-label="ถัดไป">
+          <Button size="sm" variant="ghost" onClick={() => shift(1)} aria-label={ot('summary.next')}>
             ›
           </Button>
         </div>
@@ -183,7 +186,7 @@ export function WalletSummary() {
                 {data.byDay.map((d) => (
                   <div
                     key={d.date}
-                    title={`${d.date} · ฿${formatBaht(Number(d.amount))}`}
+                    title={`${d.date} · ฿${formatBaht(locale, Number(d.amount))}`}
                     className="min-w-1.5 max-w-[42px] flex-1 rounded-t-sm bg-accent/70 transition-colors hover:bg-accent"
                     style={{ height: `${Math.max(4, (Number(d.amount) / maxDay) * 100)}%` }}
                   />
@@ -196,7 +199,7 @@ export function WalletSummary() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Panel title={ot('wallet.summary.byCategory')}>
               {Object.entries(data.byCategory).map(([k, v]) => (
-                <Line key={k} name={categoryLabel(k as ExpenseCategory)} amount={Number(v)} />
+                <Line key={k} name={categoryLabel(ot, k as ExpenseCategory)} amount={Number(v)} />
               ))}
             </Panel>
 
@@ -213,6 +216,7 @@ export function WalletSummary() {
 }
 
 function Stat({ label, value, big }: { label: string; value: number; big?: boolean }) {
+  const locale = useLocale()
   return (
     <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
       <p className="text-xs text-ink-soft">{label}</p>
@@ -222,7 +226,7 @@ function Stat({ label, value, big }: { label: string; value: number; big?: boole
           big ? 'text-2xl text-accent' : 'text-lg',
         )}
       >
-        ฿{formatBaht(value)}
+        ฿{formatBaht(locale, value)}
       </p>
     </div>
   )
@@ -238,10 +242,11 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 function Line({ name, amount }: { name: string; amount: number }) {
+  const locale = useLocale()
   return (
     <div className="flex justify-between text-sm">
       <span className="min-w-0 truncate text-ink-soft">{name}</span>
-      <span className="tabular-nums text-ink">฿{formatBaht(amount)}</span>
+      <span className="tabular-nums text-ink">฿{formatBaht(locale, amount)}</span>
     </div>
   )
 }

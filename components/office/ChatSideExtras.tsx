@@ -1,7 +1,8 @@
 'use client'
 
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { departmentLabel } from '@/lib/office/departments'
+import { useOt } from '@/lib/i18n/office'
 import { ChatAvatar } from './ChatAvatar'
 
 /**
@@ -19,6 +20,7 @@ type Room = { id: string; kind: 'DM' | 'GROUP'; unread: number }
 type Person = { id: string; name: string; department: string | null }
 
 export function ChatUnreadCard({ rooms }: { rooms: Room[] }) {
+  const ot = useOt()
   const total = rooms.reduce((sum, r) => sum + r.unread, 0)
   const from = rooms.filter((r) => r.unread > 0).length
 
@@ -74,6 +76,7 @@ export function ChatQuickStart({
   people: Person[]
   onPick: (id: string) => void
 }) {
+  const ot = useOt()
   /* ★ แสดงแค่แปดคนแรก — แถบลัดที่ยาวกว่ารายการห้องไม่ใช่ทางลัดแล้ว */
   const shown = people.slice(0, 8)
   if (shown.length === 0) return null
@@ -89,12 +92,12 @@ export function ChatQuickStart({
             key={p.id}
             type="button"
             onClick={() => onPick(p.id)}
-            title={p.department ?? p.name}
+            title={departmentLabel(ot, p.department) ?? p.name}
             className="chat-quick group flex items-center gap-2 rounded-full border border-line bg-surface/70 py-1 pe-3 ps-1"
           >
             <ChatAvatar name={p.name} url={null} size={28} />
             <span className="max-w-30 truncate text-xs text-ink-soft group-hover:text-ink">
-              {p.name}
+              <span dir="auto">{p.name}</span>
             </span>
           </button>
         ))}
@@ -114,6 +117,7 @@ export function ChatQuickStart({
  *   ได้เอง และไม่มีไฟล์ให้โหลดเพิ่ม
  */
 export function ChatWelcome() {
+  const ot = useOt()
   const feats: { icon: string; title: string; hint: string }[] = [
     {
       icon: 'M13 2 4.5 13H11l-1 9 8.5-11H12z',
@@ -185,6 +189,7 @@ export function ChatWelcome() {
 }
 
 export function ChatStats({ rooms }: { rooms: Room[] }) {
+  const ot = useOt()
   const groups = rooms.filter((r) => r.kind === 'GROUP').length
   const dms = rooms.length - groups
 

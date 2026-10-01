@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 
 type Settings = {
   report_threshold?: number
@@ -15,6 +15,7 @@ type Settings = {
 
 /** หน้าตั้งค่าระบบ (FR-X09 · หัวข้อ 8.6) */
 export function AdminSettings() {
+  const ot = useOt()
   const [settings, setSettings] = useState<Settings>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -60,7 +61,7 @@ export function AdminSettings() {
       <div className="mt-5 flex flex-col gap-4">
         <NumberRow
           label={ot('admin.settings.reportThreshold')}
-          hint="เมื่อมีผู้รายงานครบจำนวนนี้ ระบบจะซ่อนหรือติดป้ายเนื้อหานั้นอัตโนมัติ"
+          hint={ot('admin.settings.reportThresholdHint')}
           value={settings.report_threshold ?? 3}
           min={1}
           max={50}
@@ -71,7 +72,7 @@ export function AdminSettings() {
 
         <NumberRow
           label={ot('admin.settings.noRepeatDays')}
-          hint="ร้านที่เพิ่งไปภายในกี่วันจะมีโอกาสถูกสุ่มน้อยลง"
+          hint={ot('admin.settings.noRepeatDaysHint')}
           value={settings.no_repeat_days ?? 7}
           min={0}
           max={90}
@@ -82,7 +83,7 @@ export function AdminSettings() {
 
         <ListRow
           label={ot('admin.settings.reminderDays')}
-          hint="คั่นด้วยคอมมา เช่น 1,3,7 — ระบบจะทวงอัตโนมัติเมื่อค้างครบจำนวนวันเหล่านี้"
+          hint={ot('admin.settings.reminderDaysHint')}
           value={settings.reminder_days ?? [1, 3, 7]}
           saving={saving === 'reminder_days'}
           saved={saved === 'reminder_days'}
@@ -91,7 +92,7 @@ export function AdminSettings() {
 
         <DateRow
           label={ot('admin.settings.lotteryDate')}
-          hint="ใช้แสดงตัวนับถอยหลังในหน้าสุ่มเลขเด็ด"
+          hint={ot('admin.settings.lotteryDateHint')}
           value={settings.lottery_next_draw ?? null}
           saving={saving === 'lottery_next_draw'}
           saved={saved === 'lottery_next_draw'}
@@ -113,6 +114,7 @@ function Card({
   saved: boolean
   children: React.ReactNode
 }) {
+  const ot = useOt()
   return (
     <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
       <div className="flex items-start justify-between gap-3">
@@ -122,7 +124,7 @@ function Card({
         </div>
         {/* ★ บอกว่าบันทึกแล้วตรงช่องที่แก้ ไม่ใช่ toast มุมจอ
             ฟอร์มที่มีหลายช่องบันทึกแยกกัน ต้องรู้ว่าอันไหนที่เพิ่งบันทึก */}
-        {saved ? <span className="text-xs text-ink-soft">บันทึกแล้ว</span> : null}
+        {saved ? <span className="text-xs text-ink-soft">{ot('admin.settings.saved')}</span> : null}
       </div>
       <div className="mt-3 flex items-center gap-2">{children}</div>
     </div>
@@ -148,6 +150,7 @@ function NumberRow({
   saved: boolean
   onSave: (v: number) => void
 }) {
+  const ot = useOt()
   const [draft, setDraft] = useState(String(value))
   useEffect(() => setDraft(String(value)), [value])
 
@@ -187,6 +190,7 @@ function ListRow({
   saved: boolean
   onSave: (v: number[]) => void
 }) {
+  const ot = useOt()
   const [draft, setDraft] = useState(value.join(','))
   useEffect(() => setDraft(value.join(',')), [value])
 
@@ -235,6 +239,7 @@ function DateRow({
   saved: boolean
   onSave: (v: string | null) => void
 }) {
+  const ot = useOt()
   const [draft, setDraft] = useState(value ?? '')
   useEffect(() => setDraft(value ?? ''), [value])
 

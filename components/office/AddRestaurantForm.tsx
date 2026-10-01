@@ -5,7 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import { DISTANCE_OPTIONS, PRICE_OPTIONS, distanceLabel } from '@/lib/office/food'
 import type { DistanceBand, PriceRange } from '@/types/database'
 
@@ -13,6 +13,7 @@ type Similar = { id: string; name: string; signatureDish: string; similarity: nu
 
 /** ฟอร์มเพิ่มร้าน (FR-A01 + FR-A02) */
 export function AddRestaurantForm({ onDone }: { onDone: () => void }) {
+  const ot = useOt()
   const [name, setName] = useState('')
   const [dish, setDish] = useState('')
   const [cuisine, setCuisine] = useState('')
@@ -117,7 +118,7 @@ export function AddRestaurantForm({ onDone }: { onDone: () => void }) {
             value={cuisine}
             onChange={(e) => setCuisine(e.target.value)}
             maxLength={40}
-            placeholder="ก๋วยเตี๋ยว · ตามสั่ง · กาแฟ"
+            placeholder={ot('food.kindPlaceholder')}
           />
         </Field>
 
@@ -136,7 +137,7 @@ export function AddRestaurantForm({ onDone }: { onDone: () => void }) {
           options={DISTANCE_OPTIONS}
           value={distance}
           onChange={setDistance}
-          render={distanceLabel}
+          render={(v) => distanceLabel(ot, v)}
         />
       </Field>
 

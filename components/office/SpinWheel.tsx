@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
+import { useOt } from '@/lib/i18n/office'
 import { easeOut, planDraw, prefersReducedMotion, type DrawPlan } from '@/lib/office/draw'
 import { isMuted, playCelebrate, playDrumroll, playTick, setMuted, vibrate } from '@/lib/office/sound'
 import { Confetti } from './Confetti'
@@ -107,6 +108,7 @@ export function SpinWheel({
    */
   preview?: boolean
 }) {
+  const ot = useOt()
   const [angle, setAngle] = useState(0)
   const [phase, setPhase] = useState<'idle' | 'spinning' | 'done'>('idle')
   const [winner, setWinner] = useState<WheelSlot | null>(null)
@@ -387,7 +389,7 @@ export function SpinWheel({
               : phase === 'done'
                 ? revealed
                   ? winner?.label.slice(0, 18)
-                  : 'และคนนั้นก็คือ…'
+                  : ot('wheel.winnerIs')
                 : spinLabel}
           </span>
         </div>
@@ -407,7 +409,7 @@ export function SpinWheel({
             'active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40',
           )}
         >
-          {phase === 'done' ? 'สุ่มใหม่' : spinLabel}
+          {phase === 'done' ? ot('wheel.again') : spinLabel}
         </button>
 
         <button
@@ -417,7 +419,7 @@ export function SpinWheel({
             setMuted(next)
             setMutedState(next)
           }}
-          aria-label={muted ? 'เปิดเสียง' : 'ปิดเสียง'}
+          aria-label={muted ? ot('wheel.soundOn') : ot('wheel.soundOff')}
           className="grid size-10 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface hover:text-ink"
         >
           <svg

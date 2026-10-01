@@ -1,5 +1,5 @@
 import type { DistanceBand, PriceRange } from '@/types/database'
-import { ot, type OfficeKey } from '@/lib/i18n/office'
+import type { OfficeKey, Ot } from '@/lib/i18n/office-format'
 
 /**
  * ชนิดข้อมูลและกติกาที่หน้าร้านเด็ดกับหน้าสุ่มใช้ร่วมกัน
@@ -34,7 +34,18 @@ export type RestaurantList = {
 export const PRICE_OPTIONS: PriceRange[] = ['฿', '฿฿', '฿฿฿']
 export const DISTANCE_OPTIONS: DistanceBand[] = ['WALK', 'DRIVE', 'DELIVERY']
 
-export const distanceLabel = (d: DistanceBand): string => ot(`food.distance.${d}` as OfficeKey)
+/*
+ * ★★★ ป้ายพวกนี้รับ `ot` เป็นพารามิเตอร์ ไม่เรียก ot() เอง
+ *
+ *     ★ มันถูกเรียกทั้งจาก client component (ที่ ot มาจาก useOt()) และจาก
+ *       โค้ดฝั่ง server (ที่ ot มาจาก getOt()) ★★ ไฟล์นี้จึงไม่มีทางรู้ว่า
+ *       ภาษาของคนอ่านคืออะไร และไม่ควรรู้
+ *     ★ ทางที่ผิดคือเก็บภาษาไว้ในตัวแปรระดับโมดูล — ★★ server เรนเดอร์
+ *       หลายคำขอพร้อมกัน คนละภาษา บนตัวแปรก้อนเดียวกัน แล้วภาษาจะสลับ
+ *       กันเองแบบสุ่มโดยไม่มีอะไรฟ้อง
+ */
+export const distanceLabel = (ot: Ot, d: DistanceBand): string =>
+  ot(`food.distance.${d}` as OfficeKey)
 
 /**
  * เกณฑ์ "ร้านเด็ด" (FR-A07)

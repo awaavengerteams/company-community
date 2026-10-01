@@ -6,11 +6,14 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useLocale } from '@/lib/i18n/client'
+import { useOt } from '@/lib/i18n/office'
 import { formatBaht, statusLabel, type Debt, type WalletData } from '@/lib/office/wallet'
 
 /** หน้ายอดค้างของฉัน (FR-B04 / FR-B06 / FR-B07) */
 export function WalletOwed() {
+  const ot = useOt()
+  const locale = useLocale()
   const [data, setData] = useState<WalletData | null>(null)
   const [tab, setTab] = useState<'iOwe' | 'owedToMe'>('iOwe')
   const [busy, setBusy] = useState<string | null>(null)
@@ -137,10 +140,10 @@ export function WalletOwed() {
               const net = n.theyOwe - n.iOwe
               return (
                 <div key={n.id} className="flex flex-wrap items-center gap-3 text-sm">
-                  <span className="font-medium text-ink">{n.name}</span>
+                  <span className="font-medium text-ink" dir="auto">{n.name}</span>
                   <span className="text-xs text-ink-faint">
-                    {ot('wallet.net.iOwe')} ฿{formatBaht(n.iOwe)} ·{' '}
-                    {ot('wallet.net.theyOwe')} ฿{formatBaht(n.theyOwe)}
+                    {ot('wallet.net.iOwe')} ฿{formatBaht(locale, n.iOwe)} ·{' '}
+                    {ot('wallet.net.theyOwe')} ฿{formatBaht(locale, n.theyOwe)}
                   </span>
                   <span
                     className={cn(
@@ -148,7 +151,7 @@ export function WalletOwed() {
                       net > 0 ? 'text-ink' : net < 0 ? 'text-danger' : 'text-ink-faint',
                     )}
                   >
-                    {ot('wallet.net.net')} ฿{formatBaht(Math.abs(net))}
+                    {ot('wallet.net.net')} ฿{formatBaht(locale, Math.abs(net))}
                   </span>
                   <Button
                     size="sm"
@@ -212,6 +215,7 @@ function SummaryCard({
   note?: string
   onClick: () => void
 }) {
+  const locale = useLocale()
   return (
     <button
       type="button"
@@ -229,7 +233,7 @@ function SummaryCard({
           tone === 'danger' ? 'text-danger' : 'text-ink',
         )}
       >
-        ฿{formatBaht(amount)}
+        ฿{formatBaht(locale, amount)}
       </p>
       {note ? <p className="mt-1 text-xs text-warn">{note}</p> : null}
     </button>
@@ -247,6 +251,8 @@ function Row({
   busy: boolean
   onAct: (body: Record<string, unknown>) => void
 }) {
+  const ot = useOt()
+  const locale = useLocale()
   const remindedToday =
     debt.lastRemindedAt != null &&
     new Date(debt.lastRemindedAt).toDateString() === new Date().toDateString()
@@ -255,14 +261,14 @@ function Row({
     <article className="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="font-medium text-ink">{debt.otherName}</p>
+          <p className="font-medium text-ink" dir="auto">{debt.otherName}</p>
           <span
             className={cn(
               'rounded-full px-2 py-0.5 text-xs',
               debt.status === 'PAID_PENDING' ? 'bg-warn/15 text-warn' : 'bg-surface text-ink-faint',
             )}
           >
-            {statusLabel(debt.status)}
+            {statusLabel(ot, debt.status)}
           </span>
         </div>
         <p className="mt-0.5 truncate text-sm text-ink-soft">{debt.description ?? '—'}</p>
@@ -271,7 +277,7 @@ function Row({
         </p>
       </div>
 
-      <p className="text-lg font-bold tabular-nums text-ink">฿{formatBaht(debt.amount)}</p>
+      <p className="text-lg font-bold tabular-nums text-ink">฿{formatBaht(locale, debt.amount)}</p>
 
       <div className="flex w-full flex-wrap gap-1.5 border-t border-line pt-3 sm:w-auto sm:border-0 sm:pt-0">
         {side === 'iOwe' ? (
@@ -325,7 +331,7 @@ function Row({
               variant="ghost"
               loading={busy}
               onClick={() => {
-                if (window.confirm('ยกเลิกหนี้รายการนี้?')) onAct({ action: 'cancel' })
+                if (window.confirm(ot('confirm.cancelDebt'))) onAct({ action: 'cancel' })
               }}
             >
               {ot('wallet.action.cancel')}

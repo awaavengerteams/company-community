@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 
 /**
  * ฟอร์มผูกรหัสพนักงาน (FR-X02)
@@ -26,6 +26,7 @@ type Props = {
 }
 
 export function LinkCodeForm({ defaultDisplayName, defaultNickname, defaultDepartment }: Props) {
+  const ot = useOt()
   const router = useRouter()
   const [code, setCode] = useState('')
   const [displayName, setDisplayName] = useState(defaultDisplayName)

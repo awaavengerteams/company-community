@@ -1,10 +1,15 @@
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
+import { getOt } from '@/lib/i18n/office-server'
 import { getOfficeViewer } from '@/lib/office/session'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { OfficePortal, type HomeSummaryData } from '@/components/office/OfficePortal'
 
-export const metadata: Metadata = { title: 'หน้าแรก' }
+/* ★ ชื่อแท็บก็ต้องตามภาษา — generateMetadata อ่าน cookie ได้เหมือน component */
+export async function generateMetadata(): Promise<Metadata> {
+  const { ot } = await getOt()
+  return { title: ot('nav.home') }
+}
 
 /**
  * หน้าแรกรวมทุกโมดูล (FR-X07)

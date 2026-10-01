@@ -95,11 +95,6 @@ export function drawBracketOrder<T>(teams: T[]): T[] {
   return shuffle(teams)
 }
 
-/** ชื่อทีมสำหรับทัวร์นาเมนต์ที่ยังไม่ได้ตั้งชื่อ */
-export function fallbackTeamName(index: number): string {
-  return `ทีม ${index + 1}`
-}
-
 /** สุ่มผู้ชนะ (ใช้ตอนทดสอบสายเท่านั้น — ไม่ได้ใช้ใน UI จริง) */
 export function randomWinner<T>(a: T, b: T): T {
   return randomIndex(2) === 0 ? a : b

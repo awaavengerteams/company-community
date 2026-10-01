@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useLocale } from '@/lib/i18n/client'
+import { useOt } from '@/lib/i18n/office'
 import { formatBaht } from '@/lib/office/wallet'
 
 type Stats = {
@@ -49,6 +50,8 @@ const RANGES = [7, 30, 90] as const
 
 /** แดชบอร์ดการใช้งาน (FR-X10) */
 export function AdminDashboard() {
+  const ot = useOt()
+  const locale = useLocale()
   const [days, setDays] = useState<number>(30)
   const [stats, setStats] = useState<Stats | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -100,7 +103,7 @@ export function AdminDashboard() {
           {/* ── ตัวเลขที่ต้องเห็นก่อน ─────────────────────────── */}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Big label={ot('dash.activeUsers')} value={stats.people.active} sub={ot('dash.ofLinked', { n: stats.people.linked })} />
-            <Big label={ot('dash.debtsOpen')} value={formatBaht(stats.wallet.debtsOpenSum)} sub={ot('dash.debtItems', { n: stats.wallet.debtsOpen })} tone={stats.wallet.stale > 0 ? 'warn' : undefined} />
+            <Big label={ot('dash.debtsOpen')} value={formatBaht(locale, stats.wallet.debtsOpenSum)} sub={ot('dash.debtItems', { n: stats.wallet.debtsOpen })} tone={stats.wallet.stale > 0 ? 'warn' : undefined} />
             <Big label={ot('dash.listingsLive')} value={stats.market.available} sub={ot('dash.newInRange', { n: stats.market.listings })} />
             <Big label={ot('dash.reports')} value={stats.shared.reportedItems} sub={ot('dash.hiddenItems', { n: stats.shared.hiddenItems })} tone={stats.shared.hiddenItems > 0 ? 'warn' : undefined} />
           </div>
@@ -136,7 +139,7 @@ export function AdminDashboard() {
                   {stats.food.top.map((t, i) => (
                     <li key={t.name} className="flex items-center gap-2 text-sm">
                       <span className="w-4 text-xs text-ink-faint">{i + 1}.</span>
-                      <span className="min-w-0 flex-1 truncate text-ink">{t.name}</span>
+                      <span className="min-w-0 flex-1 truncate text-ink" dir="auto">{t.name}</span>
                       <span className="text-xs tabular-nums text-ink-soft">
                         {ot('dash.voteCount', { n: t.votes })}
                       </span>
@@ -150,7 +153,7 @@ export function AdminDashboard() {
               <Rows
                 rows={[
                   [ot('dash.bills'), stats.wallet.bills],
-                  [ot('dash.billTotal'), formatBaht(stats.wallet.billTotal)],
+                  [ot('dash.billTotal'), formatBaht(locale, stats.wallet.billTotal)],
                   [ot('dash.debtsDone'), stats.wallet.debtsDone],
                   [ot('dash.stale'), stats.wallet.stale],
                 ]}
@@ -249,6 +252,7 @@ function Rows({ rows }: { rows: [string, string | number][] }) {
  *      วันเดียวจะดูเหมือนใช้ทุกวัน ซึ่งอ่านผิดความหมายทั้งหมด
  */
 function DailyChart({ data, days }: { data: { day: string; n: number }[]; days: number }) {
+  const ot = useOt()
   const map = new Map(data.map((d) => [d.day, d.n]))
   const today = new Date()
   const series: { day: string; n: number }[] = []

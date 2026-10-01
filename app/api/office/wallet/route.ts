@@ -6,6 +6,7 @@ import { assertSameOrigin, parseJsonBody } from '@/lib/http/guard'
 import { ok, withErrorHandling } from '@/lib/http/respond'
 import { enforceRateLimit } from '@/lib/ratelimit'
 import { requireOfficeUser } from '@/lib/office/guard'
+import { getOt } from '@/lib/i18n/office-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,6 +64,9 @@ export const GET = withErrorHandling(async () => {
     }
   }
 
+  /* ★ ชื่อสำรองเมื่อหาโปรไฟล์ของคู่กรณีไม่เจอ — ต้องตามภาษาของคนเรียก */
+  const { ot } = await getOt()
+
   const map = (d: (typeof rows)[number]) => {
     const otherId = d.creditor_id === actor.id ? d.debtor_id : d.creditor_id
     const other = people.get(otherId)
@@ -76,7 +80,7 @@ export const GET = withErrorHandling(async () => {
       hasSlip: Boolean(d.slip_path),
       lastRemindedAt: d.last_reminded_at,
       otherId,
-      otherName: other?.name ?? 'ไม่ทราบชื่อ',
+      otherName: other?.name ?? ot('common.unknownName'),
       otherHasQr: other?.hasQr ?? false,
       /** จำนวนวันที่ค้าง — คำนวณที่ server ให้ตรงกันทุกเครื่อง */
       daysOwed: Math.floor((Date.now() - Date.parse(d.created_at)) / 86_400_000),

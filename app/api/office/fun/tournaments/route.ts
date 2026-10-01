@@ -6,6 +6,7 @@ import { assertSameOrigin, parseJsonBody } from '@/lib/http/guard'
 import { ok, withErrorHandling } from '@/lib/http/respond'
 import { enforceRateLimit } from '@/lib/ratelimit'
 import { requireOfficeUser } from '@/lib/office/guard'
+import { getOt } from '@/lib/i18n/office-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,10 +73,13 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const actor = await requireOfficeUser()
   await enforceRateLimit('funAction', actor.id)
 
+  /* ★ ชื่อสำรองก็ต้องตามภาษาของคนกด — มันไปโผล่เป็นชื่อสายการแข่งขันจริง */
+  const { ot } = await getOt()
+
   const admin = getSupabaseAdminClient()
   const { data, error } = await admin.rpc('create_tournament', {
     p_actor: actor.id,
-    p_name: body.name ?? 'การแข่งขัน',
+    p_name: body.name ?? ot('fun.cup.defaultName'),
     p_teams: body.teams,
   })
 

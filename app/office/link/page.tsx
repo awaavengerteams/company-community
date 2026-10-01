@@ -5,9 +5,14 @@ import type { Metadata } from 'next'
 import { getOfficeViewer } from '@/lib/office/session'
 import { LinkCodeForm } from '@/components/office/LinkCodeForm'
 import { cn } from '@/lib/cn'
-import { ot, type OfficeKey } from '@/lib/i18n/office'
+import { type OfficeKey } from '@/lib/i18n/office'
+import { getOt } from '@/lib/i18n/office-server'
 
-export const metadata: Metadata = { title: 'ผูกรหัสพนักงาน' }
+/* ★ ชื่อแท็บก็ต้องตามภาษา — generateMetadata อ่าน cookie ได้เหมือน component */
+export async function generateMetadata(): Promise<Metadata> {
+  const { ot } = await getOt()
+  return { title: ot('link.title') }
+}
 
 /**
  * หน้าผูกรหัสพนักงาน (FR-X02)
@@ -26,6 +31,7 @@ export const metadata: Metadata = { title: 'ผูกรหัสพนักง
  *   แต่เพราะหน้าที่ทำอะไรไม่ได้เลยคือหน้าที่ไม่ควรมีอยู่ให้เห็น
  */
 export default async function LinkCodePage() {
+  const { ot } = await getOt()
   const viewer = await getOfficeViewer()
   if (!viewer) redirect('/')
   if (viewer.employeeCode) redirect('/office')

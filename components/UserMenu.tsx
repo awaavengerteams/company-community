@@ -92,13 +92,13 @@ export function UserMenu({
             aria-hidden="true"
             className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-sm font-bold text-accent-ink"
           >
-            {initial}
+            <span dir="auto">{initial}</span>
           </span>
         )}
 
         {/* ★ ชื่อซ่อนเฉพาะจอแคบมาก แต่วงกลมตัวอักษรยังอยู่เสมอ */}
         <span className="hidden max-w-36 truncate text-sm text-ink-soft sm:block">
-          {displayName}
+          <span dir="auto">{displayName}</span>
           {isAdmin ? <span className="ms-1 text-accent">·&nbsp;Admin</span> : null}
         </span>
       </button>
@@ -119,7 +119,7 @@ export function UserMenu({
           <div className="border-b border-line px-4 py-3">
             <p className="text-[11px] text-ink-faint">{t('menu.signedInAs')}</p>
             <p className="mt-0.5 truncate text-sm font-medium text-ink">
-              {displayName}
+              <span dir="auto">{displayName}</span>
               {isAdmin ? <span className="ms-1 text-accent">·&nbsp;Admin</span> : null}
             </p>
           </div>

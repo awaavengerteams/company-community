@@ -1,5 +1,5 @@
 import type { DebtStatus, ExpenseCategory } from '@/types/database'
-import { ot, type OfficeKey } from '@/lib/i18n/office'
+import type { OfficeKey, Ot } from '@/lib/i18n/office-format'
 
 /** ชนิดข้อมูลของหน้ากระเป๋าเงิน (FR-B01–B07) */
 
@@ -26,9 +26,20 @@ export type WalletData = {
 
 export const CATEGORIES: ExpenseCategory[] = ['FOOD', 'COFFEE', 'OTHER']
 
-export const categoryLabel = (c: ExpenseCategory): string =>
+/*
+ * ★★★ ป้ายพวกนี้รับ `ot` เป็นพารามิเตอร์ ไม่เรียก ot() เอง
+ *
+ *     ★ มันถูกเรียกทั้งจาก client component (ที่ ot มาจาก useOt()) และจาก
+ *       โค้ดฝั่ง server (ที่ ot มาจาก getOt()) ★★ ไฟล์นี้จึงไม่มีทางรู้ว่า
+ *       ภาษาของคนอ่านคืออะไร และไม่ควรรู้
+ *     ★ ทางที่ผิดคือเก็บภาษาไว้ในตัวแปรระดับโมดูล — ★★ server เรนเดอร์
+ *       หลายคำขอพร้อมกัน คนละภาษา บนตัวแปรก้อนเดียวกัน แล้วภาษาจะสลับ
+ *       กันเองแบบสุ่มโดยไม่มีอะไรฟ้อง
+ */
+export const categoryLabel = (ot: Ot, c: ExpenseCategory): string =>
   ot(`wallet.category.${c}` as OfficeKey)
-export const statusLabel = (s: DebtStatus): string => ot(`wallet.status.${s}` as OfficeKey)
+export const statusLabel = (ot: Ot, s: DebtStatus): string =>
+  ot(`wallet.status.${s}` as OfficeKey)
 
 /**
  * จัดรูปเงินบาท
@@ -39,8 +50,21 @@ export const statusLabel = (s: DebtStatus): string => ot(`wallet.status.${s}` as
  *    ★ ตัวที่มีทศนิยมบอกว่า "นี่คือยอดที่แม่นถึงสตางค์" ซึ่งสำคัญมาก
  *      เมื่อยอดจริงเป็น 33.34 กับ 33.33 ที่ต่างกันแค่สตางค์เดียว
  */
-export function formatBaht(amount: number): string {
-  return new Intl.NumberFormat('th-TH', {
+export function formatBaht(locale: string, amount: number): string {
+  /*
+   * ★★★ ฿ ไม่เปลี่ยนตามภาษา แต่ "วิธีเขียนตัวเลข" เปลี่ยน
+   *
+   *     ★ เงินก้อนนี้เป็นบาทไม่ว่าใครอ่าน — การแปลงเป็นสกุลอื่นคือการบอก
+   *       ตัวเลขที่ไม่มีใครรับจริง ★★ จึงไม่ใช้ style: 'currency'
+   *
+   *     ★ แต่ 1,234.50 · 1.234,50 · ١٢٣٤٫٥٠ คือเลขเดียวกันที่เขียนต่างกัน
+   *       ★★ ตัวคั่นหลักพันที่ผิดภาษาทำให้คนอ่านราคาผิดหลัก ซึ่งในหน้าที่
+   *          เกี่ยวกับเงินแพงกว่าความสวยงามมาก
+   *
+   *     ★ เดิมตรึงไว้ที่ 'th-TH' ทุกที่ — ถูกสำหรับคนไทย และผิดสำหรับ
+   *       คนเยอรมันกับคนรัสเซียที่สลับจุดกับคอมมา
+   */
+  return new Intl.NumberFormat(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount)

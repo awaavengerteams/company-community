@@ -36,6 +36,9 @@ export function ChatAvatar({
   return (
     <span
       aria-hidden="true"
+      /* ★ ตัวอักษรแรกมาจากชื่อคน ซึ่งเป็นภาษาอะไรก็ได้ ไม่เกี่ยวกับภาษาของหน้า
+           ★★ และเป็นรอยที่ด่าน i18n-test ใช้แยกว่าอะไรคือของผู้ใช้ */
+      dir="auto"
       className="grid shrink-0 place-items-center rounded-full font-medium text-white"
       style={{
         width: size,

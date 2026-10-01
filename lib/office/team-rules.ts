@@ -1,5 +1,24 @@
 import { randomIndex } from './draw'
 import { shuffle, type Member, type Team } from './teams'
+import type { OfficeKey } from '@/lib/i18n/office-format'
+
+/**
+ * เหตุผลที่เงื่อนไขเป็นไปไม่ได้ — เป็น "กุญแจ + ตัวเลข" ไม่ใช่ประโยคไทย
+ *
+ * ★★★ เดิมคืนประโยคไทยสำเร็จรูปออกมาแล้วหน้าเว็บเอาไปแปะตรง ๆ
+ *
+ *     ★ ซึ่งแปลไม่ได้เลย — ประโยคถูกประกอบเสร็จในไฟล์ที่ไม่รู้ภาษาของคนอ่าน
+ *       ★★ และต่อสตริงไว้ด้วย ลำดับคำจึงตายตัวเป็นไทยถาวร
+ *          ("...มี 5 คน แต่ทีมหนึ่งรับได้มากสุด 3 คน" สลับที่ในภาษาอื่นไม่ได้)
+ *
+ *     ★ คืนกุญแจกับตัวเลขแยกกัน แล้วให้หน้าเว็บเรียก ot() เอง —
+ *       ★★ ตรรกะการตรวจเงื่อนไขอยู่ที่เดิม และคำแปลอยู่ในดิกชันนารี
+ *          ซึ่งเป็นที่ของมัน
+ */
+export type RuleProblem = {
+  key: Extract<OfficeKey, `teamRule.${string}`>
+  params?: Record<string, string | number>
+}
 
 /**
  * เงื่อนไขการแบ่งทีม (FR-C06)
@@ -61,7 +80,7 @@ export function checkFeasible(
   members: Member[],
   teamCount: number,
   rules: TeamRule[],
-): { ok: true } | { ok: false; reason: string } {
+): { ok: true } | { ok: false; reason: RuleProblem } {
   const ids = new Set(members.map((m) => m.id))
   const active = rules.filter((r) => ids.has(r.a) && ids.has(r.b))
 
@@ -73,7 +92,7 @@ export function checkFeasible(
         ((o.a === r.a && o.b === r.b) || (o.a === r.b && o.b === r.a)),
     )
     if (opposite) {
-      return { ok: false, reason: 'เงื่อนไขขัดกันเอง — คู่เดียวกันทั้งต้องอยู่และห้ามอยู่ด้วยกัน' }
+      return { ok: false, reason: { key: 'teamRule.contradiction' } }
     }
   }
 
@@ -106,7 +125,7 @@ export function checkFeasible(
     if (size > maxTeamSize) {
       return {
         ok: false,
-        reason: `กลุ่มที่ต้องอยู่ด้วยกันมี ${size} คน แต่ทีมหนึ่งรับได้มากสุด ${maxTeamSize} คน`,
+        reason: { key: 'teamRule.groupTooBig', params: { size, max: maxTeamSize } },
       }
     }
   }
@@ -118,7 +137,7 @@ export function checkFeasible(
     const ra = find(r.a)
     const rb = find(r.b)
     if (ra === rb) {
-      return { ok: false, reason: 'มีคนที่ต้องอยู่ด้วยกันแต่ก็ห้ามอยู่ด้วยกันในเวลาเดียวกัน' }
+      return { ok: false, reason: { key: 'teamRule.mustAndCant' } }
     }
     if (!apartGraph.has(ra)) apartGraph.set(ra, new Set())
     if (!apartGraph.has(rb)) apartGraph.set(rb, new Set())
@@ -136,7 +155,7 @@ export function checkFeasible(
   if (maxDegree + 1 > teamCount) {
     return {
       ok: false,
-      reason: `มีคนที่ห้ามอยู่ด้วยกันมากเกินไป — ต้องมีอย่างน้อย ${maxDegree + 1} ทีม`,
+      reason: { key: 'teamRule.needMoreTeams', params: { n: maxDegree + 1 } },
     }
   }
 

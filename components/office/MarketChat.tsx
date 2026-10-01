@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Input } from '@/components/ui/Input'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 
 type Thread = {
   id: string
@@ -31,6 +31,7 @@ type Room = {
 
 /** แชทตลาดนัด (FR-D08) + คำค้นแจ้งเตือน (FR-D09) */
 export function MarketChat({ initialListing }: { initialListing?: string }) {
+  const ot = useOt()
   const [threads, setThreads] = useState<Thread[]>([])
   const [room, setRoom] = useState<Room | null>(null)
   const [text, setText] = useState('')
@@ -242,6 +243,7 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
 
 /** คำค้นแจ้งเตือน (FR-D09) — อยู่หน้าเดียวกับกล่องข้อความเพราะเป็น "ของที่ตามหา" */
 function SearchAlerts() {
+  const ot = useOt()
   const [items, setItems] = useState<{ id: string; keyword: string }[]>([])
   const [typed, setTyped] = useState('')
   const [busy, setBusy] = useState(false)

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useOt } from '@/lib/i18n/office'
 import {
   effectiveDuration,
   planDraw,
@@ -66,6 +66,7 @@ export function RandomWheel({
   autoSpinToken,
   hideSpinButton = false,
 }: Props) {
+  const ot = useOt()
   const [phase, setPhase] = useState<Phase>('idle')
   const [offset, setOffset] = useState(0)
   const [winner, setWinner] = useState<WheelItem | null>(null)
@@ -243,7 +244,7 @@ export function RandomWheel({
 
         {phase === 'done' && !winnerVisible ? (
           <p className="absolute inset-x-0 bottom-3 text-center text-xs text-ink-faint">
-            และคนนั้นก็คือ…
+            {ot('wheel.winnerIs')}
           </p>
         ) : null}
       </div>
@@ -262,7 +263,7 @@ export function RandomWheel({
               'active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40',
             )}
           >
-            {phase === 'done' ? 'สุ่มใหม่' : (spinLabel ?? 'หมุนเลย')}
+            {phase === 'done' ? ot('wheel.again') : (spinLabel ?? ot('wheel.spin'))}
           </button>
         )}
 
@@ -273,15 +274,15 @@ export function RandomWheel({
             onClick={() => planRef.current && finish(planRef.current)}
             className="h-10 rounded-full bg-surface px-4 text-sm text-ink transition-colors hover:bg-surface-hover"
           >
-            ข้าม
+            {ot('wheel.skip')}
           </button>
         ) : null}
 
         <button
           type="button"
           onClick={toggleMute}
-          aria-label={muted ? 'เปิดเสียง' : 'ปิดเสียง'}
-          title={muted ? 'เปิดเสียง' : 'ปิดเสียง'}
+          aria-label={muted ? ot('wheel.soundOn') : ot('wheel.soundOff')}
+          title={muted ? ot('wheel.soundOn') : ot('wheel.soundOff')}
           className="grid size-10 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface hover:text-ink"
         >
           <svg

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch, apiUpload } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
-import { ot } from '@/lib/i18n/office'
+import { useLocale } from '@/lib/i18n/client'
+import { useOt } from '@/lib/i18n/office'
 import { formatBaht } from '@/lib/office/wallet'
 
 type Files = {
@@ -33,6 +34,8 @@ export function WalletPay({
   description: string | null
   isDebtor: boolean
 }) {
+  const ot = useOt()
+  const locale = useLocale()
   const router = useRouter()
   const [files, setFiles] = useState<Files | null>(null)
   const [busy, setBusy] = useState(false)
@@ -88,7 +91,7 @@ export function WalletPay({
         {files?.creditorName ? ` · ${files.creditorName}` : ''}
       </p>
 
-      <p className="mt-4 text-3xl font-bold tabular-nums text-ink">฿{formatBaht(amount)}</p>
+      <p className="mt-4 text-3xl font-bold tabular-nums text-ink">฿{formatBaht(locale, amount)}</p>
 
       {/* ── QR รับเงิน ───────────────────────────────────────────── */}
       <div className="mt-5 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
@@ -106,11 +109,11 @@ export function WalletPay({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={files.qrUrl}
-              alt="QR รับเงิน"
+              alt={ot('wallet.pay.qrAlt')}
               className="mx-auto block w-full max-w-64 rounded-xl"
             />
             <p className="mt-3 text-center text-xs text-ink-faint">
-              สแกนด้วยแอปธนาคารแล้วโอน ฿{formatBaht(amount)}
+              {ot('wallet.pay.scanHint', { amount: `฿${formatBaht(locale, amount)}` })}
             </p>
           </>
         ) : (
@@ -121,17 +124,17 @@ export function WalletPay({
       {/* ── สลิป ─────────────────────────────────────────────────── */}
       {isDebtor ? (
         <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
-          <p className="text-sm font-medium text-ink">สลิปโอนเงิน</p>
+          <p className="text-sm font-medium text-ink">{ot('wallet.pay.slip')}</p>
 
           {files?.slipUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={files.slipUrl}
-              alt="สลิปที่แนบไว้"
+              alt={ot('wallet.pay.slipAlt')}
               className="mt-2 block w-full max-w-48 rounded-xl"
             />
           ) : (
-            <p className="mt-1 text-xs text-ink-faint">ยังไม่ได้แนบ (ไม่บังคับ)</p>
+            <p className="mt-1 text-xs text-ink-faint">{ot('wallet.pay.noSlip')}</p>
           )}
 
           <input
@@ -145,7 +148,7 @@ export function WalletPay({
             }}
           />
           <Button size="sm" className="mt-3" loading={busy} onClick={() => fileRef.current?.click()}>
-            {files?.slipUrl ? 'เปลี่ยนสลิป' : 'แนบสลิป'}
+            {files?.slipUrl ? ot('wallet.pay.changeSlip') : ot('wallet.pay.attachSlip')}
           </Button>
         </div>
       ) : null}
@@ -153,11 +156,11 @@ export function WalletPay({
       {/* ── ใบเสร็จของบิล ────────────────────────────────────────── */}
       {files?.receiptUrl ? (
         <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
-          <p className="text-sm font-medium text-ink">ใบเสร็จ</p>
+          <p className="text-sm font-medium text-ink">{ot('wallet.pay.receipt')}</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={files.receiptUrl}
-            alt="ใบเสร็จ"
+            alt={ot('wallet.pay.receipt')}
             className="mt-2 block w-full max-w-48 rounded-xl"
           />
         </div>
@@ -184,8 +187,7 @@ export function WalletPay({
 
       {/* ★ ย้ำกฎข้อ 1 ของหัวข้อ 7 ตรงจุดที่คนกำลังจะโอนเงินจริง */}
       <p className="mt-3 text-center text-xs text-ink-faint">
-        ระบบนี้ไม่ได้โอนเงินให้ — โอนผ่านแอปธนาคารของคุณเอง
-        แล้วกด “{ot('wallet.action.markPaid')}” เพื่อแจ้งผู้รับ
+        {ot('wallet.pay.disclaimer', { action: ot('wallet.action.markPaid') })}
       </p>
     </div>
   )

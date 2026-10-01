@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/cn'
-import { ot } from '@/lib/i18n/office'
+import { useLocale } from '@/lib/i18n/client'
+import { useOt, type Ot } from '@/lib/i18n/office'
 import { ChatAvatar } from './ChatAvatar'
 import { ChatGroupPanel } from './ChatGroupPanel'
 import { useChatTyping } from './useChatTyping'
@@ -80,6 +81,11 @@ type Thread = {
 }
 
 export function OfficeChat() {
+  const ot = useOt()
+  /* ★ วันที่หัวกลุ่มข้อความต้องเขียนด้วยปฏิทินและเดือนของภาษาที่คนอ่านเลือก
+     ★★ เดิมตรึงไว้ที่ 'th-TH' — คนญี่ปุ่นจะเห็นเดือนเป็นตัวหนังสือไทย
+        ปนอยู่กลางหน้าญี่ปุ่น ซึ่งอ่านไม่ออกและไม่มีใครรู้ว่ามาจากไหน */
+  const locale = useLocale()
   const [rooms, setRooms] = useState<Room[]>([])
   const [openId, setOpenId] = useState<string | null>(null)
   const [thread, setThread] = useState<Thread | null>(null)
@@ -429,7 +435,7 @@ export function OfficeChat() {
                       on ? 'bg-accent text-accent-ink' : 'bg-surface text-ink-soft hover:bg-elevated',
                     )}
                   >
-                    {p.name}
+                    <span dir="auto">{p.name}</span>
                   </button>
                 )
               })}
@@ -714,7 +720,7 @@ export function OfficeChat() {
                     <div key={m.id}>
                       {showDay ? (
                         <p className="my-3 flex justify-center">
-                          <span className="chat-daypill">{dayLabel(m.createdAt)}</span>
+                          <span className="chat-daypill">{dayLabel(ot, locale, m.createdAt)}</span>
                         </p>
                       ) : null}
 
@@ -734,7 +740,7 @@ export function OfficeChat() {
                         <span className={cn('flex max-w-[72%] flex-col', m.mine ? 'items-end' : 'items-start')}>
                           {/* ★ ชื่อคนส่งขึ้นเฉพาะในกลุ่มและเฉพาะฟองแรกของช่วง */}
                           {!m.mine && first && thread.room?.kind === 'GROUP' ? (
-                            <span className="chat-meta mb-1 ps-1">{m.senderName}</span>
+                            <span className="chat-meta mb-1 ps-1" dir="auto">{m.senderName}</span>
                           ) : null}
 
                           <span className="flex items-end gap-1.5">
@@ -780,7 +786,7 @@ export function OfficeChat() {
                       ★★ เยื้องไป 34px อ่านเป็น "จัดวางพลาด" ไม่ใช่ดีไซน์ */}
                   <span className="size-8.5 shrink-0" />
                   <span className="flex flex-col items-start">
-                    <span className="chat-meta mb-1 ps-1">{typingLabel(typing)}</span>
+                    <span className="chat-meta mb-1 ps-1">{typingLabel(ot, typing)}</span>
                     <span className="bubble bubble-you chat-typing" aria-hidden="true">
                       <i />
                       <i />
@@ -961,6 +967,7 @@ export function OfficeChat() {
  *    ★★ แอปแชททุกตัวจึงปล่อยรูปลอยบนผนังห้องตรง ๆ
  */
 function MessageBody({ m, last }: { m: Message; last: boolean }) {
+  const ot = useOt()
   if (m.deleted) {
     return (
       <span
@@ -1078,7 +1085,7 @@ function keepLoadedUrls(prev: Thread | null, next: Thread): Thread {
  * ★ สามคนขึ้นไปไม่ไล่ชื่อทั้งหมด — บรรทัดจะยาวจนดันฟองข้อความหลุดจอ
  *   ★★ ชื่อแรกคนเดียวพอ ที่เหลือเป็นตัวเลข
  */
-function typingLabel(names: string[]): string {
+function typingLabel(ot: Ot, names: string[]): string {
   const clean = names.map((n) => n.trim()).filter(Boolean)
   if (clean.length === 0) return ''
   if (clean.length === 1) return ot('chat.typingOne', { name: clean[0]! })
@@ -1103,7 +1110,7 @@ function dayOf(iso: string): string {
   return iso.slice(0, 10)
 }
 
-function dayLabel(iso: string): string {
+function dayLabel(ot: Ot, locale: string, iso: string): string {
   const d = new Date(iso)
   const today = new Date()
   const diff = Math.floor(
@@ -1113,5 +1120,5 @@ function dayLabel(iso: string): string {
   )
   if (diff === 0) return ot('chat.today')
   if (diff === 1) return ot('chat.yesterday')
-  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
 }
