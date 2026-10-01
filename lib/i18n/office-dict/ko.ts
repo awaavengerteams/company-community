@@ -549,6 +549,7 @@ export const ko: OfficeDict = {
   "page.back": "활동 모음",
 
   "chat.title": "채팅",
+  "chat.seeAll": "ดูทั้งหมด",
   "chat.newDm": "개인 채팅",
   "chat.newGroup": "그룹 만들기",
   "chat.groupName": "그룹 이름",
@@ -585,6 +586,11 @@ export const ko: OfficeDict = {
   "chat.saved": "저장했습니다",
 
   "chat.reply": "답장",
+  "chat.react": "ใส่ความรู้สึก",
+  "chat.unreact": "เอาความรู้สึกออก",
+  "chat.deleteMessage": "ลบข้อความ",
+  "chat.cancelReply": "ยกเลิกการตอบกลับ",
+  "chat.voice": "ข้อความเสียง",
   "chat.replyingTo": "{name}에게 답장",
   "chat.edit": "수정",
   "chat.edited": "수정됨",

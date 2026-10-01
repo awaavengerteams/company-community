@@ -2818,6 +2818,232 @@ html[data-theme='dark'] {
 }
 
 /*
+ * กล่องแชทที่กางจากแถบบน
+ *
+ * ★★★ บนจอแคบต้องเกาะ "ขอบจอ" ไม่ใช่เกาะปุ่มที่กด
+ *
+ *     ★ เดิมใช้ absolute + end-0 ซึ่งถูกต้องบนคอม — กล่องห้อยใต้ปุ่มพอดี
+ *       ★★ แต่บนมือถือ ปุ่มแชทอยู่กลางแถบ (มีปุ่มอื่นต่อท้ายอีกสี่ปุ่ม)
+ *          กล่องกว้าง 352px ที่เกาะขอบขวาของปุ่มจึงยื่นออกนอกจอทางซ้าย
+ *     ★ วัดจากเบราว์เซอร์จริงที่ 390px: ขอบซ้ายของกล่องอยู่ที่ x = -153
+ *       ★★ แปลว่าชื่อคนกับรูปโปรไฟล์ซึ่งอยู่ซ้ายสุดของแถว หายไปนอกจอทั้งหมด
+ *          — เหลือให้เห็นแค่เวลากับจุดแดง ซึ่งไม่ได้บอกอะไรเลย
+ *     ★ max-width อย่างเดียวแก้ไม่ได้ เพราะปัญหาคือ "ตำแหน่ง" ไม่ใช่ "ความกว้าง"
+ *
+ * ★★ fixed + inset-inline ทำให้กล่องกว้างเท่าจอลบขอบ ไม่ว่าปุ่มจะอยู่ตรงไหน
+ *    ★ และใช้ inset-inline ไม่ใช่ left/right — ภาษาอาหรับกลับด้านทั้งหน้า
+ */
+.chat-pop {
+  position: fixed;
+  inset-inline: 12px;
+  top: calc(var(--spacing-header) + 4px);
+  width: auto;
+}
+
+@media (min-width: 640px) {
+  .chat-pop {
+    position: absolute;
+    inset-inline: auto 0;
+    top: 2.75rem;
+    width: 22rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * ตอบกลับ · ลบ · อิโมจิความรู้สึก
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/*
+ * แถวปุ่มข้างฟองข้อความ
+ *
+ * ★★★ ซ่อนเฉพาะบนเครื่องที่ชี้เมาส์ได้ ไม่ใช่ซ่อนทุกเครื่อง
+ *
+ *     ★ ปุ่มที่โผล่ตอน hover เป็นลายเซ็นของแชทบนคอม — มันทำให้ผนังห้อง
+ *       สะอาดโดยที่ปุ่มยังอยู่ตรงที่มือไปถึง
+ *     ★★ แต่บนมือถือไม่มี hover เลย ★ ถ้าซ่อนด้วย opacity: 0 เฉย ๆ
+ *        ปุ่มตอบกลับกับปุ่มลบจะ "ไม่มีอยู่" สำหรับคนใช้มือถือทั้งหมด
+ *        ★★ ซึ่งคือคนส่วนใหญ่ของระบบนี้ (ดูคอมเมนต์เรื่องแถบล่างในหน้าแชท)
+ *
+ *     ★ @media (hover: hover) ถามความสามารถของอุปกรณ์ ไม่ใช่ความกว้างจอ
+ *       ★★ การเดาจากความกว้างจะพลาดทั้งสองทาง: แท็บเล็ตจอใหญ่ที่ไม่มีเมาส์
+ *          และหน้าต่างเบราว์เซอร์แคบ ๆ บนคอมที่มีเมาส์
+ */
+.msg-acts {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0.45;
+  transition: opacity 0.14s ease;
+}
+
+@media (hover: hover) {
+  .msg-acts {
+    opacity: 0;
+  }
+}
+
+/* ★ focus-within ด้วย ไม่ใช่ hover อย่างเดียว — คนที่เดินด้วย Tab
+     ต้องเห็นปุ่มที่ตัวเองกำลังโฟกัสอยู่ ไม่ใช่กดปุ่มที่มองไม่เห็น */
+.msg-row:hover .msg-acts,
+.msg-row:focus-within .msg-acts {
+  opacity: 1;
+}
+
+.msg-act {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  color: var(--chat-meta);
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease;
+}
+
+.msg-act:hover {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+/*
+ * เม็ดอิโมจิใต้ฟอง
+ *
+ * ★★ ซ้อนขึ้นมาทับขอบล่างของฟอง 6px ไม่ได้วางต่อท้ายเป็นบรรทัดใหม่
+ *    ★ เป็นรูปทรงที่เฟซบุ๊กกับ LINE ใช้ตรงกัน และมีเหตุผล: มันบอกว่า
+ *      "อิโมจินี้เป็นของฟองใบนี้" โดยไม่ต้องมีเส้นโยง
+ *      ★★ ถ้าวางห่างออกมา คนจะอ่านว่าเป็นข้อความใหม่ที่มีแต่อิโมจิ
+ */
+.rx-row {
+  position: relative;
+  /* ★ ลอยเหนือฟอง ไม่ใช่ใต้ฟอง — เม็ดกับฟองซ้อนกัน 4px
+       ★★ ไม่มี z-index แล้วเม็ดจะถูกฟองทับครึ่งหนึ่ง ซึ่งอ่านเป็น "เรนเดอร์พัง" */
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: -4px;
+  padding-inline: 2px;
+}
+
+.rx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  /* ★★ กำหนดความสูงขั้นต่ำ ไม่ปล่อยให้ความสูงมาจาก line-height ของตัวอักษร
+       ★ อีโมจิสูงกว่ากล่องบรรทัดของฟอนต์ปกติ ★★ ปล่อยไว้แล้วมันจะล้น
+         ออกนอกเม็ดแล้วถูกตัดครึ่ง — เห็นชัดตอนวัดจากเบราว์เซอร์จริง */
+  min-height: 22px;
+  border: 1px solid var(--color-line);
+  border-radius: 9999px;
+  background: var(--color-elevated);
+  padding: 1px 8px 1px 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-ink-soft);
+  transition:
+    border-color 0.14s ease,
+    background-color 0.14s ease;
+}
+
+/* ★ ตัวอีโมจิเองใหญ่กว่าตัวเลข — มันคือเนื้อหา ตัวเลขเป็นแค่ของประกอบ */
+.rx-chip > :first-child {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.rx-chip:hover {
+  border-color: color-mix(in oklab, var(--color-accent) 45%, var(--color-line));
+}
+
+/*
+ * ★★★ เม็ดที่เรากดเองต้องต่างจากเม็ดที่คนอื่นกด "ด้วยสายตา" ไม่ใช่ด้วยตัวเลข
+ *
+ *     ★ ถ้าหน้าตาเหมือนกันหมด คนจะไม่รู้ว่าตัวเองกดไปแล้วหรือยัง
+ *       ★★ แล้วจะกดซ้ำ ซึ่งในระบบนี้แปลว่า "ถอน" — คนจะเห็นตัวเลขลดลง
+ *          ทั้งที่เพิ่งกดเพิ่ม และอ่านว่าปุ่มพัง
+ */
+.rx-chip-mine {
+  border-color: color-mix(in oklab, var(--color-accent) 60%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 14%, var(--color-elevated));
+  color: var(--color-ink);
+}
+
+/* ★ กล่องเลือกอิโมจิ — ลอยอยู่เหนือฟอง ไม่ดันผนังห้องให้ขยับ */
+.rx-pop {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  z-index: 30;
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--color-line);
+  border-radius: 9999px;
+  background: var(--color-elevated);
+  padding: 4px 6px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.22);
+}
+
+.rx-pick {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  font-size: 17px;
+  line-height: 1;
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+
+.rx-pick:hover {
+  background: var(--color-surface);
+  /* ★ โตขึ้นตอนชี้ — ยืนยันว่าชี้ตรงอันไหนอยู่ ซึ่งสำคัญเมื่อปุ่มเรียงติดกัน
+       และตัวอิโมจิเองก็ไม่มีกรอบให้เห็นขอบ */
+  transform: scale(1.18);
+}
+
+/*
+ * ข้อความต้นทางในฟองที่ตอบกลับ
+ *
+ * ★★ เส้นขีดข้างซ้ายคือ "คำพูดที่ยกมา" ซึ่งเป็นรูปทรงที่คนอ่านได้ทันที
+ *    เพราะมันเป็นรูปทรงเดียวกับ blockquote ในทุกที่
+ *
+ * ★★ ตัดเหลือสองบรรทัด ไม่ใช่บรรทัดเดียว
+ *    ★ บรรทัดเดียวตัดข้อความสั้น ๆ ทิ้งทั้งที่ยังมีที่ว่าง ★★ สองบรรทัด
+ *      ครอบคลุมข้อความส่วนใหญ่ได้ครบและยังไม่สูงจนกลืนฟองของตัวเอง
+ */
+.quote {
+  display: block;
+  margin-bottom: 4px;
+  border-inline-start: 3px solid currentColor;
+  border-radius: 3px;
+  padding-inline-start: 7px;
+  /* ★ หรี่ลงเพื่อให้ข้อความใหม่เด่นกว่าข้อความที่ยกมา — คนอ่านมาอ่าน
+       สิ่งที่เพิ่งพูด ไม่ได้มาอ่านสิ่งที่พูดไปแล้ว */
+  opacity: 0.62;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.quote-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* แถบ "กำลังตอบกลับ…" เหนือช่องพิมพ์ */
+.reply-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-elevated);
+  padding: 7px 12px;
+}
+
+/*
  * รูปในแชท
  *
  * ★★ จำกัดความสูง ไม่ใช่แค่ความกว้าง

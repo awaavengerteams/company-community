@@ -896,6 +896,21 @@ export type Database = {
         Relationships: []
       }
 
+      /* 0044 — อิโมจิความรู้สึกบนข้อความแชทออฟฟิศ */
+      office_chat_reactions: {
+        Row: {
+          message_id: string
+          user_id: string
+          emoji: string
+          created_at: string
+        }
+        /* ★ เขียนผ่าน RPC เท่านั้น — ไม่มี policy ให้เขียนตรง ๆ
+             ★★ ประกาศ Insert/Update ไว้เพื่อให้ชนิดครบรูป ไม่ใช่เพราะมีคนใช้ */
+        Insert: { message_id: string; user_id: string; emoji: string }
+        Update: never
+        Relationships: []
+      }
+
       audit_log: {
         Row: {
           id: number
@@ -1515,6 +1530,11 @@ export type Database = {
       }
       edit_office_chat: { Args: { p_actor: string; p_msg: string; p_text: string }; Returns: void }
       delete_office_chat: { Args: { p_actor: string; p_msg: string }; Returns: void }
+      /* 0044 — กดซ้ำคือถอน ส่ง p_on มาบอกว่าตั้งใจจะกดหรือถอน */
+      toggle_office_reaction: {
+        Args: { p_actor: string; p_msg: string; p_emoji: string; p_on: boolean }
+        Returns: boolean
+      }
       pin_office_message: { Args: { p_actor: string; p_room: string; p_msg: string }; Returns: void }
       set_office_chat_pref: {
         Args: { p_actor: string; p_room: string; p_field: string; p_value: boolean }

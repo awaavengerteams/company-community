@@ -246,7 +246,17 @@ function Card({
           </p>
         ) : null}
 
-        <h2 className="text-[15px] font-semibold leading-snug text-ink">{l.title}</h2>
+        {/*
+          * ★★★ dir="auto" บนทุกช่องที่ผู้ใช้พิมพ์เอง
+          *
+          *     ★ ชื่อประกาศกับคำบรรยายมาจากคนขาย ไม่ใช่ดิกชันนารีของเรา
+          *       ★★ คนขายที่พิมพ์ภาษาอาหรับจะได้ทิศผิดทั้งบรรทัดถ้าไม่มี dir
+          *     ★ และเป็นเครื่องหมายให้ด่าน i18n รู้ว่า "ของผู้ใช้ ไม่ใช่ของเรา" —
+          *       ★★ ไม่งั้นด่านจะฟ้องว่า "ข้อความไทยหลุด" ทุกครั้งที่มีคนไทย
+          *          ลงประกาศ ทั้งที่ไม่มีอะไรผิด (จับได้ตอนเจอประกาศ "ยางรถ"
+          *          โผล่ในหน้าภาษาเยอรมัน)
+          */}
+        <h2 dir="auto" className="text-[15px] font-semibold leading-snug text-ink">{l.title}</h2>
 
         <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-ink-faint">
           <Tag>{kindLabel(ot, l.kind)}</Tag>
@@ -255,12 +265,12 @@ function Card({
         </div>
 
         {l.description ? (
-          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-ink-soft">{l.description}</p>
+          <p dir="auto" className="mt-2 line-clamp-2 text-xs leading-relaxed text-ink-soft">{l.description}</p>
         ) : null}
 
         {meet ? (
           <p className="mt-2 text-xs text-ink-faint">
-            {ot('market.meet')}: {meet}
+            {ot('market.meet')}: <span dir="auto">{meet}</span>
           </p>
         ) : null}
 

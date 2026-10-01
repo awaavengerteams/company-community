@@ -121,6 +121,56 @@ export const GET = withErrorHandling(async (_request: NextRequest, ctx: Ctx) => 
   const byMessageId = new Map((messages ?? []).map((m) => [m.id, m]))
   const roleOf = new Map((memberRows ?? []).map((m) => [m.user_id, m.role]))
 
+  /*
+   * ★★★ อิโมจิความรู้สึก — ดึงทั้งห้องในคำขอเดียว ไม่ใช่คำขอต่อข้อความ
+   *
+   *     ★ 300 ข้อความ × 1 คำขอ = 300 รอบไปฐานข้อมูลเพื่อเปิดห้องแชทหนึ่งห้อง
+   *       ★★ ซึ่งจะทำให้การเปิดแชทช้ากว่าการโหลดทั้งหน้าเสียอีก
+   *
+   * ★★ ห่อ try/catch เพราะตารางนี้มาจาก migration 0044
+   *    ★ บทเรียนเดิมของโปรเจกต์: โค้ดที่อ่านของใหม่ก่อน migration ขึ้น
+   *      ทำให้ "เปิดแชทไม่ได้เลย" ซึ่งหนักกว่า "ไม่มีอิโมจิ" หลายเท่า
+   *      ★★ ล้มแล้วแค่ไม่มีอิโมจิ ส่วนแชทยังคุยกันได้ปกติ
+   */
+  const reactionsOf = new Map<string, { emoji: string; count: number; mine: boolean }[]>()
+
+  /*
+   * ★★★ ข้ามข้อความที่ถูกลบแล้ว — ไม่ใช่แค่ไม่ให้กดเพิ่ม แต่ไม่ส่งของเก่ามาด้วย
+   *
+   *     ★ การลบที่นี่เป็น soft delete (ตั้ง deleted_at) ★★ แถวอิโมจิจึงไม่ถูก
+   *       cascade ทิ้งไปด้วย และยังอยู่ในตารางครบ
+   *     ★ ผลที่เห็นจริงบนจอ: ฟองเขียนว่า "ข้อความถูกลบแล้ว" แต่มี 👍 ห้อยอยู่ใต้ฟอง
+   *       ★★ ซึ่งอ่านได้ว่า "มีคนชอบข้อความที่ไม่มีอยู่" — คนจะพยายามกดดูว่า
+   *          ข้อความเดิมคืออะไร ทั้งที่มันหายไปแล้ว
+   *     ★ จับได้จากการลบจริงในเบราว์เซอร์ ไม่ใช่จากการอ่านโค้ด
+   */
+  const alive = (messages ?? []).filter((m) => !m.deleted_at)
+  if (alive.length > 0) {
+    try {
+      const { data: rows } = await admin
+        .from('office_chat_reactions')
+        .select('message_id, user_id, emoji')
+        .in('message_id', alive.map((m) => m.id))
+
+      /* ★ ยุบเป็น "อีโมจิ + จำนวน + เรากดไหม" ที่เซิร์ฟเวอร์
+         ★★ ส่ง user_id ของทุกคนที่กดไปให้หน้าเว็บนับเอง จะเป็นการบอกว่า
+            ใครกดอะไรบนข้อความไหน ซึ่งละเอียดเกินกว่าที่หน้าจอต้องใช้ */
+      for (const r of rows ?? []) {
+        const list = reactionsOf.get(r.message_id) ?? []
+        const hit = list.find((x) => x.emoji === r.emoji)
+        if (hit) {
+          hit.count += 1
+          if (r.user_id === actor.id) hit.mine = true
+        } else {
+          list.push({ emoji: r.emoji, count: 1, mine: r.user_id === actor.id })
+        }
+        reactionsOf.set(r.message_id, list)
+      }
+    } catch {
+      /* ★ ปล่อยว่าง — ฟองข้อความแค่ไม่มีแถวอิโมจิใต้ตัว */
+    }
+  }
+
   return ok({
     room: room
       ? {
@@ -170,6 +220,7 @@ export const GET = withErrorHandling(async (_request: NextRequest, ctx: Ctx) => 
         senderName: byId.get(m.sender_id)?.nickname || byId.get(m.sender_id)?.display_name || '—',
         senderAvatar: byId.get(m.sender_id)?.avatar_url ?? null,
         createdAt: m.created_at,
+        reactions: reactionsOf.get(m.id) ?? [],
         read: m.sender_id === actor.id && Date.parse(m.created_at) <= readUpTo,
         /* ★ จำนวนคนอื่นที่อ่านข้อความนี้แล้ว — ใช้กับห้องกลุ่มเป็นหลัก */
         readers: m.sender_id === actor.id ? readersOf(m.created_at) : 0,
@@ -210,6 +261,18 @@ const schema = z.union([
   z.object({ action: z.literal('edit'), messageId: z.uuid(), text: z.string().trim().min(1).max(2000) }),
   z.object({ action: z.literal('deleteMessage'), messageId: z.uuid() }),
   z.object({ action: z.literal('pinMessage'), messageId: z.uuid() }),
+  /*
+   * ★★ จำกัดอีโมจิไว้ 16 ตัวอักษร เท่าที่ constraint ในฐานข้อมูลยอมรับ
+   *    ★ ตัวเลขนี้ไม่ใช่ "16 อีโมจิ" — อีโมจิหนึ่งตัวที่มีสีผิวและเพศกำกับ
+   *      ยาวได้ถึง 7 code point ★★ ขอบเขตจึงกว้างพอสำหรับอีโมจิเดียว
+   *      แต่แคบพอที่จะไม่กลายเป็นช่องส่งข้อความซ่อนรูป
+   */
+  z.object({
+    action: z.literal('react'),
+    messageId: z.uuid(),
+    emoji: z.string().min(1).max(16),
+    on: z.boolean(),
+  }),
 ])
 
 export const POST = withErrorHandling(async (request: NextRequest, ctx: Ctx) => {
@@ -294,6 +357,23 @@ export const POST = withErrorHandling(async (request: NextRequest, ctx: Ctx) => 
     const { error } = await admin.rpc('delete_office_chat', {
       p_actor: actor.id,
       p_msg: body.messageId,
+    })
+    if (error) throw fromPostgresError(error)
+    return ok({})
+  }
+
+  if (body.action === 'react') {
+    /*
+     * ★★ นับโควตาด้วย เพราะการกดอิโมจิกดได้เร็วกว่าการพิมพ์หลายเท่า
+     *    ★ ปุ่มเดียวที่กดรวดเดียวสิบครั้งได้ในหนึ่งวินาที คือช่องที่ใช้
+     *      ถล่มฐานข้อมูลได้ง่ายที่สุดในหน้านี้
+     */
+    await enforceRateLimit('chatAction', actor.id)
+    const { error } = await admin.rpc('toggle_office_reaction', {
+      p_actor: actor.id,
+      p_msg: body.messageId,
+      p_emoji: body.emoji,
+      p_on: body.on,
     })
     if (error) throw fromPostgresError(error)
     return ok({})

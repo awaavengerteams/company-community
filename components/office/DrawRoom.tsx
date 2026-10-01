@@ -174,7 +174,10 @@ export function DrawRoom({ roomId }: { roomId: string }) {
         <Button variant="ghost" size="sm" onClick={() => router.push('/office/fun/room')}>
           ‹ {ot('room.back')}
         </Button>
-        <h2 className="min-w-0 flex-1 truncate text-lg font-bold text-ink">{room.title}</h2>
+        {/* ★ ชื่อห้องมาจากคนเปิดห้อง — ของผู้ใช้ ต้องมี dir="auto" เหมือนชื่อประกาศ */}
+        <h2 dir="auto" className="min-w-0 flex-1 truncate text-lg font-bold text-ink">
+          {room.title}
+        </h2>
       </div>
 
       {/* ── คนในห้อง ──────────────────────────────────────────── */}

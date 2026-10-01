@@ -590,6 +590,7 @@ export const th = {
 
   /* ── แชทออฟฟิศ (0038) ───────────────────────────────────────── */
   'chat.title': 'แชท',
+  'chat.seeAll': 'ดูทั้งหมด',
   'chat.newDm': 'แชทส่วนตัว',
   'chat.newGroup': 'สร้างกลุ่ม',
   'chat.groupName': 'ชื่อกลุ่ม',
@@ -627,6 +628,11 @@ export const th = {
   'chat.saved': 'บันทึกแล้ว',
 
   'chat.reply': 'ตอบกลับ',
+  'chat.react': 'ใส่ความรู้สึก',
+  'chat.unreact': 'เอาความรู้สึกออก',
+  'chat.deleteMessage': 'ลบข้อความ',
+  'chat.cancelReply': 'ยกเลิกการตอบกลับ',
+  'chat.voice': 'ข้อความเสียง',
   'chat.replyingTo': 'ตอบกลับ {name}',
   'chat.edit': 'แก้ไข',
   'chat.edited': 'แก้ไขแล้ว',

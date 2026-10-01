@@ -549,6 +549,7 @@ export const ja: OfficeDict = {
   "page.back": "アクティビティ一覧",
 
   "chat.title": "チャット",
+  "chat.seeAll": "ดูทั้งหมด",
   "chat.newDm": "個人チャット",
   "chat.newGroup": "グループを作る",
   "chat.groupName": "グループ名",
@@ -585,6 +586,11 @@ export const ja: OfficeDict = {
   "chat.saved": "保存しました",
 
   "chat.reply": "返信",
+  "chat.react": "ใส่ความรู้สึก",
+  "chat.unreact": "เอาความรู้สึกออก",
+  "chat.deleteMessage": "ลบข้อความ",
+  "chat.cancelReply": "ยกเลิกการตอบกลับ",
+  "chat.voice": "ข้อความเสียง",
   "chat.replyingTo": "{name} に返信",
   "chat.edit": "編集",
   "chat.edited": "編集済み",

@@ -549,6 +549,7 @@ export const vi: OfficeDict = {
   "page.back": "Trang tổng hợp",
 
   "chat.title": "Trò chuyện",
+  "chat.seeAll": "ดูทั้งหมด",
   "chat.newDm": "Nhắn riêng",
   "chat.newGroup": "Tạo nhóm",
   "chat.groupName": "Tên nhóm",
@@ -585,6 +586,11 @@ export const vi: OfficeDict = {
   "chat.saved": "Đã lưu",
 
   "chat.reply": "Trả lời",
+  "chat.react": "ใส่ความรู้สึก",
+  "chat.unreact": "เอาความรู้สึกออก",
+  "chat.deleteMessage": "ลบข้อความ",
+  "chat.cancelReply": "ยกเลิกการตอบกลับ",
+  "chat.voice": "ข้อความเสียง",
   "chat.replyingTo": "Trả lời {name}",
   "chat.edit": "Sửa",
   "chat.edited": "đã sửa",

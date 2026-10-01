@@ -549,6 +549,7 @@ export const zh: OfficeDict = {
   "page.back": "活动总览",
 
   "chat.title": "聊天",
+  "chat.seeAll": "ดูทั้งหมด",
   "chat.newDm": "私聊",
   "chat.newGroup": "建群",
   "chat.groupName": "群名称",
@@ -585,6 +586,11 @@ export const zh: OfficeDict = {
   "chat.saved": "已保存",
 
   "chat.reply": "回复",
+  "chat.react": "ใส่ความรู้สึก",
+  "chat.unreact": "เอาความรู้สึกออก",
+  "chat.deleteMessage": "ลบข้อความ",
+  "chat.cancelReply": "ยกเลิกการตอบกลับ",
+  "chat.voice": "ข้อความเสียง",
   "chat.replyingTo": "回复 {name}",
   "chat.edit": "编辑",
   "chat.edited": "已编辑",

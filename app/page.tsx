@@ -1,16 +1,13 @@
 import type { Metadata } from 'next'
 import { AppHeader } from '@/components/AppHeader'
-import { UserMenu } from '@/components/UserMenu'
+import { HeaderActions } from '@/components/HeaderActions'
 import { PortalHero } from '@/components/home/PortalHero'
 import { SystemHub } from '@/components/home/SystemHub'
 import { HubFeatures } from '@/components/home/HubFeatures'
 import { SetupNotice } from '@/components/home/SetupNotice'
 import { getHomeStats } from '@/lib/home/stats'
 import { OfficeSummary, type HomeSummaryData } from '@/components/home/OfficeSummary'
-import { NotificationBell } from '@/components/office/NotificationBell'
-import { OfficeI18nProvider } from '@/lib/i18n/office'
 import { getOt } from '@/lib/i18n/office-server'
-import { officeDictSubset } from '@/lib/i18n/office-dict'
 import { getLocale } from '@/lib/i18n/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { SignInScreen } from '@/components/SignInScreen'
@@ -68,13 +65,6 @@ export default async function HomePage() {
    */
   const { ot } = await getOt()
   const locale = await getLocale()
-  /*
-   * ★★ ส่งเฉพาะกุญแจที่กระดิ่งใช้ ไม่ใช่ทั้งดิกชันนารี
-   *    ★ กระดิ่งใช้ notify.* (รวมชื่อชนิดแจ้งเตือน) · time.* · top.notifications
-   *      · common.loading ★★ นับแล้วไม่ถึง 30 กุญแจ จาก 779
-   *    ★ การ์ดสรุปไม่ต้องใช้เลยเพราะเป็น server component ที่รับ ot มาตรง ๆ
-   */
-  const bellDict = officeDictSubset(locale, ['notify.', 'time.', 'top.', 'common.'])
   let summary: HomeSummaryData | null = null
   try {
     const { data } = await getSupabaseAdminClient().rpc('office_home_summary', {
@@ -109,22 +99,23 @@ export default async function HomePage() {
              ตัวเองเป็นใครอยู่ และไม่มีทางออก */}
       <AppHeader
         center={<span />}
-        /* ★ หน้านี้ไม่ได้อ่านสิทธิ์ Admin มา (getRegisteredUser ไม่คืนมาให้)
-             ★★ ไม่ยิง query เพิ่มเพื่อป้ายเล็ก ๆ อันเดียว — ป้าย Admin
-                แสดงในแถบบนของโมดูลออฟฟิศซึ่งเป็นที่ที่สิทธิ์นั้นมีผลจริง */
-          right={
-            /* ★★★ กระดิ่งแจ้งเตือนย้ายมาอยู่ที่นี่ด้วย
-                ★ เดิมมีแค่ในแถบบนของ /office ★★ พอยุบพอร์ทัลนั้นทิ้ง
-                  คนที่อยู่หน้าแรกจะไม่มีทางรู้เลยว่ามีใครทวงเงินหรือทักมา
-                ★ NotificationBell เป็น client component ที่ใช้ useOt()
-                  จึงต้องมี provider ครอบ — หน้านี้อยู่นอก /office
-                  ★★ ครอบแค่ตรงนี้ ไม่ใช่ทั้งหน้า จะได้ไม่ลากดิกชันนารี
-                     ออฟฟิศเข้าไปในส่วนอื่นของหน้าแรกโดยไม่จำเป็น */
-            <OfficeI18nProvider dict={bellDict}>
-              <NotificationBell userId={me.id} />
-              <UserMenu displayName={me.displayName} isAdmin={isAdmin} avatarUrl={me.avatarUrl} />
-            </OfficeI18nProvider>
-          }
+        /*
+         * ★★★ ชุดเดียวกับที่แถบบนของ /office ใช้ — ไม่ใช่ชุดที่หน้านี้ประกอบเอง
+         *
+         *     ★ เดิมหน้านี้วางกระดิ่งกับเมนูผู้ใช้เอง แล้วแถบบนของออฟฟิศ
+         *       วางของตัวเองอีกชุด ★★ ผลคือสองชุดนั้นเพี้ยนจากกัน —
+         *       หน้าในออฟฟิศไม่มีปุ่มเปลี่ยนภาษาเลย ซึ่งผู้ใช้ทักมาเอง
+         *     ★ ตอนนี้ลำดับปุ่มและรายการปุ่มถูกตัดสินใน HeaderActions ที่เดียว
+         *       ★★ ปุ่มใหม่ที่เพิ่มวันหลังจะขึ้นทั้งสองที่พร้อมกันโดยไม่ต้องจำ
+         */
+        actions={
+          <HeaderActions
+            userId={me.id}
+            displayName={me.displayName}
+            avatarUrl={me.avatarUrl}
+            isAdmin={isAdmin}
+          />
+        }
       />
 
       <PortalHero stats={stats} />

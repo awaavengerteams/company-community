@@ -549,6 +549,7 @@ export const es: OfficeDict = {
   "page.back": "Todas las actividades",
 
   "chat.title": "Chat",
+  "chat.seeAll": "ดูทั้งหมด",
   "chat.newDm": "Mensaje privado",
   "chat.newGroup": "Nuevo grupo",
   "chat.groupName": "Nombre del grupo",
@@ -585,6 +586,11 @@ export const es: OfficeDict = {
   "chat.saved": "Guardado",
 
   "chat.reply": "Responder",
+  "chat.react": "ใส่ความรู้สึก",
+  "chat.unreact": "เอาความรู้สึกออก",
+  "chat.deleteMessage": "ลบข้อความ",
+  "chat.cancelReply": "ยกเลิกการตอบกลับ",
+  "chat.voice": "ข้อความเสียง",
   "chat.replyingTo": "Respondiendo a {name}",
   "chat.edit": "Editar",
   "chat.edited": "editado",

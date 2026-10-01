@@ -549,6 +549,7 @@ export const ru: OfficeDict = {
   "page.back": "Все активности",
 
   "chat.title": "Чат",
+  "chat.seeAll": "ดูทั้งหมด",
   "chat.newDm": "Личное сообщение",
   "chat.newGroup": "Новая группа",
   "chat.groupName": "Название группы",
@@ -585,6 +586,11 @@ export const ru: OfficeDict = {
   "chat.saved": "Сохранено",
 
   "chat.reply": "Ответить",
+  "chat.react": "ใส่ความรู้สึก",
+  "chat.unreact": "เอาความรู้สึกออก",
+  "chat.deleteMessage": "ลบข้อความ",
+  "chat.cancelReply": "ยกเลิกการตอบกลับ",
+  "chat.voice": "ข้อความเสียง",
   "chat.replyingTo": "Ответ {name}",
   "chat.edit": "Изменить",
   "chat.edited": "изменено",

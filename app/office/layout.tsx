@@ -1,12 +1,10 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOfficeViewer } from '@/lib/office/session'
-import { NotificationBell } from '@/components/office/NotificationBell'
+import { HeaderActions } from '@/components/HeaderActions'
 import { OfficeI18nProvider, type Ot } from '@/lib/i18n/office'
 import { getOt } from '@/lib/i18n/office-server'
 import { Logo } from '@/components/Logo'
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { UserMenu } from '@/components/UserMenu'
 
 /**
  * โครงของทุกหน้าในระบบกิจกรรมออฟฟิศ (FR-X07)
@@ -79,11 +77,16 @@ export default async function OfficeLayout({ children }: LayoutProps<'/office'>)
 }
 
 /**
- * แถบบน — ใช้ Logo กับ ThemeToggle ตัวเดียวกับห้องเพลง
+ * แถบบน — รูปทรงเดียวกับหน้าแรกเป๊ะ
  *
- * ★ ไม่ทำ header ใหม่ทั้งอัน เพราะ AppHeader เดิมผูกกับ state ของห้องเพลง
- *   (ช่องค้นหาเพลง · ปุ่มออกจากห้อง) ซึ่งไม่มีความหมายในหน้าออฟฟิศ
- *   ★ หยิบเฉพาะชิ้นที่ใช้ร่วมกันได้จริงมาใช้ หน้าตาจึงยังเป็นชุดเดียวกัน
+ * ★★★ กลุ่มปุ่มขวามือมาจาก <HeaderActions /> ตัวเดียวกับที่หน้าแรกใช้
+ *
+ *     ★ เดิมไฟล์นี้เขียนกลุ่มปุ่มขึ้นเองต่างหาก แล้ว "ลืม" ใส่ปุ่มเปลี่ยนภาษา
+ *       ★★ คนที่เปลี่ยนภาษาจากหน้าแรกแล้วกดเข้าหน้าในโมดูลออฟฟิศ จะหา
+ *          ปุ่มเปลี่ยนภาษาไม่เจอเลย ต้องถอยออกมาหน้าแรกก่อน
+ *          ★ ซึ่งผู้ใช้อ่านเป็น "ปุ่มหาย เว็บพัง" ไม่ใช่ "หน้านี้ไม่มีปุ่ม"
+ *     ★ สองชุดที่ต้องเหมือนกันแต่แก้แยกกัน จะเพี้ยนอีกวันหนึ่งแน่นอน —
+ *       ★★ รวมเป็นชุดเดียวคือวิธีเดียวที่ทำให้มันไม่หลุดซ้ำ
  */
 function OfficeHeader({
   ot,
@@ -101,52 +104,21 @@ function OfficeHeader({
   return (
     <header className="sticky top-0 z-50 flex h-(--spacing-header) items-center gap-3 border-b border-line bg-page px-4">
       {/* ★ โลโก้กลับหน้ารวมของทั้งเว็บ ไม่ใช่หน้าแรกของโมดูล
-          คนคาดหวังว่าโลโก้พากลับจุดเริ่มต้นเสมอ */}
-      <Link href="/" className="flex items-center gap-2">
+          คนคาดหวังว่าโลโก้พากลับจุดเริ่มต้นเสมอ
+          ★★ aria-label ชุดเดียวกับที่ AppHeader ใช้ ★ เดิมลิงก์นี้ไม่มีชื่อเลย
+             — คนใช้ screen reader จะได้ยินแค่ "ลิงก์" แล้วไม่รู้ว่าพาไปไหน
+             ★★ จับได้ตอนเทียบรายชื่อปุ่มในแถบบนของสองหน้าจากเบราว์เซอร์จริง */}
+      <Link href="/" className="flex items-center gap-2" aria-label={ot('nav.home')}>
         <Logo />
       </Link>
 
       <div className="ms-auto flex items-center gap-1">
-        {/*
-          * ★★★ ปุ่มเข้าหน้าผู้ดูแลระบบ — เห็นเฉพาะ Admin
-          *
-          *     ★ เดิมต้องกลับไปหน้ารวม → หาการ์ด "ผู้ดูแลระบบ" → กดเข้า
-          *       แดชบอร์ด → แล้วค่อยกดแท็บ "ผู้ใช้งาน" รวมสี่จังหวะ
-          *       ★★ ทั้งที่เป็นงานที่ Admin ทำบ่อยที่สุดในระบบ
-          *     ★ ปุ่มนี้พาไปหน้าจัดการผู้ใช้ตรง ๆ ไม่ใช่แดชบอร์ด —
-          *       ★★ คนกดปุ่ม Admin ส่วนใหญ่มาเพื่อจัดการคน ไม่ได้มาดูกราฟ
-          */}
-        {isAdmin ? (
-          <Link
-            href="/office/admin/users"
-            title={ot('nav.admin')}
-            aria-label={ot('nav.admin')}
-            className="grid size-9 shrink-0 place-items-center rounded-full text-accent transition-colors hover:bg-accent/15"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="size-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6zM9.5 12l2 2 3.5-3.5" />
-            </svg>
-          </Link>
-        ) : null}
-
-        <NotificationBell userId={userId} />
-        <ThemeToggle />
-        {/*
-          * ★ ชื่อผู้ใช้เป็นตัวยืนยันว่า "กำลังใช้ในนามใคร" ซึ่งสำคัญมากใน
-          *   ระบบที่มีเรื่องเงิน — คนต้องเห็นได้ทันทีว่าไม่ได้สวมบัญชีคนอื่นอยู่
-          * ★★ เดิมเป็นลิงก์เฉย ๆ ที่พาไปหน้าโปรไฟล์ และไม่มีทางออกจากระบบเลย
-          *    ★ ตอนนี้เป็นเมนูที่มีทั้งโปรไฟล์และออกจากระบบ
-          */}
-        <UserMenu displayName={displayName} isAdmin={isAdmin} avatarUrl={avatarUrl} />
+        <HeaderActions
+          userId={userId}
+          displayName={displayName}
+          avatarUrl={avatarUrl}
+          isAdmin={isAdmin}
+        />
       </div>
     </header>
   )
