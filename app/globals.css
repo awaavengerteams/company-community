@@ -2516,6 +2516,14 @@ html[data-theme='dark'] {
     0 14px 38px -22px rgb(0 0 0 / 0.45);
 }
 
+/* ── กล่องสรุปการหารบิล ──────────────────────────────────────────────────── */
+.split-preview {
+  border: 1px solid color-mix(in oklab, var(--color-accent) 30%, transparent);
+  background:
+    radial-gradient(90% 120% at 100% 0%, color-mix(in oklab, var(--color-accent) 10%, transparent), transparent 62%),
+    color-mix(in oklab, var(--color-surface) 50%, transparent);
+}
+
 /* ── กล่องสถานะว่าง ─────────────────────────────────────────────────────── */
 .empty-state {
   border: 1px dashed color-mix(in oklab, var(--color-line-strong) 85%, transparent);

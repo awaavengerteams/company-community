@@ -784,6 +784,13 @@ export const OFFICE_TH = {
   'profile.notSet': 'ยังไม่ได้กรอก',
   'profile.askAdmin': 'ข้อมูลนี้แก้ได้โดยผู้ดูแลระบบ',
 
+  /* ── สร้างรายการเงิน: ตัวเลือกคน ─────────────────────────────── */
+  'wallet.create.search': 'ค้นหาชื่อหรือฝ่าย',
+  'wallet.create.picked': 'เลือกแล้ว {n} คน',
+  'wallet.create.clear': 'ล้างทั้งหมด',
+  'wallet.create.noMatch': 'ไม่พบคนที่ตรงกับคำค้น',
+  'wallet.create.perHead': 'ตกคนละ',
+
   'footer.office': '© {year} AWA ROOM · ระบบกิจกรรมภายในออฟฟิศ',
 
   /* ── ทั่วไป ──────────────────────────────────────────────────── */

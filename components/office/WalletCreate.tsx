@@ -20,8 +20,24 @@ export function WalletCreate({ selfId }: { selfId: string }) {
   const [total, setTotal] = useState('')
   const [category, setCategory] = useState<ExpenseCategory>('FOOD')
   const [split, setSplit] = useState<SplitMode>('EQUAL')
+  const [query, setQuery] = useState('')
+
   const [includeSelf, setIncludeSelf] = useState(true)
   const [picked, setPicked] = useState<string[]>([])
+  /*
+   * ★★ คนที่เลือกแล้วอยู่บนสุดเสมอ แล้วค่อยเป็นผลการค้นหา
+   *    ★ เรียงด้วย useMemo ไม่ใช่ sort ตอน render ทุกครั้ง — รายการนี้
+   *      ถูกวาดใหม่ทุกตัวอักษรที่พิมพ์ในช่องค้นหา
+   */
+  const shownPeople = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const match = (p: { name: string; department: string | null }) =>
+      !q || p.name.toLowerCase().includes(q) || (p.department ?? '').toLowerCase().includes(q)
+
+    const chosen = people.filter((p) => picked.includes(p.id))
+    const rest = people.filter((p) => !picked.includes(p.id) && match(p))
+    return [...chosen, ...rest]
+  }, [people, picked, query])
   const [custom, setCustom] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -99,17 +115,23 @@ export function WalletCreate({ selfId }: { selfId: string }) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={ot('wallet.create.total')} required>
-            <Input radius="round"
-              value={total}
-              onChange={(e) => setTotal(e.target.value)}
-              type="number"
-              step="0.01"
-              min="0.01"
-              inputMode="decimal"
-              invalid={total !== '' && !totalValid}
-              required
-              className="tabular-nums"
-            />
+            {/* ★ สัญลักษณ์บาทอยู่ในช่อง ไม่ใช่ในป้ายกำกับ — คนกรอกมองที่
+                เคอร์เซอร์ ไม่ได้มองป้ายด้านบน (เหมือนช่องราคาของฟอร์มลงประกาศ) */}
+            <span className="relative flex items-center">
+              <span className="pointer-events-none absolute start-4 text-sm text-ink-faint">฿</span>
+              <Input
+                radius="round"
+                value={total}
+                onChange={(e) => setTotal(e.target.value)}
+                type="number"
+                step="0.01"
+                min="0.01"
+                inputMode="decimal"
+                invalid={total !== '' && !totalValid}
+                required
+                className="ps-8 text-lg font-semibold tabular-nums"
+              />
+            </span>
           </Field>
 
           <Field label={ot('wallet.create.category')}>
@@ -123,17 +145,57 @@ export function WalletCreate({ selfId }: { selfId: string }) {
           </Field>
         </div>
 
-        {/* ── ผู้ร่วมจ่าย ────────────────────────────────────────── */}
+        {/*
+          * ── ผู้ร่วมจ่าย ──────────────────────────────────────────
+          *
+          * ★★★ มีคนในระบบสิบแปดคนแล้ว และจะเพิ่มขึ้นเรื่อย ๆ
+          *
+          *     ★ กองชิปที่ไม่เรียงและหาไม่ได้ ใช้ได้ตอนมีห้าคน
+          *       ★★ พอถึงยี่สิบคนมันกลายเป็นการไล่อ่านทีละอันจนเจอ
+          *          ซึ่งเป็นงานที่คนทำผิดพลาดง่ายกว่าการพิมพ์ค้นหา
+          *
+          * ★★ คนที่เลือกแล้วถูกดันขึ้นบนสุดเสมอ
+          *    ★ ไม่งั้นพอกรองคำค้นแล้ว คนที่เลือกไว้ก่อนหน้าจะหายไปจากจอ
+          *      ★★ แล้วคนกรอกจะไม่แน่ใจว่าเลือกใครไปบ้าง และเลือกซ้ำหรือตกหล่น
+          */}
         <div>
-          <p className="text-sm font-medium text-ink">
-            {ot('wallet.create.people')}
-            <span className="ms-0.5 text-accent">*</span>
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-ink">
+              {ot('wallet.create.people')}
+              <span className="ms-0.5 text-accent">*</span>
+              {picked.length > 0 ? (
+                <span className="ms-2 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
+                  {ot('wallet.create.picked', { n: picked.length })}
+                </span>
+              ) : null}
+            </p>
+
+            {picked.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setPicked([])}
+                className="text-xs text-ink-faint underline-offset-2 hover:text-ink hover:underline"
+              >
+                {ot('wallet.create.clear')}
+              </button>
+            ) : null}
+          </div>
+
+          <Input
+            radius="round"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={ot('wallet.create.search')}
+            className="mt-2.5"
+          />
+
+          <div className="mt-2.5 flex max-h-64 flex-wrap gap-1.5 overflow-y-auto">
             {people.length === 0 ? (
               <p className="text-xs text-ink-faint">{ot('common.loading')}</p>
+            ) : shownPeople.length === 0 ? (
+              <p className="text-xs text-ink-faint">{ot('wallet.create.noMatch')}</p>
             ) : (
-              people.map((p) => (
+              shownPeople.map((p) => (
                 <Chip key={p.id} active={picked.includes(p.id)} onClick={() => toggle(p.id)}>
                   {p.name}
                   {p.department ? (
@@ -143,6 +205,7 @@ export function WalletCreate({ selfId }: { selfId: string }) {
               ))
             )}
           </div>
+
           {picked.length === 0 ? (
             <p className="mt-1.5 text-xs text-ink-faint">{ot('wallet.create.noPeople')}</p>
           ) : null}
@@ -180,9 +243,25 @@ export function WalletCreate({ selfId }: { selfId: string }) {
 
         {/* ── ตัวอย่างยอด ───────────────────────────────────────── */}
         {split === 'EQUAL' && preview && picked.length > 0 ? (
-          <div className="rounded-xl border border-line p-3">
-            <p className="text-xs text-ink-faint">{ot('wallet.create.preview')}</p>
-            <div className="mt-1.5 flex flex-col gap-0.5">
+          <div className="split-preview rounded-2xl p-4">
+            {/*
+              * ★★★ "ตกคนละเท่าไหร่" เป็นตัวเลขหลัก ไม่ใช่รายการเล็ก ๆ
+              *
+              *     ★ นี่คือตัวเลขเดียวที่คนกรอกอยากรู้ก่อนกดบันทึก และเป็น
+              *       ตัวเลขที่เขาจะเอาไปบอกคนอื่นต่อ
+              *       ★★ ของเดิมมันปนอยู่ในรายการชื่อตัวเท่ากันหมด
+              *          ต้องอ่านทีละบรรทัดถึงจะเจอ
+              *     ★ รายชื่อยังอยู่ข้างล่างสำหรับตรวจว่าใครได้เท่าไหร่
+              *       ซึ่งสำคัญตอนหารไม่ลงตัว
+              */}
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-xs text-ink-faint">{ot('wallet.create.perHead')}</span>
+              <span className="text-[26px] font-bold tabular-nums text-ink">
+                ฿{formatBaht(preview.shares[0] ?? preview.myShare)}
+              </span>
+            </div>
+
+            <div className="mt-3 flex flex-col gap-0.5 border-t border-line pt-3">
               {picked.map((id, i) => (
                 <div key={id} className="flex justify-between text-sm">
                   <span className="text-ink-soft">
