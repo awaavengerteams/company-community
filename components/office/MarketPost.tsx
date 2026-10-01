@@ -247,7 +247,7 @@ export function MarketPost() {
             /* ★ ช่องกรอกอื่นในฟอร์มนี้เป็นทรงมนหมด ★★ ช่องเดียวที่เป็นเหลี่ยม
                  อ่านเป็นของที่หลุดมาจากหน้าอื่น ไม่ใช่ความตั้งใจ */
             className={cn(
-              'w-full rounded-2xl bg-input px-4 py-3',
+              'field-input w-full rounded-2xl bg-input px-4 py-3',
               'border border-line text-[16px] placeholder:text-ink-faint sm:text-sm',
               'transition-colors focus:border-accent/70 focus:outline-none',
             )}

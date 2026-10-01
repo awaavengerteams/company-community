@@ -2772,6 +2772,17 @@ html[data-theme='dark'] {
  * ★ กฎนี้ต้องมี specificity สูงกว่า :where(textarea):focus-visible ด้านบน
  *   และต้องอยู่นอก @layer เหมือนกัน — ไม่งั้นแพ้เหมือนที่ utility แพ้มาแล้ว
  */
+/*
+ * ★★★ ใช้กับทุกช่องกรอกในเว็บ ไม่ใช่เฉพาะช่องแชท
+ *
+ *     ★ ตอนแรกตั้งชื่อ .chat-input เพราะเจอปัญหาที่ช่องแชทก่อน
+ *       ★★ แต่สาเหตุเป็นเรื่องของทั้งเว็บ — กฎ focus กลางอยู่นอก @layer
+ *          จึงชนะ utility ของ Tailwind ทุกช่องเหมือนกันหมด
+ *     ★ <textarea> ของฟอร์มสมัครและฟอร์มลงประกาศเจออาการเดียวกัน:
+ *       ขอบฟ้าของระบบซ้อนขอบแดงของธีม อ่านเป็นช่องกรอกผิดพลาด
+ *     ★★ จึงรับทั้งสองชื่อ — ของเดิมไม่ต้องแก้ ของใหม่ใช้ชื่อที่ตรงความหมาย
+ */
+.field-input:focus-visible,
 .chat-input:focus-visible {
   outline: 2px solid color-mix(in oklab, var(--color-accent) 62%, transparent);
   outline-offset: 0;

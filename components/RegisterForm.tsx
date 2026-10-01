@@ -51,6 +51,8 @@ export function RegisterForm() {
 
   const [purpose, setPurpose] = useState('')
   const [terms, setTerms] = useState(false)
+  /** แผงเงื่อนไขเปิดอยู่หรือไม่ */
+  const [showTerms, setShowTerms] = useState(false)
 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -289,7 +291,7 @@ export function RegisterForm() {
             maxLength={500}
             rows={3}
             className={cn(
-              'w-full rounded-2xl border border-line bg-input px-4 py-3',
+              'field-input w-full rounded-2xl border border-line bg-input px-4 py-3',
               'text-[16px] text-ink placeholder:text-ink-faint sm:text-sm',
               'transition-colors focus:border-accent/70 focus:outline-none',
             )}
@@ -311,6 +313,34 @@ export function RegisterForm() {
             </span>
             <span className="mt-0.5 block text-xs leading-relaxed text-ink-faint">
               {ot('reg.termsBody')}
+            </span>
+
+            {/*
+              * ★★★ เป็น <span role="button"> ไม่ใช่ <button>
+              *
+              *     ★ ทั้งก้อนนี้อยู่ใน <label> ที่ผูกกับ checkbox — ปุ่มจริง
+              *       ซ้อนใน label จะทำให้คลิกแล้วติ๊กถูกสลับไปด้วย
+              *       ★★ คนกดเพื่อ "อ่าน" แต่ได้ "ยอมรับ" ไปโดยไม่ได้อ่าน
+              *          ซึ่งเป็นสิ่งที่ข้อความยินยอมไม่ควรทำเด็ดขาด
+              *     ★ stopPropagation กันไม่ให้คลิกไหลไปถึง label
+              */}
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setShowTerms(true)
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter' && e.key !== ' ') return
+                e.preventDefault()
+                e.stopPropagation()
+                setShowTerms(true)
+              }}
+              className="mt-1.5 inline-block cursor-pointer text-xs font-medium text-link underline underline-offset-2 hover:opacity-80"
+            >
+              {ot('reg.termsLink')}
             </span>
           </span>
         </label>
@@ -334,6 +364,16 @@ export function RegisterForm() {
         {busy ? ot('reg.working') : ot('reg.submit')}
       </Button>
 
+      {showTerms ? (
+        <TermsDialog
+          onClose={() => setShowTerms(false)}
+          onAgree={() => {
+            setTerms(true)
+            setShowTerms(false)
+          }}
+        />
+      ) : null}
+
       <p className="mt-4 text-center text-sm text-ink-soft">
         {ot('reg.haveAccount')}{' '}
         <Link href="/" className="font-medium text-link hover:underline">
@@ -341,6 +381,87 @@ export function RegisterForm() {
         </Link>
       </p>
     </form>
+  )
+}
+
+/**
+ * แผงเงื่อนไขการใช้งาน
+ *
+ * ★★★ เปิดทับฟอร์ม ไม่ใช่ลิงก์ไปหน้าอื่น
+ *
+ *     ★ ตอนกดอ่าน คนกรอกฟอร์มมาแล้ว 13 ช่อง ★★ การพาออกไปหน้าอื่น
+ *       แล้วกดกลับ = ฟอร์มถูกสร้างใหม่ ข้อมูลที่กรอกหายทั้งหมด
+ *       ★ คนจะไม่กดอ่านเลย ซึ่งทำให้ลิงก์นั้นมีไว้เพื่อให้ดูเหมือนมี
+ *
+ * ★★ มีปุ่ม "ยอมรับและปิด" ให้ติ๊กจากในนี้ได้เลย
+ *    ★ คนที่อ่านจบแล้วตั้งใจจะยอมรับอยู่แล้ว ไม่ควรต้องปิดหน้าต่างแล้วไปหา
+ *      ช่องติ๊กเองอีกรอบ ★★ แต่ปุ่ม "เข้าใจแล้ว" ที่ปิดเฉย ๆ ก็ยังมี —
+ *      การอ่านจบไม่ได้แปลว่ายอมรับ
+ */
+function TermsDialog({ onClose, onAgree }: { onClose: () => void; onAgree: () => void }) {
+  const items: { t: string; b: string }[] = [
+    { t: ot('reg.t1'), b: ot('reg.t1b') },
+    { t: ot('reg.t2'), b: ot('reg.t2b') },
+    { t: ot('reg.t3'), b: ot('reg.t3b') },
+    { t: ot('reg.t4'), b: ot('reg.t4b') },
+    { t: ot('reg.t5'), b: ot('reg.t5b') },
+    { t: ot('reg.t6'), b: ot('reg.t6b') },
+  ]
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={ot('reg.termsTitle')}
+      /* ★ กดพื้นหลังเพื่อปิด — แต่เฉพาะพื้นหลังจริง ไม่ใช่ตัวแผง */
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="flex max-h-[85vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-3xl border border-line bg-elevated sm:rounded-3xl">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
+          <h2 className="text-[17px] font-semibold text-ink">{ot('reg.termsTitle')}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={ot('common.close')}
+            className="grid size-9 shrink-0 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface hover:text-ink"
+          >
+            <svg viewBox="0 0 24 24" className="size-5" fill="currentColor" aria-hidden="true">
+              <path d="m12 10.6 5-5 1.4 1.4-5 5 5 5-1.4 1.4-5-5-5 5L5.6 17l5-5-5-5L12 5.6z" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <ol className="flex flex-col gap-4">
+            {items.map((it, i) => (
+              <li key={it.t} className="flex gap-3">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-surface text-[11px] font-bold text-ink-soft">
+                  {i + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-ink">{it.t}</span>
+                  <span className="mt-1 block text-[13px] leading-relaxed text-ink-soft">
+                    {it.b}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="flex flex-wrap gap-2 border-t border-line px-5 py-4">
+          <Button variant="primary" onClick={onAgree}>
+            {ot('reg.termsAgreeHere')}
+          </Button>
+          <Button variant="ghost" onClick={onClose}>
+            {ot('reg.termsClose')}
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }
 
