@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/Input'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
+import { useOnlinePeople } from './useOnlinePeople'
 import { useOt, type Ot } from '@/lib/i18n/office'
 import { ChatAvatar } from './ChatAvatar'
 import { ChatGroupPanel } from './ChatGroupPanel'
 import { useChatTyping } from './useChatTyping'
-import { ChatQuickStart, ChatStats, ChatUnreadCard, ChatWelcome } from './ChatSideExtras'
+import { ChatStats, ChatWelcome } from './ChatSideExtras'
 
 /**
  * แชทออฟฟิศ — แชทส่วนตัวและแชทกลุ่ม
@@ -66,7 +67,7 @@ type Member = {
   isOwner: boolean
   isMe: boolean
 }
-type Person = { id: string; name: string; department: string | null }
+type Person = { id: string; name: string; department: string | null; avatarUrl: string | null }
 
 type Thread = {
   room: {
@@ -120,6 +121,31 @@ export function OfficeChat() {
 
   /* ★ ทุกที่ที่ให้เลือก "คน" ต้องไม่มีตัวเราเอง — ทั้งแชทด่วน เปิดแชทส่วนตัว และสร้างกลุ่ม */
   const others = useMemo(() => people.filter((p) => p.id !== meId), [people, meId])
+
+  /* ── ใครออนไลน์อยู่ตอนนี้ ──────────────────────────────────────── */
+  const online = useOnlinePeople(meId)
+
+  const [whoQuery, setWhoQuery] = useState('')
+  /*
+   * ★★ คนที่ออนไลน์ขึ้นก่อนเสมอ แล้วค่อยเรียงตามชื่อ
+   *    ★ คนที่ทักแล้วได้คำตอบทันทีมีค่ากว่าคนที่ต้องรอข้ามวัน
+   *      ★★ การเรียงตามชื่ออย่างเดียวทำให้คนที่ออนไลน์อยู่ไปจมอยู่ท้ายรายการ
+   *         ทั้งที่เป็นคนที่ควรทักที่สุดในตอนนั้น
+   */
+  const whoList = useMemo(() => {
+    const q = whoQuery.trim().toLowerCase()
+    const base = q ? others.filter((p) => p.name.toLowerCase().includes(q)) : others
+    return [...base].sort((a, b) => {
+      const ao = online.has(a.id) ? 0 : 1
+      const bo = online.has(b.id) ? 0 : 1
+      return ao !== bo ? ao - bo : a.name.localeCompare(b.name)
+    })
+  }, [others, whoQuery, online])
+
+  const onlineCount = useMemo(
+    () => others.reduce((n, p) => n + (online.has(p.id) ? 1 : 0), 0),
+    [others, online],
+  )
 
   /*
    * ★★★ ถามซ้ำทุก 5 วินาที แต่ห้าม setState ถ้าข้อมูลเหมือนเดิม
@@ -408,38 +434,91 @@ export function OfficeChat() {
               />
             ) : null}
 
-            <p className="text-xs text-ink-faint">
-              {composer === 'dm' ? ot('chat.pickOne') : ot('chat.pickMany')}
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-ink-faint">
+                {composer === 'dm' ? ot('chat.pickOne') : ot('chat.pickMany')}
+              </p>
+              {/* ★ บอกจำนวนคนที่ออนไลน์ก่อนกวาดตาหาทีละคน
+                  ★★ ถ้าไม่มีใครออนเลย คนจะได้รู้ตั้งแต่แรกว่าทักไปแล้วต้องรอ */}
+              {onlineCount > 0 ? (
+                <span className="who-count">
+                  <span className="who-count-dot" aria-hidden="true" />
+                  ออนไลน์ {onlineCount} คน
+                </span>
+              ) : null}
+            </div>
 
-            <div className="mt-2 flex max-h-56 flex-wrap gap-1.5 overflow-y-auto">
-              {others.map((p) => {
-                const on = picked.has(p.id)
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      if (composer === 'dm') {
-                        void openDm(p.id)
-                        return
-                      }
-                      setPicked((s) => {
-                        const next = new Set(s)
-                        if (next.has(p.id)) next.delete(p.id)
-                        else next.add(p.id)
-                        return next
-                      })
-                    }}
-                    className={cn(
-                      'h-8 rounded-full px-3 text-xs transition-colors',
-                      on ? 'bg-accent text-accent-ink' : 'bg-surface text-ink-soft hover:bg-elevated',
-                    )}
-                  >
-                    <span dir="auto">{p.name}</span>
-                  </button>
-                )
-              })}
+            {/* ★ ช่องค้นหาโผล่เมื่อคนเยอะพอที่จะหาไม่เจอด้วยตา
+                ★★ ต่ำกว่านั้นช่องค้นหาเป็นของที่กินที่แล้วไม่มีใครใช้ */}
+            {others.length > 8 ? (
+              <Input
+                radius="round"
+                value={whoQuery}
+                onChange={(e) => setWhoQuery(e.target.value)}
+                placeholder={ot('common.search')}
+                className="mt-2"
+              />
+            ) : null}
+
+            <div className="who-grid mt-2">
+              {whoList.length === 0 ? (
+                <p className="col-span-full px-2 py-6 text-center text-xs text-ink-faint">
+                  {ot('wallet.create.noMatch')}
+                </p>
+              ) : (
+                whoList.map((p) => {
+                  const on = picked.has(p.id)
+                  const isOn = online.has(p.id)
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      aria-pressed={composer === 'group' ? on : undefined}
+                      onClick={() => {
+                        if (composer === 'dm') {
+                          void openDm(p.id)
+                          return
+                        }
+                        setPicked((s) => {
+                          const next = new Set(s)
+                          if (next.has(p.id)) next.delete(p.id)
+                          else next.add(p.id)
+                          return next
+                        })
+                      }}
+                      className="who-card"
+                    >
+                      <span className="who-ava">
+                        <ChatAvatar name={p.name} url={p.avatarUrl} size={34} />
+                        {/* ★ จุดขึ้นทั้งสองสถานะ ไม่ใช่โผล่เฉพาะตอนออนไลน์
+                            ★★ ถ้าโผล่เฉพาะตอนออน คนจะอ่าน "ไม่มีจุด" ว่า
+                               ระบบยังโหลดไม่เสร็จ ไม่ใช่ว่าเขาออฟไลน์ */}
+                        <span
+                          className={cn('who-dot', isOn && 'who-dot-on')}
+                          aria-hidden="true"
+                        />
+                      </span>
+
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13px] text-ink" dir="auto">
+                          {p.name}
+                        </span>
+                        <span className="block text-[10.5px] text-ink-faint">
+                          {isOn ? 'ออนไลน์' : 'ออฟไลน์'}
+                        </span>
+                      </span>
+
+                      {composer === 'group' && on ? (
+                        <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent text-accent-ink">
+                          <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="m5 13 4 4L19 7" />
+                          </svg>
+                        </span>
+                      ) : null}
+                    </button>
+                  )
+                })
+              )}
             </div>
 
             {error ? (
@@ -467,7 +546,6 @@ export function OfficeChat() {
         ) : null}
 
         {/* ★ สรุปที่ค้างอยู่ก่อนรายการห้อง — ตอบคำถามแรกที่คนเปิดหน้านี้ถาม */}
-        <ChatUnreadCard rooms={rooms} />
 
         {/*
           * ★★ แถวรายการแบบ LINE: รูป 56px · ชื่อหนา · ข้อความล่าสุดสีจาง ·
@@ -558,7 +636,6 @@ export function OfficeChat() {
         </div>
 
         {/* ★ ของสองอย่างนี้ไม่ใช่ของประดับ — เติมพื้นที่ว่างด้วยสิ่งที่กดต่อได้ */}
-        <ChatQuickStart people={others} onPick={openDm} />
         <ChatStats rooms={rooms} />
       </aside>
 

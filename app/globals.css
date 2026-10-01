@@ -3467,3 +3467,115 @@ html[data-theme='light'] .auth-card {
   background: color-mix(in oklab, var(--color-accent) 25%, transparent);
   color: var(--color-ink);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * เลือกคนที่จะคุยด้วย (หน้าแชท)
+ *
+ * ★★★ เดิมเป็นป้ายกลมเรียงกันที่มีแต่ชื่อ
+ *
+ *     ★ ป้ายขนาดเท่าชื่อทำให้ตาไล่หาคนไม่เจอ — ไม่มีจุดยึดให้กวาด
+ *       ★★ และไม่มีทางรู้ว่าทักไปแล้วอีกฝ่ายจะเห็นเมื่อไหร่
+ *          ซึ่งเป็นคำถามแรกที่คนถามก่อนกดทัก
+ *     ★ การ์ดที่มีรูปจริงกับจุดเขียวตอบทั้งสองเรื่องในรูปเดียว
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.who-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.5rem;
+  max-height: 19rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.125rem;
+}
+
+.who-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-elevated) 50%, transparent);
+  padding: 0.5rem 0.6rem;
+  text-align: start;
+  transition: background-color 150ms, border-color 150ms, transform 150ms;
+}
+
+.who-card:hover {
+  background: color-mix(in oklab, var(--color-surface) 85%, transparent);
+  border-color: var(--color-line-strong);
+}
+
+.who-card:active {
+  transform: scale(0.98);
+}
+
+.who-card[aria-pressed='true'] {
+  border-color: color-mix(in oklab, var(--color-accent) 55%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+}
+
+/* ── รูปโปรไฟล์ + จุดสถานะ ────────────────────────────────────────────── */
+/*
+ * ★★ จุดอยู่มุมล่างของรูป และมีวงแหวนสีพื้นหลังคั่น
+ *    ★ ไม่มีวงแหวน จุดเขียวจะกลืนไปกับรูปที่มีสีเขียวอยู่แล้ว
+ *      ★★ วงแหวนใช้สีพื้นของการ์ด ไม่ใช่สีขาวตายตัว — ไม่งั้นโหมดมืด
+ *         จะได้จุดขาวล้อมจุดเขียว ซึ่งเด่นเกินกว่าที่ควรเป็น
+ */
+.who-ava {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.who-dot {
+  position: absolute;
+  inset-inline-end: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 9999px;
+  background: var(--color-ink-faint);
+  box-shadow: 0 0 0 2px var(--color-elevated);
+}
+
+.who-dot-on {
+  background: #22c55e;
+}
+
+/* ★ วงจาง ๆ กระเพื่อมออก — บอกว่า "ตอนนี้จริง ๆ" ไม่ใช่ค่าที่ค้างไว้ */
+.who-dot-on::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: #22c55e59;
+  animation: signin-pulse 2.8s ease-out infinite;
+}
+
+/* ── แถบหัว: ออนไลน์กี่คน ─────────────────────────────────────────────── */
+.who-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 11px;
+  color: var(--color-ink-soft);
+}
+
+/*
+ * ★★★ จุดของแถบหัวเป็นคลาสของตัวเอง ไม่ใช่ .who-dot ที่ปรับ position
+ *
+ *     ★ เคยใช้ .who-dot who-dot-on แล้วเขียนทับเป็น position: static
+ *       ★★ ผลคือ ::after ที่เป็น absolute ไปอิงกล่องนอกสุดที่มี position แทน
+ *          แล้ววงกระเพื่อมที่ควรกว้าง 15px บานออกคลุมทั้งแผงเลือกคน
+ *          เป็นวงเขียวจาง ๆ ขนาดครึ่งจอ
+ *     ★ เห็นตอนถ่ายจอ ไม่ใช่ตอนเขียน — เพราะมันจาง และ animation
+ *       ทำให้มันอยู่ที่ opacity 0 เกือบตลอดเวลา
+ */
+.who-count-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: #22c55e;
+}
