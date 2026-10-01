@@ -22,7 +22,8 @@ export default async function OfficeMemberLayout({ children }: LayoutProps<'/off
   const viewer = await getOfficeViewer()
 
   if (!viewer) redirect('/')
-  if (!viewer.employeeCode) redirect('/office/link')
+  /* ★ เลิกบังคับผูกรหัสพนักงานแล้ว (0043) — หน้า /office/link ยังอยู่
+     สำหรับคนที่อยากผูกเอง แต่ไม่ใช่ด่านอีกต่อไป */
 
   return (
     <>

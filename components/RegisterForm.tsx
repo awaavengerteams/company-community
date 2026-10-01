@@ -30,7 +30,6 @@ import { ot } from '@/lib/i18n/office'
  *      ★ แต่ server ก็ตรวจซ้ำอยู่ดี — ฝั่ง client เป็นความเร็ว ไม่ใช่ด่าน
  */
 
-const PREFIXES = ['นาย', 'นาง', 'นางสาว', 'ดร.', 'อื่น ๆ'] as const
 
 /*
  * ★★★ ฝ่าย/แผนกเป็นรายการให้เลือก ไม่ใช่ช่องพิมพ์อิสระ
@@ -64,11 +63,7 @@ export function RegisterForm() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
 
-  const [code, setCode] = useState('')
-  const [prefix, setPrefix] = useState<string>(PREFIXES[0])
-  const [customPrefix, setCustomPrefix] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
+  const [nickname, setNickname] = useState('')
   const [phone, setPhone] = useState('')
   const [department, setDepartment] = useState<string>('')
   const [customDept, setCustomDept] = useState('')
@@ -82,7 +77,6 @@ export function RegisterForm() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const realPrefix = prefix === 'อื่น ๆ' ? customPrefix.trim() : prefix
   const realDept = department === 'อื่น ๆ' ? customDept.trim() : department
 
   /* ★ ตรวจครบทุกช่องที่บังคับ ปุ่มจึงบอกได้ว่า "ยังกรอกไม่ครบ" ก่อนกด */
@@ -90,10 +84,7 @@ export function RegisterForm() {
     /^[a-z0-9._]{3,20}$/.test(username.trim().toLowerCase()) &&
     password.length >= 8 &&
     confirm === password &&
-    code.trim().length > 0 &&
-    realPrefix.length > 0 &&
-    firstName.trim().length > 0 &&
-    lastName.trim().length > 0 &&
+    nickname.trim().length > 0 &&
     realDept.length > 0 &&
     terms
 
@@ -114,10 +105,7 @@ export function RegisterForm() {
           username: username.trim().toLowerCase(),
           password,
           confirm,
-          code: code.trim(),
-          prefix: realPrefix,
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
+          nickname: nickname.trim(),
           phone: phone.trim(),
           /* ★ บริษัทเป็นค่าคงที่ ไม่ได้มาจากฟอร์ม — แต่ยังส่งไปเก็บ
              ★★ เพื่อให้หน้า Admin และรายงานยังอ่านฟิลด์เดิมได้เหมือนเดิม
@@ -204,68 +192,23 @@ export function RegisterForm() {
 
       {/* ═══ 2 · ข้อมูลพนักงาน ═════════════════════════════════════ */}
       <Section n={2} title={ot('reg.secEmployee')}>
-        <Field label={ot('reg.code')} required hint={ot('reg.codeHint')}>
+        {/*
+          * ★★★ ชื่อเล่นช่องเดียว ไม่มีรหัสพนักงาน ไม่มีชื่อ-นามสกุลจริง
+          *
+          *     ★ ระบบนี้ใช้กันในออฟฟิศเดียว คนเรียกกันด้วยชื่อเล่นอยู่แล้ว
+          *       ★★ ชื่อ-นามสกุลจริงเป็นสองช่องที่ไม่มีหน้าไหนเอาไปแสดงเลย
+          *     ★ รหัสพนักงานเคยเป็นด่านของทั้งโมดูล ตอนนี้ถอดออกแล้ว (0043)
+          *       ★★ ใครมีรหัสก็ยังไปผูกเองได้ที่ /office/link แต่ไม่บังคับ
+          */}
+        <Field label={ot('reg.nickname')} required hint={ot('reg.nicknameHint')}>
           <Input
             radius="round"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            maxLength={32}
-            className="font-mono tracking-wide"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            maxLength={40}
             required
           />
         </Field>
-
-        <Field label={ot('reg.prefix')} required>
-          <div className="flex flex-wrap gap-1.5">
-            {PREFIXES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPrefix(p)}
-                aria-pressed={prefix === p}
-                className={cn(
-                  'h-9 rounded-full px-3.5 text-[13px] transition-colors',
-                  prefix === p
-                    ? 'bg-ink text-page'
-                    : 'bg-surface text-ink-soft hover:bg-surface-hover hover:text-ink',
-                )}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-          {prefix === 'อื่น ๆ' ? (
-            <Input
-              radius="round"
-              value={customPrefix}
-              onChange={(e) => setCustomPrefix(e.target.value)}
-              maxLength={20}
-              className="mt-2"
-              placeholder={ot('reg.prefix')}
-            />
-          ) : null}
-        </Field>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={ot('reg.firstName')} required>
-            <Input
-              radius="round"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              maxLength={60}
-              required
-            />
-          </Field>
-          <Field label={ot('reg.lastName')} required>
-            <Input
-              radius="round"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              maxLength={60}
-              required
-            />
-          </Field>
-        </div>
 
         <Field label={ot('reg.phone')} hint={ot('reg.optional')}>
           <Input

@@ -85,10 +85,12 @@ export async function requireActiveUser(): Promise<OfficeUser> {
 export async function requireOfficeUser(): Promise<OfficeUser> {
   const actor = await requireActiveUser()
 
-  if (!actor.profile.employee_code) {
-    throw new AppError('NEEDS_EMPLOYEE_CODE')
-  }
-
+  /*
+   * ★★ ไม่ตรวจรหัสพนักงานแล้ว (0043) — ใครมีบัญชีที่ยังไม่ถูกระงับก็ใช้ได้
+   *    ★ requireActiveUser() ด้านบนตรวจสถานะบัญชีให้แล้ว
+   *    ★★ คงฟังก์ชันนี้ไว้แทนที่จะลบ เพราะมีจุดเรียกเป็นสิบ และวันที่
+   *       อยากกลับไปบังคับรหัส จะได้เติมเงื่อนไขที่นี่ที่เดียว
+   */
   return actor
 }
 

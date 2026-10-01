@@ -1122,6 +1122,23 @@ export type Database = {
 
       /* ── ระบบกิจกรรมออฟฟิศ (0023) ───────────────────────────────────── */
       /* ── 0041 · ระบบสมัครสมาชิก ─────────────────────────────── */
+      /* ── 0043 · สมัครแบบเปิด ไม่ต้องมีรหัสพนักงาน ───────────── */
+      register_open: {
+        Args: {
+          p_actor: string
+          p_nickname: string
+          p_phone?: string | null
+          p_company?: string | null
+          p_dept?: string | null
+          p_position?: string | null
+          p_purpose?: string | null
+        }
+        Returns: Database['public']['Tables']['profiles']['Row']
+      }
+      can_use_office: {
+        Args: { p_user: string }
+        Returns: boolean
+      }
       register_employee: {
         Args: {
           p_actor: string

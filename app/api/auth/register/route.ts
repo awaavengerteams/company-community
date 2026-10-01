@@ -32,12 +32,11 @@ const bodySchema = z
     confirm: z.string(),
 
     /* ── ข้อมูลพนักงาน ── */
-    code: z.string().trim().min(1).max(32),
-    prefix: z.string().trim().min(1, 'common.required').max(20),
-    firstName: z.string().trim().min(1, 'common.required').max(60),
-    lastName: z.string().trim().min(1, 'common.required').max(60),
+    /* ★ ชื่อเล่นอย่างเดียว ★★ ไม่มีรหัสพนักงาน ไม่มีชื่อ-นามสกุลจริง
+       — ใครก็สมัครได้ ดูเหตุผลเต็มใน 0043 */
+    nickname: z.string().trim().min(1, 'common.required').max(40),
     phone: z.string().trim().max(30).optional().default(''),
-    company: z.string().trim().min(1, 'common.required').max(80),
+    company: z.string().trim().max(80).optional().default(''),
     department: z.string().trim().min(1, 'common.required').max(80),
     position: z.string().trim().max(80).optional().default(''),
 
@@ -58,19 +57,15 @@ const bodySchema = z
 /**
  * POST /api/auth/register — สมัครสมาชิกพร้อมผูกรหัสพนักงานในขั้นเดียว
  *
- * ★★★ ลำดับสำคัญมาก: ตรวจรหัสพนักงาน → สร้างบัญชี → เขียนโปรไฟล์
+ * ★★★ ใครก็สมัครได้ ไม่ต้องมีรหัสพนักงาน (0043)
  *
- *     ★ ถ้าสร้างบัญชีก่อนแล้วรหัสพนักงานใช้ไม่ได้ จะเหลือบัญชีเปล่า
- *       ที่จองชื่อผู้ใช้นั้นไว้ตลอดกาล ★★ เจ้าตัวสมัครใหม่ด้วยชื่อเดิมไม่ได้
- *       และไม่มีใครรู้ว่าบัญชีนั้นมาจากไหน
+ *     ★ ด่านรหัสพนักงานถูกถอดออกทั้งระบบ — เหตุผลและผลกระทบอยู่ใน 0043
+ *       ★★ ที่นี่จึงเหลือแค่ สร้างบัญชี → เขียนโปรไฟล์
  *
- *     ★★ แต่การตรวจก่อนไม่ใช่การกันจริง — ระหว่างตรวจเสร็จกับตอนเขียน
- *        ยังมีช่องให้คนอื่นแย่งรหัสเดียวกันได้ ★ ด่านจริงคือ `where claimed_by
- *        is null` ใน claim_employee_code ★★ ที่ตรวจก่อนมีไว้เพื่อ "ไม่สร้าง
- *        ขยะโดยไม่จำเป็น" ในกรณีที่รู้ผลล่วงหน้าได้ ไม่ใช่เพื่อความถูกต้อง
- *
- *     ★★★ และถ้าขั้นสุดท้ายล้มจริง ๆ ต้องลบบัญชีที่เพิ่งสร้างทิ้ง
- *          ไม่งั้นได้ขยะแบบเดียวกับที่พยายามเลี่ยงตั้งแต่แรก
+ * ★★★ ถ้าขั้นเขียนโปรไฟล์ล้ม ต้องลบบัญชีที่เพิ่งสร้างทิ้ง
+ *      ★ ไม่งั้นชื่อผู้ใช้นั้นถูกจองโดยบัญชีที่ใช้งานไม่ได้
+ *        ★★ แล้วคนสมัครจะเจอ "ชื่อนี้ถูกใช้แล้ว" ตอนลองใหม่
+ *           ทั้งที่คนที่ใช้ชื่อนั้นคือตัวเขาเองเมื่อสิบวินาทีก่อน
  */
 export const POST = withErrorHandling(async (request: NextRequest) => {
   assertSameOrigin(request)
@@ -80,22 +75,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const admin = getSupabaseAdminClient()
   const email = `${body.username}@${FAKE_DOMAIN}`
-  const code = body.code.trim().toUpperCase()
 
-  /* ── 1. รหัสพนักงานใช้ได้ไหม (ตรวจก่อนเพื่อไม่สร้างขยะ) ───────── */
-  const { data: codeRow } = await admin
-    .from('employee_codes')
-    .select('code, status, claimed_by')
-    .eq('code', code)
-    .maybeSingle()
-
-  if (!codeRow) throw new AppError('VALIDATION_FAILED', { messageKey: 'link.err.notFound' })
-  if (codeRow.status !== 'ACTIVE')
-    throw new AppError('VALIDATION_FAILED', { messageKey: 'link.err.inactive' })
-  if (codeRow.claimed_by)
-    throw new AppError('VALIDATION_FAILED', { messageKey: 'link.err.taken' })
-
-  /* ── 2. สร้างบัญชีพร้อมรหัสผ่าน ──────────────────────────────── */
+  /* ── 1. สร้างบัญชีพร้อมรหัสผ่าน ──────────────────────────────── */
   /*
    * ★ email_confirm: true เพราะไม่มีอีเมลจริงให้ยืนยัน
    *   ★★ ถ้าไม่ตั้ง บัญชีจะค้างอยู่สถานะ "รอยืนยันอีเมล" แล้วเข้าไม่ได้เลย
@@ -118,7 +99,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   }
 
   try {
-    /* ── 3. ชื่อผู้ใช้ลงโปรไฟล์ (trigger สร้างแถวไว้ให้แล้ว) ──────── */
+    /* ── 2. ชื่อผู้ใช้ลงโปรไฟล์ (trigger สร้างแถวไว้ให้แล้ว) ──────── */
     const { error: nameError } = await admin
       .from('profiles')
       .update({ username: body.username })
@@ -126,15 +107,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
     if (nameError) throw fromPostgresError(nameError)
 
-    /* ── 4. ข้อมูลพนักงาน + ยึดรหัส ใน transaction เดียว ────────── */
-    const { error: rpcError } = await admin.rpc('register_employee', {
+    /* ── 3. ข้อมูลโปรไฟล์ ──────────────────────────────────────── */
+    const { error: rpcError } = await admin.rpc('register_open', {
       p_actor: userId,
-      p_code: code,
-      p_prefix: body.prefix,
-      p_first: body.firstName,
-      p_last: body.lastName,
+      p_nickname: body.nickname,
       p_phone: body.phone || null,
-      p_company: body.company,
+      p_company: body.company || null,
       p_dept: body.department,
       p_position: body.position || null,
       p_purpose: body.purpose || null,
@@ -152,7 +130,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     throw e
   }
 
-  /* ── 5. ออก token ให้เข้าใช้งานต่อได้ทันที ───────────────────── */
+  /* ── 4. ออก token ให้เข้าใช้งานต่อได้ทันที ───────────────────── */
   /*
    * ★ ใช้ทางเดียวกับการเข้าสู่ระบบเดิม — client แลก tokenHash เป็น session
    *   ด้วย verifyOtp อยู่แล้ว ★★ จึงไม่ต้องแก้โค้ดฝั่ง client เลยสักบรรทัด
