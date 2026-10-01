@@ -160,7 +160,7 @@ export const th = {
   'auth.title': "เข้าสู่ระบบ",
   'auth.detail': "ใช้ชื่อผู้ใช้และรหัสผ่านที่ตั้งไว้ตอนสมัคร",
   'auth.username': 'ชื่อผู้ใช้',
-  'auth.usernamePlaceholder': 'เช่น frame',
+  'auth.usernamePlaceholder': 'ชื่อที่ตั้งไว้ตอนสมัคร',
   'auth.submit': 'เข้าใช้งาน',
   'auth.working': 'กำลังเข้าใช้งาน…',
 
@@ -220,6 +220,8 @@ export const th = {
   'auth.perk1': 'เปิดจากเบราว์เซอร์',
   'auth.perk2': 'ไม่ต้องติดตั้ง',
   'auth.perk3': 'ใช้ได้ทั้งคอมและมือถือ',
+  'auth.showPassword': 'แสดงรหัสผ่าน',
+  'auth.hidePassword': 'ซ่อนรหัสผ่าน',
   "auth.rule": "a-z 0-9 . _ ยาว 3–20 ตัว",
   "auth.warn1": "รหัสผ่านถูกเข้ารหัสก่อนเก็บ ไม่มีใครรวมถึงผู้ดูแลระบบอ่านได้",
   "auth.warn2": "ทุกบัญชีต้องมีรหัสผ่าน ไม่มีการเข้าแบบเว้นว่าง",

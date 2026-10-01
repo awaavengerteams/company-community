@@ -3101,3 +3101,118 @@ html[data-theme='light'] .signin-ring {
   color: var(--color-ink-faint);
   white-space: nowrap;
 }
+
+/* ── การ์ดฟอร์มเข้าใช้งาน ──────────────────────────────────────────────── */
+/*
+ * ★★★ การ์ดนี้คือสิ่งเดียวบนหน้าที่คนต้อง "ทำอะไรสักอย่าง" กับมัน
+ *
+ *     ★ ของรอบ ๆ ทั้งหมดมีไว้ให้อ่าน มีแค่กล่องนี้ที่มีไว้ให้กรอก
+ *       ★★ มันจึงต้องดูหนักแน่นกว่าทุกอย่างบนหน้า ไม่ใช่กลมกลืนไปกับพื้น
+ *     ★ ของเดิมเป็นกล่องโปร่งขอบบาง ซึ่งบนพื้นที่มีแสงเหนือวิ่งอยู่
+ *       แทบแยกไม่ออกว่าตรงไหนคือขอบกล่อง
+ */
+.auth-card {
+  position: relative;
+  border-radius: 1.5rem;
+  border: 1px solid var(--color-line);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-elevated) 92%, transparent),
+      color-mix(in oklab, var(--color-elevated) 74%, transparent)
+    );
+  backdrop-filter: blur(22px);
+  box-shadow:
+    0 2px 0 0 color-mix(in oklab, #fff 6%, transparent) inset,
+    0 40px 90px -50px rgb(0 0 0 / 0.9);
+}
+
+html[data-theme='light'] .auth-card {
+  box-shadow:
+    0 2px 0 0 color-mix(in oklab, #fff 70%, transparent) inset,
+    0 34px 80px -46px rgb(15 15 15 / 0.28);
+}
+
+/*
+ * ★★ เส้นไล่สีบาง ๆ ที่ขอบบน — เส้นเดียวที่ทำให้กล่องดู "ตั้งใจทำ"
+ *    ★ ใช้สีแสงเหนือชุดเดียวกับพาดหัว จึงผูกกล่องนี้เข้ากับหน้าที่เหลือ
+ *      แทนที่จะดูเหมือนคอมโพเนนต์ที่หยิบมาจากที่อื่น
+ */
+.auth-card::before {
+  content: '';
+  position: absolute;
+  inset-inline: 1.25rem;
+  top: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--aurora-1) / 0.85),
+    rgb(var(--aurora-2) / 0.85) 55%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* ── ตราประจำหัวการ์ด ─────────────────────────────────────────────────── */
+.auth-badge {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in oklab, var(--color-accent) 35%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 14%, transparent);
+  color: var(--color-accent);
+  box-shadow: 0 16px 36px -22px color-mix(in oklab, var(--color-accent) 85%, transparent);
+}
+
+/* ── ไอคอนนำหน้าช่องกรอก ──────────────────────────────────────────────── */
+/*
+ * ★★ start-* ไม่ใช่ left-* — "ต้นบรรทัด" ต้องอยู่หน้าตัวหนังสือเสมอ
+ *    ทั้งภาษาที่อ่านซ้ายไปขวาและขวาไปซ้าย
+ */
+.auth-lead {
+  position: absolute;
+  inset-inline-start: 0.95rem;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--color-ink-faint);
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+
+/* ── ปุ่มดู/ซ่อนรหัสผ่าน ──────────────────────────────────────────────── */
+/*
+ * ★★★ มีไว้เพราะ "พิมพ์ผิดแล้วไม่รู้ตัว" คือสาเหตุที่คนเข้าไม่ได้บ่อยที่สุด
+ *
+ *     ★ ไม่มีปุ่มนี้ คนที่พิมพ์ผิดจะเห็นแต่ "เข้าใช้งานไม่สำเร็จ" ซึ่งอ่านได้ว่า
+ *       "บัญชีมีปัญหา" ทั้งที่แค่กดโดนปุ่มข้าง ๆ
+ *     ★★ ต้องเป็น type="button" — ไม่งั้นมันจะกลายเป็นปุ่มส่งฟอร์มตัวที่สอง
+ *        แล้วการกดดูรหัสผ่านจะส่งฟอร์มทิ้งไปเลย
+ */
+.auth-eye {
+  position: absolute;
+  inset-inline-end: 0.5rem;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.6rem;
+  color: var(--color-ink-faint);
+  transition: color 150ms, background-color 150ms;
+}
+
+.auth-eye:hover {
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+/* ── เส้นคั่นก่อนลิงก์สมัคร ────────────────────────────────────────────── */
+.auth-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-line), transparent);
+}
