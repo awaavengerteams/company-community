@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function RegisterPage() {
   const me = await getRegisteredUser()
-  if (me) redirect('/office')
+  if (me) redirect('/')
 
   /*
    * ★★★ หน้านี้อยู่นอก /office แต่ฟอร์มสมัครใช้ข้อความของโมดูลออฟฟิศ

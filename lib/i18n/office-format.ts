@@ -56,3 +56,31 @@ export function splitList(value: string): string[] {
     .map((s) => s.trim())
     .filter(Boolean)
 }
+
+/**
+ * ข้อความผิดพลาดที่เอาไปโชว์ผู้ใช้ได้เลย — ฝั่งโมดูลออฟฟิศ
+ *
+ * ★★★ คู่แฝดของ errorText() ใน lib/api/client.ts แต่แปลด้วย ot แทน t
+ *
+ *     ★ ApiClientError ติดธง needsTranslation มากับชื่อกุญแจ (net.offline ฯลฯ)
+ *       ★★ คอมโพเนนต์ออฟฟิศ 55 จุดเขียน `e instanceof Error ? e.message : …`
+ *          ซึ่งเอาชื่อกุญแจไปโชว์ตรง ๆ — ผู้ใช้เห็นคำว่า "net.offline" กลางจอ
+ *          ★ ซึ่งเป็นสิ่งที่ความเห็นใน client.ts เขียนเตือนไว้เองว่าจะเกิด
+ *            ถ้าปล่อยให้แต่ละจุดตัดสินใจเรื่องการแปลเอง
+ *
+ *     ★★ เจอตอนด่าน i18n รันแล้วเน็ตสะดุดพอดี — ไม่ใช่ตอนอ่านโค้ด
+ *        ★ บั๊กนี้โผล่เฉพาะตอนเน็ตหลุด จึงไม่มีทางเจอด้วยการกดเล่นปกติ
+ *
+ * ★ รับ `ot` เข้ามาแทนการเรียก useOt() — ใช้ได้ทั้งในคอมโพเนนต์และนอกคอมโพเนนต์
+ */
+export function officeErrorText(error: unknown, ot: Ot, fallback: OfficeKey = 'common.error'): string {
+  if (!(error instanceof Error)) return ot(fallback)
+
+  /*
+   * ★★ ตรวจจาก "หน้าตาของค่า" ไม่ใช่ instanceof ApiClientError
+   *    ★ การ import คลาสนั้นมาที่นี่จะผูกชั้นภาษาเข้ากับชั้นเครือข่าย
+   *      ★★ ซึ่งทำให้ไฟล์นี้ลากโค้ดที่ไม่เกี่ยวกับการแปลเข้าบันเดิลไปด้วย
+   */
+  const needs = (error as { needsTranslation?: boolean }).needsTranslation === true
+  return needs ? ot(error.message as OfficeKey) : error.message || ot(fallback)
+}

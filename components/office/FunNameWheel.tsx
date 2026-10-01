@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
@@ -105,7 +106,7 @@ export function FunNameWheel() {
       await loadSets()
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }
 
@@ -114,7 +115,7 @@ export function FunNameWheel() {
       await apiFetch('/api/office/fun/name-sets', { method: 'DELETE', body: { id } })
       await loadSets()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }
 

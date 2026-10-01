@@ -7,6 +7,13 @@ import { HubFeatures } from '@/components/home/HubFeatures'
 import { JumpScare } from '@/components/home/JumpScare'
 import { SetupNotice } from '@/components/home/SetupNotice'
 import { getHomeStats } from '@/lib/home/stats'
+import { OfficeSummary, type HomeSummaryData } from '@/components/home/OfficeSummary'
+import { NotificationBell } from '@/components/office/NotificationBell'
+import { OfficeI18nProvider } from '@/lib/i18n/office'
+import { getOt } from '@/lib/i18n/office-server'
+import { officeDictSubset } from '@/lib/i18n/office-dict'
+import { getLocale } from '@/lib/i18n/server'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { SignInScreen } from '@/components/SignInScreen'
 import { getRegisteredUser } from '@/lib/supabase/server'
 import { viewerIsAdmin } from '@/lib/office/session'
@@ -53,6 +60,44 @@ export default async function HomePage() {
   const stats = await getHomeStats()
   const { t } = await getT()
 
+  /*
+   * ★★ ห่อ try/catch เพราะ RPC นี้มาจาก migration 0036
+   *
+   *    บทเรียนเดิมของโปรเจกต์นี้: โค้ดที่อ่านของใหม่ก่อน migration ขึ้น
+   *    ทำให้หน้าพังทั้งหน้า ★ หน้าแรกพังหมายถึงเข้าเว็บไม่ได้เลย
+   *    ★ การ์ดสรุปหายไปเงียบ ๆ ดีกว่าหน้าขาว
+   */
+  const { ot } = await getOt()
+  const locale = await getLocale()
+  /*
+   * ★★ ส่งเฉพาะกุญแจที่กระดิ่งใช้ ไม่ใช่ทั้งดิกชันนารี
+   *    ★ กระดิ่งใช้ notify.* (รวมชื่อชนิดแจ้งเตือน) · time.* · top.notifications
+   *      · common.loading ★★ นับแล้วไม่ถึง 30 กุญแจ จาก 779
+   *    ★ การ์ดสรุปไม่ต้องใช้เลยเพราะเป็น server component ที่รับ ot มาตรง ๆ
+   */
+  const bellDict = officeDictSubset(locale, ['notify.', 'time.', 'top.', 'common.'])
+  let summary: HomeSummaryData | null = null
+  try {
+    const { data } = await getSupabaseAdminClient().rpc('office_home_summary', {
+      p_actor: me.id,
+    })
+    if (data && typeof data === 'object') {
+      const d = data as Record<string, unknown>
+      summary = {
+        iOwe: Number(d.iOwe ?? 0),
+        owedToMe: Number(d.owedToMe ?? 0),
+        toConfirm: Number(d.toConfirm ?? 0),
+        stale: Number(d.stale ?? 0),
+        newListings: Number(d.newListings ?? 0),
+        topRestaurant: typeof d.topRestaurant === 'string' ? d.topRestaurant : null,
+        unread: Number(d.unread ?? 0),
+        unreadChat: Number(d.unreadChat ?? 0),
+      }
+    }
+  } catch {
+    summary = null
+  }
+
   return (
     <>
       {/* ★ แถบความคืบหน้าการเลื่อน — CSS ล้วนด้วย animation-timeline: scroll()
@@ -68,7 +113,19 @@ export default async function HomePage() {
         /* ★ หน้านี้ไม่ได้อ่านสิทธิ์ Admin มา (getRegisteredUser ไม่คืนมาให้)
              ★★ ไม่ยิง query เพิ่มเพื่อป้ายเล็ก ๆ อันเดียว — ป้าย Admin
                 แสดงในแถบบนของโมดูลออฟฟิศซึ่งเป็นที่ที่สิทธิ์นั้นมีผลจริง */
-          right={<UserMenu displayName={me.displayName} isAdmin={isAdmin} avatarUrl={me.avatarUrl} />}
+          right={
+            /* ★★★ กระดิ่งแจ้งเตือนย้ายมาอยู่ที่นี่ด้วย
+                ★ เดิมมีแค่ในแถบบนของ /office ★★ พอยุบพอร์ทัลนั้นทิ้ง
+                  คนที่อยู่หน้าแรกจะไม่มีทางรู้เลยว่ามีใครทวงเงินหรือทักมา
+                ★ NotificationBell เป็น client component ที่ใช้ useOt()
+                  จึงต้องมี provider ครอบ — หน้านี้อยู่นอก /office
+                  ★★ ครอบแค่ตรงนี้ ไม่ใช่ทั้งหน้า จะได้ไม่ลากดิกชันนารี
+                     ออฟฟิศเข้าไปในส่วนอื่นของหน้าแรกโดยไม่จำเป็น */
+            <OfficeI18nProvider dict={bellDict}>
+              <NotificationBell userId={me.id} />
+              <UserMenu displayName={me.displayName} isAdmin={isAdmin} avatarUrl={me.avatarUrl} />
+            </OfficeI18nProvider>
+          }
       />
 
       <PortalHero stats={stats} />
@@ -79,6 +136,12 @@ export default async function HomePage() {
       <main className="mx-auto w-full max-w-[1120px] px-4">
         <SetupNotice />
       </main>
+
+      {/* ★★ ตัวเลขของฉันมาก่อนการ์ดเมนู
+          ★ คนที่เปิดหน้านี้ทุกเช้าไม่ได้มาหาเมนู เขามาดูว่ามีอะไรค้างอยู่ไหม
+            ★★ การ์ดเมนูอยู่ที่เดิมทุกวัน ส่วนตัวเลขเปลี่ยนทุกวัน —
+               ของที่เปลี่ยนควรอยู่บนของที่ไม่เปลี่ยน */}
+      {summary ? <OfficeSummary ot={ot} locale={locale} data={summary} /> : null}
 
       {/* ★ id="systems" — ปุ่มหลักบนหัวหน้าเลื่อนมาที่นี่ */}
       <SystemHub />

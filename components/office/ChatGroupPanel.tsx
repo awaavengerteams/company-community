@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import { ChatAvatar } from './ChatAvatar'
 
@@ -72,7 +73,7 @@ export function ChatGroupPanel({
       onChanged()
       if (okNote) setNote(okNote)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }
@@ -100,7 +101,7 @@ export function ChatGroupPanel({
       onChanged()
       setNote(ot('chat.saved'))
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }
@@ -249,7 +250,7 @@ export function ChatGroupPanel({
             void apiFetch(`/api/office/chat/${roomId}`, { method: 'POST', body: { action: 'leave' } })
               .then(onLeft)
               .catch((e: unknown) =>
-                setError(e instanceof Error ? e.message : ot('common.error')),
+                setError(officeErrorText(e, ot)),
               )
           }}
         >

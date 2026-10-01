@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import { formatBaht } from '@/lib/office/wallet'
 
@@ -62,7 +63,7 @@ export function AdminDashboard() {
       const res = await apiFetch<{ stats: Stats }>(`/api/office/admin/stats?days=${d}`)
       setStats(res.stats)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 

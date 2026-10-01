@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { apiFetch, apiUpload } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { useLocale } from '@/lib/i18n/client'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import { formatBaht } from '@/lib/office/wallet'
 
@@ -46,7 +47,7 @@ export function WalletPay({
     try {
       setFiles(await apiFetch<Files>(`/api/office/wallet/debts/${debtId}/files`))
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [debtId])
 
@@ -61,7 +62,7 @@ export function WalletPay({
       await apiUpload(`/api/office/wallet/debts/${debtId}/files`, file)
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -79,7 +80,7 @@ export function WalletPay({
       router.push('/office/wallet/owed')
       router.refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
       setBusy(false)
     }
   }

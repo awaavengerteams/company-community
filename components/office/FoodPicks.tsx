@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import {
   DISTANCE_OPTIONS,
@@ -32,7 +33,7 @@ export function FoodPicks() {
     try {
       setData(await apiFetch<RestaurantList>('/api/office/food/restaurants'))
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setLoading(false)
     }
@@ -86,7 +87,7 @@ export function FoodPicks() {
       alertInline(id, ot('food.picks.reported', { reports: res.reports, threshold: res.threshold }))
       if (res.maybeClosed) void load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }
 
@@ -102,7 +103,7 @@ export function FoodPicks() {
       await apiFetch(`/api/office/food/restaurants/${id}`, { method: 'DELETE' })
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }
 
@@ -123,7 +124,7 @@ export function FoodPicks() {
       })
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }
 

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 
 type Room = {
@@ -38,7 +39,7 @@ export function DrawRoomList() {
       const d = await apiFetch<{ items: Room[] }>('/api/office/draw/rooms')
       setRooms(d.items)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -76,7 +77,7 @@ export function DrawRoomList() {
       })
       router.push(`/office/fun/room/${d.id}`)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }

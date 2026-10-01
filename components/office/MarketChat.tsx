@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Input } from '@/components/ui/Input'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/cn'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 
 type Thread = {
@@ -55,7 +56,7 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
       const d = await apiFetch<Omit<Room, 'threadId'>>(`/api/office/market/chat?thread=${id}`)
       setRoom({ ...d, threadId: id })
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -136,7 +137,7 @@ export function MarketChat({ initialListing }: { initialListing?: string }) {
         if (fresh) await openThread(fresh.id)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }
@@ -272,7 +273,7 @@ function SearchAlerts() {
       setTyped('')
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }

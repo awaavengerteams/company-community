@@ -9,6 +9,7 @@ import { ListingImage } from './ListingImage'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import {
   CATEGORIES,
@@ -40,7 +41,7 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
       const d = await apiFetch<{ items: Listing[] }>('/api/office/market')
       setItems(d.items)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setLoading(false)
     }
@@ -68,7 +69,7 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
       }
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(null)
     }
@@ -81,7 +82,7 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
       await apiFetch(`/api/office/market/${id}`, { method: 'DELETE' })
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(null)
     }

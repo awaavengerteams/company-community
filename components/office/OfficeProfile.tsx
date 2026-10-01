@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { apiFetch, apiUpload } from '@/lib/api/client'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { shrinkImage } from '@/lib/image/shrink'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
@@ -66,7 +67,7 @@ export function OfficeProfile() {
       setDepartment(d.profile.department ?? '')
       setOff(new Set(d.off))
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -85,7 +86,7 @@ export function OfficeProfile() {
       })
       setSaved(true)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }
@@ -114,7 +115,7 @@ export function OfficeProfile() {
       await load()
       setAvatarNote(ot('profile.avatarSaved'))
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setUploading(false)
     }
@@ -135,7 +136,7 @@ export function OfficeProfile() {
         body: { action: 'notify', type, enabled },
       })
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
       await load()
     }
   }

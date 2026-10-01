@@ -6,6 +6,7 @@ import { apiFetch, apiUpload } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import {
   CATEGORIES,
@@ -51,7 +52,7 @@ export function MarketPost() {
         setImages((p) => [...p, d.url])
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -83,7 +84,7 @@ export function MarketPost() {
       router.push('/office/market')
       router.refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
       setBusy(false)
     }
   }

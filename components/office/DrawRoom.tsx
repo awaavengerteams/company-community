@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { MAX_MS } from '@/lib/office/draw'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import { RandomWheel, type WheelItem } from './RandomWheel'
 
@@ -62,7 +63,7 @@ export function DrawRoom({ roomId }: { roomId: string }) {
       setRoom(d.room)
       setMembers(d.members)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [roomId])
 
@@ -143,7 +144,7 @@ export function DrawRoom({ roomId }: { roomId: string }) {
       }
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }

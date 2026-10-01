@@ -172,11 +172,19 @@ async function overflow(p: Page) {
 }
 
 /** เปิดหน้าด้วยภาษาที่กำหนด — ★ ผ่าน cookie เพราะ server อ่านจาก cookie ตัวเดียว */
+/*
+ * ★★ เพดานเวลาสูงกว่าค่าเริ่มต้นมาก เพราะด่านนี้รันกับ Supabase จริง
+ *    ★ เคยล้มกลางคันตอนรอบที่ 13 จาก 16 ภาษา เพราะคำขอหนึ่งใช้ 26 วินาที
+ *      (read ETIMEDOUT ฝั่งเครือข่าย ไม่ใช่โค้ดช้า)
+ *      ★★ ด่านที่ล้มเพราะเน็ตสะดุด คือด่านที่คนเลิกเชื่อผลของมัน
+ */
+const NAV_TIMEOUT = 90_000
+
 async function openAs(p: Page, locale: Locale, path = '/') {
   await p.context().addCookies([
     { name: LOCALE_COOKIE, value: locale, url: APP },
   ])
-  await p.goto(`${APP}${path}`, { waitUntil: 'networkidle' })
+  await p.goto(`${APP}${path}`, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT })
 }
 
 /** ตรวจชุดเดียวกันทุกที่: ป้ายภาษา ทิศทาง ไทยหลุด กุญแจหลุด ไม่ล้น */
@@ -208,8 +216,23 @@ async function audit(p: Page, locale: Locale, where: string) {
  *       ค่านี้จะไม่ขยับตอนเป็นอาหรับ — เป็นการตรวจว่าท่อ RTL ทั้งเส้นยังต่อกันอยู่
  *       ตั้งแต่ cookie → dir บน <html> → คลาส logical → ตำแหน่งจริงบนจอ
  */
+/**
+ * ★★★ เลือกปุ่มภาษาด้วยเมนูข้างใน ไม่ใช่ .first()
+ *
+ *     ★ หน้าเข้าใช้งานมีปุ่มเมนูสองอันแล้ว (ธีมกับภาษา) ★★ .first() จึง
+ *       ไปโดนปุ่มธีม แล้วด่านนับตัวเลือกได้ 3 แทนที่จะเป็น 16 ทั้ง 16 ภาษา
+ *     ★ ผูกกับ "เมนูนี้มีกี่ตัวเลือก" ไม่ได้เพราะต้องกดก่อนถึงจะนับได้
+ *       ★★ จึงผูกกับ aria-label ของเมนู ซึ่งเป็นของที่คอมโพเนนต์นั้นมีอยู่แล้ว
+ */
+function langButton(p: Page) {
+  return p
+    .locator('button[aria-haspopup="menu"]')
+    .filter({ has: p.locator('svg, span') })
+    .nth(1)
+}
+
 async function langButtonSide(p: Page, locale: Locale) {
-  const btn = p.locator('button[aria-haspopup="menu"]').first()
+  const btn = langButton(p)
   if (!(await btn.count())) return bad(`${locale} · หาปุ่มเปลี่ยนภาษาไม่เจอ`)
   const box = await btn.boundingBox()
   const vw = await p.evaluate(() => document.documentElement.clientWidth)
@@ -244,7 +267,8 @@ async function signUp(p: Page, locale: Locale, tag: string) {
   await p.locator('select').first().selectOption({ index: 1 })
   await p.locator('input[type="checkbox"]').first().check()
   await p.locator('form button[type="submit"]').first().click()
-  await p.waitForURL(/\/office/, { timeout: 30_000 })
+  /* ★ พอร์ทัล /office ถูกยุบ — สมัครเสร็จแล้วไปหน้าแรกของเว็บแทน */
+  await p.waitForURL((u) => new URL(u).pathname === '/', { timeout: NAV_TIMEOUT })
   return username
 }
 
@@ -269,13 +293,14 @@ async function main() {
       for (const [size, vp] of [['กว้าง', WIDE], ['แคบ', NARROW]] as const) {
         const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1 })
         const p = await ctx.newPage()
+        p.setDefaultTimeout(NAV_TIMEOUT)
         await openAs(p, locale, '/')
         await audit(p, locale, `${locale}/${size}`)
         if (size === 'กว้าง') {
           await langButtonSide(p, locale)
 
           // ★ กางเมนูด้วย — 16 แถวสองคอลัมน์คือที่ที่ล้นง่ายที่สุดในหน้านี้
-          await p.locator('button[aria-haspopup="menu"]').first().click()
+          await langButton(p).click()
           await p.waitForSelector('[role="menu"]')
           await sleep(350)
           const rows = await p.locator('[role="menuitemradio"]').count()
@@ -300,6 +325,7 @@ async function main() {
         console.log(`\n\x1b[1mหลังสมัคร · ${locale}\x1b[0m`)
         const ctx = await browser.newContext({ viewport: WIDE, deviceScaleFactor: 1 })
         const p = await ctx.newPage()
+        p.setDefaultTimeout(NAV_TIMEOUT)
 
         // ★ ชื่อผู้ใช้ต่างกันทุกภาษา ไม่งั้นรอบที่สองจะชนกับรอบแรกที่ยังไม่ถูกลบ
         cleanup.push(await signUp(p, locale, locale))
@@ -323,13 +349,13 @@ async function main() {
          *      ซึ่งไม่มีอยู่บนหน้าแรกอีกต่อไป
          */
         await openAs(p, locale, '/music')
-        await p.waitForSelector('#create', { timeout: 25_000 })
+        await p.waitForSelector('#create', { timeout: NAV_TIMEOUT })
         await audit(p, locale, `${locale}/ห้องเพลง`)
 
         // ★ ปุ่มสร้างห้องกดไม่ได้จนกว่าจะมีชื่อห้อง — ตั้งใจให้เป็นอย่างนั้น
         await p.locator('#create input').first().fill(`ห้อง ${locale}`)
         await p.locator('#create button[type="submit"]').first().click()
-        await p.waitForURL(/\/room\/[A-Za-z0-9]+/, { timeout: 25_000 })
+        await p.waitForURL(/\/room\/[A-Za-z0-9]+/, { timeout: NAV_TIMEOUT })
         await sleep(3_000)
         await audit(p, locale, `${locale}/หน้าห้อง`)
         await p.screenshot({ path: `${SHOTS}/room-${locale}.png`, fullPage: true })
@@ -370,6 +396,7 @@ async function main() {
       {
         const ctx = await browser.newContext({ viewport: WIDE, deviceScaleFactor: 1 })
         const p = await ctx.newPage()
+        p.setDefaultTimeout(NAV_TIMEOUT)
         cleanup.push(await signUp(p, 'th', 'off'))
 
         const OFFICE_PAGES: [string, string][] = [

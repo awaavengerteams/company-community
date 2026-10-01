@@ -88,15 +88,6 @@ const CARDS: Card[] = [
     tint: '48 209 176',
     demo: 'bubble',
   },
-  {
-    href: '/office',
-    titleKey: 'hub.more',
-    detailKey: 'hub.moreDetail',
-    icon: 'M4 6h16M4 12h16M4 18h10',
-    tint: '142 142 147',
-    full: true,
-    demo: 'grid',
-  },
 ]
 
 /** แถบอีควอไลเซอร์ในการ์ดห้องเพลง — ค่าคงที่ ห้ามสุ่มตอน render */

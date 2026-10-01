@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import { playCelebrate, vibrate } from '@/lib/office/sound'
 import { Confetti } from './Confetti'
@@ -46,7 +47,7 @@ export function FunCup() {
       setList(d.items)
       setStats(d.stats)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -54,7 +55,7 @@ export function FunCup() {
     try {
       setOpen(await apiFetch<Bracket>(`/api/office/fun/tournaments/${id}`))
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -75,7 +76,7 @@ export function FunCup() {
       playCelebrate()
       vibrate(30)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(null)
     }
@@ -88,7 +89,7 @@ export function FunCup() {
       setOpen(null)
       await loadList()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }
 

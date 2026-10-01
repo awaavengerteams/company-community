@@ -862,6 +862,17 @@ export const it: OfficeDict = {
 
   "common.unknownName": "Nome sconosciuto",
 
+  /* ── ข้อผิดพลาดของเครือข่าย ───────────────────────────────────
+     ★★★ คำแปลชุดเดียวกับ dict ของห้องเพลง ไม่ได้แปลใหม่
+          ★ ApiClientError โยนชื่อกุญแจเหล่านี้ออกมาเมื่อเน็ตหลุด
+            แล้วคอมโพเนนต์ของออฟฟิศเอาไปแปลด้วย ot() ซึ่งหาไม่เจอ
+            ★★ ผู้ใช้จึงเห็นคำว่า "net.offline" โผล่กลางจอ —
+               ซึ่ง lib/api/client.ts เขียนเตือนไว้เองว่าจะเกิดถ้าลืม */
+  "net.slow": "Il server sta rispondendo molto lentamente — riprova",
+  "net.offline": "Nessuna connessione — controlla la rete",
+  "net.badShape": "Il server ha risposto in modo inatteso",
+  "net.uploadSlow": "Il caricamento ha impiegato troppo — riprova",
+
   "common.save": "Salva",
   "common.cancel": "Annulla",
   "common.close": "Chiudi",

@@ -56,7 +56,6 @@ const ICONS = {
 } as const
 
 export const OFFICE_NAV: NavSection[] = [
-  { href: '/office', labelKey: 'nav.home', icon: ICONS.home },
   {
     href: '/office/food',
     labelKey: 'nav.food',

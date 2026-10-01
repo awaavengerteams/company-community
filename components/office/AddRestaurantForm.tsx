@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import { DISTANCE_OPTIONS, PRICE_OPTIONS, distanceLabel } from '@/lib/office/food'
 import type { DistanceBand, PriceRange } from '@/types/database'
@@ -81,7 +82,7 @@ export function AddRestaurantForm({ onDone }: { onDone: () => void }) {
       })
       onDone()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }

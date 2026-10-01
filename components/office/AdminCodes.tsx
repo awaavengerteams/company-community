@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import type { EmployeeCodeStatus } from '@/types/database'
 
@@ -32,7 +33,7 @@ export function AdminCodes() {
       const data = await apiFetch<{ items: Row[] }>('/api/office/admin/codes')
       setRows(data.items)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -54,7 +55,7 @@ export function AdminCodes() {
       setNewCode('')
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }
@@ -67,7 +68,7 @@ export function AdminCodes() {
       await apiFetch('/api/office/admin/codes', { method: 'PATCH', body: { code, status } })
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }

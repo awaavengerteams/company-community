@@ -124,7 +124,7 @@ export function RegisterForm() {
         username: saved,
       })
 
-      router.replace('/office')
+      router.replace('/')
     } catch (err) {
       const slow = err instanceof DOMException && err.name === 'TimeoutError'
       setError(

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 
 type Settings = {
@@ -26,7 +27,7 @@ export function AdminSettings() {
       const data = await apiFetch<{ settings: Settings }>('/api/office/admin/settings')
       setSettings(data.settings)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -43,7 +44,7 @@ export function AdminSettings() {
       setSaved(key)
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setSaving(null)
     }

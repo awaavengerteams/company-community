@@ -34,7 +34,7 @@ export default async function LinkCodePage() {
   const { ot } = await getOt()
   const viewer = await getOfficeViewer()
   if (!viewer) redirect('/')
-  if (viewer.employeeCode) redirect('/office')
+  if (viewer.employeeCode) redirect('/')
 
   const perks: { key: OfficeKey; icon: string }[] = [
     { key: 'link.perk.food', icon: 'M7 3v8a3 3 0 0 0 3 3v7M7 3v5M10 3v5M17 3c-1.5 2-2 4-2 6s.5 3 2 3v9' },

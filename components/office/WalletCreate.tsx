@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
 import { ChatAvatar } from './ChatAvatar'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import { CATEGORIES, categoryLabel, formatBaht, previewEqualSplit } from '@/lib/office/wallet'
 import type { ExpenseCategory, SplitMode } from '@/types/database'
@@ -65,7 +66,7 @@ export function WalletCreate({ selfId }: { selfId: string }) {
       const data = await apiFetch<{ items: Person[] }>('/api/office/people')
       setPeople(data.items.filter((p) => p.id !== selfId))
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [selfId])
 
@@ -111,7 +112,7 @@ export function WalletCreate({ selfId }: { selfId: string }) {
       router.push('/office/wallet/owed')
       router.refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }

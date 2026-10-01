@@ -70,3 +70,29 @@ export function officeTranslator(locale: Locale): Ot {
 export function clientOfficeDict(locale: Locale): OfficeDict {
   return { ...fallbackFor(locale), ...officeDictOf(locale) }
 }
+
+/**
+ * ก้อนย่อยของดิกชันนารี — เฉพาะกุญแจที่ขึ้นต้นด้วยคำนำหน้าที่ขอมา
+ *
+ * ★★★ มีไว้สำหรับหน้าที่อยู่นอก /office แต่ใช้คอมโพเนนต์ของออฟฟิศชิ้นเดียว
+ *
+ *     ★ หน้าแรกใส่กระดิ่งแจ้งเตือนเข้าไป ซึ่งเป็น client component ที่ใช้
+ *       useOt() ★★ ถ้าส่ง clientOfficeDict() ไปทั้งก้อน หน้าแรกจะแบก
+ *       ข้อความ 779 กุญแจของทุกโมดูล เพื่อป้ายไม่กี่คำบนกระดิ่งอันเดียว
+ *
+ *     ★ วัดจริงบนหน้าแรกตอนล็อกอินแล้ว: ก้อนเต็ม 269,764 ไบต์ ·
+ *       ก้อนย่อย 235,038 ไบต์ — ต่างกัน 34,726 ไบต์ (ราว 13%)
+ *       ★★ ซึ่งคนทุกคนต้องโหลดทุกครั้งที่เปิดเว็บ ไม่ว่าจะมีแจ้งเตือนไหม
+ *
+ * ★★ ไม่ใช้ fallback ภาษาอังกฤษซ้อนเหมือน clientOfficeDict()
+ *    ★ ตอนนี้ทุกภาษาแปลครบแล้ว การซ้อนจึงไม่ได้เพิ่มอะไรนอกจากขนาด
+ *      ★★ และ makeOt() คืนชื่อกุญแจเองถ้าหาไม่เจอ — ไม่มีทางเป็นจอขาว
+ */
+export function officeDictSubset(locale: Locale, prefixes: string[]): Partial<OfficeDict> {
+  const full = officeDictOf(locale)
+  const out: Partial<OfficeDict> = {}
+  for (const [key, value] of Object.entries(full)) {
+    if (prefixes.some((p) => key.startsWith(p))) out[key as OfficeKey] = value
+  }
+  return out
+}

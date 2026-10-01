@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
@@ -146,7 +147,7 @@ export function OfficeChat() {
       setMeId(d.meId)
       setListError(null)
     } catch (e) {
-      setListError(e instanceof Error ? e.message : ot('common.error'))
+      setListError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -159,7 +160,7 @@ export function OfficeChat() {
         setThread((prev) => keepLoadedUrls(prev, d))
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -271,7 +272,7 @@ export function OfficeChat() {
         body: { action: 'send', text: body },
       })
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
       /* ★ คืนข้อความให้ผู้ใช้ ไม่ให้สิ่งที่พิมพ์หายไปพร้อมกับความผิดพลาด */
       setText((t) => (t ? t : body))
       setBusy(false)
@@ -332,7 +333,7 @@ export function OfficeChat() {
         },
       })
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
       setUploading(false)
       return
     }
@@ -352,7 +353,7 @@ export function OfficeChat() {
       await loadRooms()
       setOpenId(d.roomId)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }
 
@@ -369,7 +370,7 @@ export function OfficeChat() {
       await loadRooms()
       setOpenId(d.roomId)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }
 

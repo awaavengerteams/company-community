@@ -213,7 +213,9 @@ export async function HubFeatures() {
               {t('hubcta.title')}
             </h2>
             <Link
-              href="/office"
+              /* ★ เคยชี้ไป /office ซึ่งเป็นพอร์ทัลที่ยุบไปแล้ว
+                   ★★ ตอนนี้เลื่อนขึ้นไปที่การ์ดเมนูบนหน้าเดียวกันแทน */
+              href="#systems"
               className={cn(
                 'pulse-ring mt-7 inline-flex h-12 items-center gap-2 rounded-full bg-accent px-8',
                 'font-medium text-accent-ink transition-all',

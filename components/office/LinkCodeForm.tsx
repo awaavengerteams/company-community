@@ -69,7 +69,7 @@ export function LinkCodeForm({ defaultDisplayName, defaultNickname, defaultDepar
        *   ★ push('/office') อย่างเดียวจะได้หน้าเดิมจากแคชฝั่ง client
        *     แล้วผู้ใช้จะเห็นหน้า "ต้องผูกรหัส" ค้างอยู่ทั้งที่ผูกสำเร็จแล้ว
        */
-      router.replace('/office')
+      router.replace('/')
       router.refresh()
     } catch {
       setError(ot('common.error'))

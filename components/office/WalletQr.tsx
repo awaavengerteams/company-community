@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch, apiUpload } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 
 /** หน้า QR รับเงินของฉัน (FR-B03 · หัวข้อ 8.1) */
@@ -19,7 +20,7 @@ export function WalletQr() {
       const data = await apiFetch<{ url: string | null }>('/api/office/wallet/qr')
       setUrl(data.url)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setLoaded(true)
     }
@@ -36,7 +37,7 @@ export function WalletQr() {
       const data = await apiUpload<{ url: string }>('/api/office/wallet/qr', file)
       setUrl(data.url)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -50,7 +51,7 @@ export function WalletQr() {
       await apiFetch('/api/office/wallet/qr', { method: 'DELETE' })
       setUrl(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(false)
     }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
+import { officeErrorText } from '@/lib/i18n/office-format'
 import { useOt } from '@/lib/i18n/office'
 import { formatBaht, statusLabel, type Debt, type WalletData } from '@/lib/office/wallet'
 
@@ -23,7 +24,7 @@ export function WalletOwed() {
     try {
       setData(await apiFetch<WalletData>('/api/office/wallet'))
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     }
   }, [])
 
@@ -38,7 +39,7 @@ export function WalletOwed() {
       await apiFetch(`/api/office/wallet/debts/${id}`, { method: 'POST', body })
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(null)
     }
@@ -85,7 +86,7 @@ export function WalletOwed() {
       )
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : ot('common.error'))
+      setError(officeErrorText(e, ot))
     } finally {
       setBusy(null)
     }
