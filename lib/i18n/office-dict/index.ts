@@ -9,6 +9,8 @@ import { lo } from './lo'
 import { vi } from './vi'
 import { id } from './id'
 import { ms } from './ms'
+import { fr } from './fr'
+import { de } from './de'
 
 export type { OfficeDict, OfficeKey, Ot }
 
@@ -34,7 +36,7 @@ export type { OfficeDict, OfficeKey, Ot }
  *          แล้วไม่มีใครรู้จนกว่าจะมีคนบ่น
  */
 const DICTS: Partial<Record<Locale, OfficeDict>> = {
-  th, en, ja, zh, ko, lo, vi, id, ms,
+  th, en, ja, zh, ko, lo, vi, id, ms, fr, de,
 }
 
 export function officeDictOf(locale: Locale): OfficeDict {
