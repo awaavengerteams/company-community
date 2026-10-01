@@ -14,6 +14,7 @@ import { ChatAvatar } from './ChatAvatar'
 import { ChatGroupPanel } from './ChatGroupPanel'
 import { useChatTyping } from './useChatTyping'
 import { ChatStats, ChatWelcome } from './ChatSideExtras'
+import { ReactionPeople } from './ReactionPeople'
 
 /**
  * แชทออฟฟิศ — แชทส่วนตัวและแชทกลุ่ม
@@ -136,6 +137,8 @@ export function OfficeChat() {
   const [replying, setReplying] = useState<Message | null>(null)
   /** ข้อความที่กล่องเลือกอิโมจิเปิดอยู่ — ครั้งละใบเดียว */
   const [pickFor, setPickFor] = useState<string | null>(null)
+  /** ข้อความที่กำลังเปิดดูว่า "ใครกดความรู้สึกบ้าง" */
+  const [whoFor, setWhoFor] = useState<string | null>(null)
 
   const endRef = useRef<HTMLDivElement | null>(null)
   const wallRef = useRef<HTMLDivElement | null>(null)
@@ -236,6 +239,9 @@ export function OfficeChat() {
      */
     setReplying(null)
     setPickFor(null)
+    /* ★ กล่อง "ใครกดบ้าง" ผูกกับ id ของข้อความในห้องเดิม — ค้างไว้แล้วจะยิง
+         คำขอที่ได้ FORBIDDEN กลับมา เพราะข้อความนั้นไม่ได้อยู่ในห้องใหม่ */
+    setWhoFor(null)
     if (openId) void loadThread(openId)
   }, [openId, loadThread])
 
@@ -1068,8 +1074,18 @@ export function OfficeChat() {
                                   <button
                                     key={r.emoji}
                                     type="button"
-                                    onClick={() => void react(m, r.emoji)}
-                                    title={ot(r.mine ? 'chat.unreact' : 'chat.react')}
+                                    /*
+                                     * ★★★ กดเม็ดแล้ว "เปิดดูว่าใครกด" ไม่ใช่ถอนของตัวเอง
+                                     *
+                                     *     ★ เดิมกดแล้วถอนทันที ★★ ซึ่งแปลว่าไม่มีทางรู้เลยว่า
+                                     *       ใครกดบ้าง — เม็ด "👍 3" ตอบได้แค่ "สามคน"
+                                     *       แต่คำถามจริงในที่ทำงานคือ "หัวหน้าเห็นหรือยัง"
+                                     *     ★ การถอนย้ายไปอยู่ในกล่อง (แตะชื่อตัวเอง) และยังถอน
+                                     *       จากกล่องเลือกอีโมจิได้เหมือนเดิม — เลือกตัวเดิมซ้ำ = ถอน
+                                     *       ★★ ทางถอนจึงไม่ได้หายไป แค่ไม่ใช่ผลข้างเคียงของการ "ดู"
+                                     */
+                                    onClick={() => setWhoFor(m.id)}
+                                    title={ot('chat.whoReacted')}
                                     className={cn('rx-chip', r.mine && 'rx-chip-mine')}
                                   >
                                     <span aria-hidden="true">{r.emoji}</span>
@@ -1326,6 +1342,29 @@ export function OfficeChat() {
           </>
         )}
       </section>
+
+      {/*
+        * ★ กล่องอยู่นอก <section> ของห้อง — มันเป็น portal ไปที่ document.body อยู่แล้ว
+        *   ★★ วางไว้ตรงนี้เพื่อให้อ่านโค้ดแล้วเห็นว่ามันเป็นของทั้งหน้า
+        *      ไม่ใช่ของบานใดบานหนึ่ง
+        */}
+      {whoFor && openId ? (
+        <ReactionPeople
+          roomId={openId}
+          messageId={whoFor}
+          onClose={() => setWhoFor(null)}
+          onToggle={(emoji) => {
+            /*
+             * ★ หาข้อความจาก thread ตอนกด ไม่ได้เก็บทั้งก้อนไว้ใน state
+             *   ★★ ข้อความถูกดึงใหม่ทุก 5 วินาที ★ ก้อนที่เก็บไว้ตอนเปิดกล่อง
+             *      จะมี reactions เป็นค่าเก่า แล้ว react() จะคำนวณ "เรากดไว้ไหม"
+             *      จากค่าเก่านั้น — ได้ผลกลับด้านถ้ามีคนกดเพิ่มระหว่างที่กล่องเปิด
+             */
+            const msg = thread?.messages.find((x) => x.id === whoFor)
+            if (msg) void react(msg, emoji)
+          }}
+        />
+      ) : null}
     </div>
   )
 }
