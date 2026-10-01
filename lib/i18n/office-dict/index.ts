@@ -15,6 +15,7 @@ import { es } from './es'
 import { pt } from './pt'
 import { it } from './it'
 import { ru } from './ru'
+import { ar } from './ar'
 
 export type { OfficeDict, OfficeKey, Ot }
 
@@ -28,19 +29,16 @@ export type { OfficeDict, OfficeKey, Ot }
  */
 
 /*
- * ★★★ ระหว่างแปล ตารางนี้เป็น Partial ชั่วคราว
+ * ★★ Record เต็ม ไม่ใช่ Partial — เหตุผลเดียวกับ dict ของห้องเพลง
  *
- *     ★ ภาษาที่ยังไม่มีไฟล์ ตกไปอังกฤษตาม fallbackFor() ซึ่งเป็นพฤติกรรม
- *       ที่ออกแบบไว้แต่แรกอยู่แล้ว — ★★ คนญี่ปุ่นเห็นอังกฤษ ไม่ใช่เห็นไทย
- *       ซึ่งอ่านไม่ออกเลยแม้แต่ตัวเดียว
- *
- *     ★★ พอครบ 16 ไฟล์ ต้องเปลี่ยนกลับเป็น Record<Locale, OfficeDict> เต็ม
- *        ★ เพื่อให้วันที่ใครเพิ่มภาษาใน LOCALES แล้วลืมสร้างไฟล์ดิกชันนารี
- *          TypeScript ไม่ยอมคอมไพล์ แทนที่จะปล่อยให้ตกไปอังกฤษเงียบ ๆ
- *          แล้วไม่มีใครรู้จนกว่าจะมีคนบ่น
+ *    ระหว่างที่ยังแปลไม่ครบ ตัวนี้เป็น Partial เพื่อให้ภาษาที่ยังไม่มีไฟล์
+ *    ตกไปอังกฤษ ★ ตอนนี้ครบ 16 ภาษาแล้ว จึงเปลี่ยนกลับเป็น Record เต็มทันที —
+ *      วันที่ใครเพิ่มภาษาใน LOCALES แล้วลืมสร้างดิกชันนารี TypeScript
+ *      จะไม่ยอมคอมไพล์ ★★ แทนที่จะปล่อยให้ภาษานั้นตกไปอังกฤษเงียบ ๆ
+ *      แล้วไม่มีใครรู้จนกว่าจะมีคนบ่น
  */
-const DICTS: Partial<Record<Locale, OfficeDict>> = {
-  th, en, ja, zh, ko, lo, vi, id, ms, fr, de, es, pt, it, ru,
+const DICTS: Record<Locale, OfficeDict> = {
+  th, en, zh, ja, ko, lo, vi, id, ms, fr, de, es, pt, it, ru, ar,
 }
 
 export function officeDictOf(locale: Locale): OfficeDict {
