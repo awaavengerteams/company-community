@@ -27,7 +27,13 @@ export const GET = withErrorHandling(async () => {
    */
   const { data, error } = await admin
     .from('profiles')
-    .select('id, display_name, nickname, username, department, employee_code, is_admin, account_status, created_at')
+    /* ★ ต้องเป็นสตริงก้อนเดียว ห้ามต่อด้วย + ★★ supabase-js อ่านชื่อคอลัมน์
+       จาก literal เพื่อสร้าง type ให้ — พอต่อสตริงมันจะกลายเป็น string ธรรมดา
+       แล้ว type ของผลลัพธ์พังทั้งก้อน (เจอมาแล้วตอนเพิ่มคอลัมน์ชุดนี้)
+       ★ ยังไม่มี payment_qr_path เหมือนเดิม ดูเหตุผลข้างบน */
+    .select(
+      'id, display_name, nickname, username, department, employee_code, is_admin, account_status, created_at, prefix, first_name, last_name, phone, company, position_title, purpose, terms_accepted_at',
+    )
     .not('employee_code', 'is', null)
     .order('created_at', { ascending: false })
 
@@ -44,6 +50,14 @@ export const GET = withErrorHandling(async () => {
       isAdmin: p.is_admin,
       accountStatus: p.account_status,
       createdAt: p.created_at,
+      prefix: p.prefix,
+      firstName: p.first_name,
+      lastName: p.last_name,
+      phone: p.phone,
+      company: p.company,
+      position: p.position_title,
+      purpose: p.purpose,
+      termsAcceptedAt: p.terms_accepted_at,
     })),
   })
 })
@@ -62,6 +76,18 @@ const actionSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('resetPassword'),
     userId: z.uuid(),
+  }),
+  /* ★ แก้ข้อมูลพนักงาน (0041) — ชื่อ/นามสกุลบังคับ ที่เหลือว่างได้ */
+  z.object({
+    action: z.literal('profile'),
+    userId: z.uuid(),
+    prefix: z.string().trim().max(20).nullish(),
+    firstName: z.string().trim().min(1, 'common.required').max(60),
+    lastName: z.string().trim().min(1, 'common.required').max(60),
+    phone: z.string().trim().max(30).nullish(),
+    company: z.string().trim().max(80).nullish(),
+    department: z.string().trim().max(80).nullish(),
+    position: z.string().trim().max(80).nullish(),
   }),
 ])
 
@@ -83,6 +109,27 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     })
     if (error) throw fromPostgresError(error)
     return ok({ accountStatus: data?.account_status ?? body.status })
+  }
+
+  /*
+   * ★ Admin แก้ข้อมูลพนักงานที่กรอกผิดตอนสมัคร หรือย้ายฝ่าย
+   *   ★★ ไม่ให้แก้ username และ employee_code จากที่นี่ — สองอันนั้นเป็น
+   *      ตัวตนที่ของอื่นอ้างถึงอยู่ ต้องไปเส้นทางของมันเอง
+   */
+  if (body.action === 'profile') {
+    const { error } = await admin.rpc('admin_update_profile', {
+      p_actor: actor.id,
+      p_target: body.userId,
+      p_prefix: body.prefix ?? null,
+      p_first: body.firstName,
+      p_last: body.lastName,
+      p_phone: body.phone ?? null,
+      p_company: body.company ?? null,
+      p_dept: body.department ?? null,
+      p_position: body.position ?? null,
+    })
+    if (error) throw fromPostgresError(error)
+    return ok({})
   }
 
   if (body.action === 'admin') {

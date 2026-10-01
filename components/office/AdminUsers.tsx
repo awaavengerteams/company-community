@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -18,6 +18,15 @@ type Row = {
   isAdmin: boolean
   accountStatus: AccountStatus
   createdAt: string
+  /* ── ข้อมูลจากฟอร์มสมัคร (0041) ── */
+  prefix: string | null
+  firstName: string | null
+  lastName: string | null
+  phone: string | null
+  company: string | null
+  position: string | null
+  purpose: string | null
+  termsAcceptedAt: string | null
 }
 
 /** หน้าจัดการผู้ใช้งาน (FR-X09 · หัวข้อ 8.6) */
@@ -28,6 +37,8 @@ export function AdminUsers({ selfId }: { selfId: string }) {
   const [error, setError] = useState<string | null>(null)
   /** รหัสชั่วคราวที่เพิ่งสร้าง — แสดงครั้งเดียวแล้วหายเมื่อรีเฟรช */
   const [temp, setTemp] = useState<{ id: string; password: string } | null>(null)
+  /** แถวที่กางรายละเอียดอยู่ — ทีละแถวเท่านั้น */
+  const [openId, setOpenId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -66,13 +77,18 @@ export function AdminUsers({ selfId }: { selfId: string }) {
       r.displayName.toLowerCase().includes(q) ||
       (r.nickname ?? '').toLowerCase().includes(q) ||
       (r.employeeCode ?? '').toLowerCase().includes(q) ||
-      (r.department ?? '').toLowerCase().includes(q)
+      (r.department ?? '').toLowerCase().includes(q) ||
+      /* ★ เพิ่ม username · เบอร์โทร · บริษัท — Admin มักค้นจากสิ่งที่
+         ผู้ใช้บอกมาทางโทรศัพท์ ซึ่งไม่ค่อยใช่ชื่อที่ตั้งไว้ในระบบ */
+      (r.username ?? '').toLowerCase().includes(q) ||
+      (r.phone ?? '').includes(q) ||
+      (r.company ?? '').toLowerCase().includes(q)
     )
   })
 
   return (
     <div className="py-2">
-      <p className="mt-1 text-sm text-ink-soft">{rows.length} คน</p>
+      <p className="mt-1 text-sm text-ink-soft">{ot('admin.users.count', { n: rows.length })}</p>
 
       {error ? (
         <p role="alert" className="mt-3 text-sm text-danger">
@@ -100,8 +116,8 @@ export function AdminUsers({ selfId }: { selfId: string }) {
         <Input radius="round"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={ot('common.search')}
-          className="max-w-xs"
+          placeholder={ot('admin.users.search')}
+          className="max-w-md"
         />
       </div>
 
@@ -128,7 +144,8 @@ export function AdminUsers({ selfId }: { selfId: string }) {
               filtered.map((row) => {
                 const self = row.id === selfId
                 return (
-                  <tr key={row.id} className="border-t border-line">
+                  <Fragment key={row.id}>
+                  <tr className="border-t border-line">
                     <Td>
                       {row.nickname || row.displayName}
                       {self ? <span className="ms-1 text-xs text-ink-faint">(คุณ)</span> : null}
@@ -183,9 +200,33 @@ export function AdminUsers({ selfId }: { selfId: string }) {
                             ? ot('admin.users.removeAdmin')
                             : ot('admin.users.makeAdmin')}
                         </Button>
+
+                        {/* ★ ปุ่มกางรายละเอียด — ข้อมูลจากฟอร์มสมัครมี 8 ช่อง
+                            ★★ ยัดลงตารางหมดจะได้ตารางที่ต้องเลื่อนแนวนอนสามจอ
+                               และอ่านไม่ออกสักคอลัมน์ */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setOpenId(openId === row.id ? null : row.id)}
+                        >
+                          {openId === row.id ? ot('common.close') : ot('admin.users.detail')}
+                        </Button>
                       </div>
                     </Td>
                   </tr>
+
+                  {openId === row.id ? (
+                    <tr key={`${row.id}-detail`} className="border-t border-line bg-surface/40">
+                      <td colSpan={6} className="px-4 py-4">
+                        <UserDetail
+                          row={row}
+                          busy={busy === row.id}
+                          onSave={(patch) => act(row.id, { action: 'profile', ...patch })}
+                        />
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
                 )
               })
             )}
@@ -193,6 +234,119 @@ export function AdminUsers({ selfId }: { selfId: string }) {
         </table>
       </div>
     </div>
+  )
+}
+
+/**
+ * รายละเอียดผู้ใช้หนึ่งคน + แก้ไขได้ในที่
+ *
+ * ★★ แก้ตรงนี้เลย ไม่เด้งไปหน้าอื่น
+ *    ★ Admin ที่กำลังไล่ตรวจคนสมัครเข้ามาสิบคน ต้องการแก้ชื่อที่พิมพ์ผิด
+ *      แล้วไปคนถัดไป ★★ การเปิดหน้าใหม่แล้วกดกลับทุกครั้งทำให้เสียตำแหน่ง
+ *      ที่ไล่อ่านมา และต้องค้นหาใหม่ทุกคน
+ *
+ * ★ ช่องที่แก้ไม่ได้ (username · รหัสพนักงาน) แสดงเป็นข้อความ ไม่ใช่ช่องกรอก
+ *   ที่กดไม่ได้ ★★ ช่องเทา ๆ ที่พิมพ์ไม่ได้ชวนให้คนพยายามพิมพ์แล้วสงสัยว่าพัง
+ */
+function UserDetail({
+  row,
+  busy,
+  onSave,
+}: {
+  row: Row
+  busy: boolean
+  onSave: (patch: Record<string, string>) => void | Promise<void>
+}) {
+  const [prefix, setPrefix] = useState(row.prefix ?? '')
+  const [firstName, setFirstName] = useState(row.firstName ?? '')
+  const [lastName, setLastName] = useState(row.lastName ?? '')
+  const [phone, setPhone] = useState(row.phone ?? '')
+  const [company, setCompany] = useState(row.company ?? '')
+  const [department, setDepartment] = useState(row.department ?? '')
+  const [position, setPosition] = useState(row.position ?? '')
+
+  const dirty =
+    prefix !== (row.prefix ?? '') ||
+    firstName !== (row.firstName ?? '') ||
+    lastName !== (row.lastName ?? '') ||
+    phone !== (row.phone ?? '') ||
+    company !== (row.company ?? '') ||
+    department !== (row.department ?? '') ||
+    position !== (row.position ?? '')
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* ── ของที่แก้ไม่ได้ ───────────────────────────────────── */}
+      <div className="flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-ink-soft">
+        <span>
+          Username <span className="font-mono text-ink">{row.username ?? '—'}</span>
+        </span>
+        <span>
+          {ot('admin.codes.code')}{' '}
+          <span className="font-mono text-ink">{row.employeeCode ?? '—'}</span>
+        </span>
+        <span>
+          {ot('admin.users.registeredAt')}{' '}
+          <span className="text-ink">
+            {new Date(row.createdAt).toLocaleDateString('th-TH', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })}
+          </span>
+        </span>
+      </div>
+
+      {row.purpose ? (
+        <div className="rounded-xl border border-line bg-elevated/50 p-3">
+          <p className="text-[11px] text-ink-faint">{ot('admin.users.purpose')}</p>
+          <p className="mt-0.5 text-sm leading-relaxed text-ink">{row.purpose}</p>
+        </div>
+      ) : null}
+
+      {/* ── ของที่แก้ได้ ──────────────────────────────────────── */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Mini label={ot('reg.prefix')} value={prefix} onChange={setPrefix} max={20} />
+        <Mini label={ot('reg.firstName')} value={firstName} onChange={setFirstName} max={60} />
+        <Mini label={ot('reg.lastName')} value={lastName} onChange={setLastName} max={60} />
+        <Mini label={ot('admin.users.phone')} value={phone} onChange={setPhone} max={30} />
+        <Mini label={ot('admin.users.company')} value={company} onChange={setCompany} max={80} />
+        <Mini label={ot('reg.department')} value={department} onChange={setDepartment} max={80} />
+        <Mini label={ot('admin.users.position')} value={position} onChange={setPosition} max={80} />
+      </div>
+
+      <div>
+        <Button
+          size="sm"
+          loading={busy}
+          disabled={!dirty || !firstName.trim() || !lastName.trim()}
+          onClick={() =>
+            void onSave({ prefix, firstName, lastName, phone, company, department, position })
+          }
+        >
+          {ot('common.save')}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function Mini({
+  label,
+  value,
+  onChange,
+  max,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  max: number
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[11px] text-ink-faint">{label}</span>
+      <Input radius="round" value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} />
+    </label>
   )
 }
 

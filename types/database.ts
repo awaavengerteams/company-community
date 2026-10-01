@@ -67,6 +67,14 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          prefix: string | null
+          first_name: string | null
+          last_name: string | null
+          phone: string | null
+          company: string | null
+          position_title: string | null
+          purpose: string | null
+          terms_accepted_at: string | null
           id: string
           display_name: string
           avatar_url: string | null
@@ -1112,6 +1120,44 @@ export type Database = {
       }
 
       /* ── ระบบกิจกรรมออฟฟิศ (0023) ───────────────────────────────────── */
+      /* ── 0041 · ระบบสมัครสมาชิก ─────────────────────────────── */
+      register_employee: {
+        Args: {
+          p_actor: string
+          p_code: string
+          p_prefix: string
+          p_first: string
+          p_last: string
+          p_phone?: string | null
+          p_company?: string | null
+          p_dept?: string | null
+          p_position?: string | null
+          p_purpose?: string | null
+        }
+        Returns: Database['public']['Tables']['profiles']['Row']
+      }
+      user_has_password: {
+        Args: { p_user: string }
+        Returns: boolean
+      }
+      admin_user_list: {
+        Args: { p_actor: string }
+        Returns: unknown
+      }
+      admin_update_profile: {
+        Args: {
+          p_actor: string
+          p_target: string
+          p_prefix: string | null
+          p_first: string
+          p_last: string
+          p_phone: string | null
+          p_company: string | null
+          p_dept: string | null
+          p_position: string | null
+        }
+        Returns: Database['public']['Tables']['profiles']['Row']
+      }
       claim_employee_code: {
         Args: {
           p_actor: string

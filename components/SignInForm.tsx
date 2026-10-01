@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react'
 
 import { useState, type FormEvent } from 'react'
+import Link from 'next/link'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -49,6 +50,7 @@ export function SignInForm({
 }) {
   const t = useT()
   const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -87,9 +89,18 @@ export function SignInForm({
       const { tokenHash, username: saved } = await apiFetch<{
         tokenHash: string
         username: string
-      }>('/api/auth/username', {
+        /*
+         * ★★★ ต้องเป็น /api/auth/login ไม่ใช่ /api/auth/username
+         *
+         *     ★ ทางเดิมออก session ให้ทุกคนที่พิมพ์ชื่อถูก โดยไม่ดูรหัสผ่านเลย
+         *       ★★ ถ้ายังเรียกทางนั้น คนที่ตั้งรหัสผ่านไว้จะถูกข้ามรหัสผ่าน
+         *          ได้ด้วยการเข้าจากฟอร์มนี้ — รหัสผ่านกลายเป็นของประดับ
+         *     ★ ทางใหม่ตรวจว่าบัญชีนั้น "เคยตั้งรหัสผ่านหรือยัง" แล้วบังคับ
+         *       เฉพาะคนที่ตั้งไว้ ★★ บัญชีรุ่นเก่าจึงยังเข้าได้เหมือนเดิม
+         */
+      }>('/api/auth/login', {
         method: 'POST',
-        body: { username: clean },
+        body: { username: clean, password },
         signal: AbortSignal.timeout(25_000),
       })
 
@@ -182,6 +193,37 @@ export function SignInForm({
           <p className="mt-1.5 text-[11px] text-ink-faint">{t('auth.rule')}</p>
         </div>
 
+        {/*
+          * ★★ ช่องรหัสผ่านไม่บังคับที่ฟอร์ม แต่บังคับที่เซิร์ฟเวอร์
+          *
+          *    ★ บัญชีรุ่นเก่าไม่มีรหัสผ่าน ถ้าทำช่องนี้เป็น required ทุกคน
+          *      ที่ใช้อยู่เดิมจะเข้าไม่ได้ทันที
+          *    ★★ ส่วนคนที่ตั้งรหัสผ่านไว้ เซิร์ฟเวอร์จะปฏิเสธถ้าเว้นว่าง —
+          *       การไม่บังคับที่ฟอร์มจึงไม่ใช่ช่องโหว่ แค่ไม่เดาแทนผู้ใช้
+          */}
+        <div className="mt-3">
+          <label className="mb-1.5 block text-xs text-ink-soft" htmlFor="password">
+            {t('auth.password')}
+          </label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value)
+              setError(null)
+            }}
+            maxLength={72}
+            autoComplete="current-password"
+            aria-label={t('auth.password')}
+            disabled={pending}
+            invalid={Boolean(error)}
+            focusTone="accent"
+            className="h-12 rounded-xl text-[15px] sm:text-[15px]"
+          />
+          <p className="mt-1.5 text-[11px] text-ink-faint">{t('auth.passwordOptional')}</p>
+        </div>
+
         {error ? (
           <p role="alert" className="mt-3 text-xs text-danger">
             {error}
@@ -250,6 +292,13 @@ export function SignInForm({
           )}
         </ul>
       ) : null}
+      <p className="mt-4 text-center text-xs text-ink-soft">
+        {t('auth.noAccount')}{' '}
+        <Link href="/register" className="font-medium text-link hover:underline">
+          {t('auth.register')}
+        </Link>
+      </p>
+
     </form>
   )
 }
