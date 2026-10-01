@@ -464,6 +464,7 @@ export const vi: Dict = {
   "srvErr.signInFailed": "Đăng nhập không thành công. Vui lòng thử lại.",
   "menu.signedInAs": "Đang đăng nhập",
   "menu.profile": "Hồ sơ của tôi",
+  "menu.admin": "Quản trị",
   "menu.signOut": "Đăng xuất",
   "menu.open": "Menu tài khoản",
   "auth.password": "Mật khẩu",

@@ -85,3 +85,27 @@ export async function getOfficeViewer(): Promise<OfficeViewer | null> {
     accountStatus: row.account_status ?? 'ACTIVE',
   }
 }
+
+/**
+ * คนนี้เป็น Admin ไหม — คำถามเดียว คำตอบเดียว
+ *
+ * ★★ แยกจาก getOfficeViewer() เพราะหน้าแรกไม่ได้ต้องการข้อมูลทั้งชุด
+ *    ★ มันต้องการแค่ "โชว์ปุ่ม Admin ไหม" ★★ และต้องไม่ทำให้หน้าแรกพัง
+ *       ถ้า query นี้ล้ม — ล้มแล้วคืน false คือไม่เห็นปุ่ม ซึ่งยอมรับได้
+ *       ต่างจากการโยน error ที่จะทำให้ทั้งหน้าไม่ขึ้น
+ */
+export async function viewerIsAdmin(userId: string): Promise<boolean> {
+  try {
+    /* ★ ใช้ client ของผู้ใช้เอง ไม่ใช่ service role — อ่านสิทธิ์ตัวเองพอ
+       ★★ ไม่ต้องยกระดับสิทธิ์เพื่อตอบคำถามที่ RLS ยอมให้ถามอยู่แล้ว */
+    const supabase = await createSupabaseServerClient()
+    const { data } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .maybeSingle()
+    return Boolean(data?.is_admin)
+  } catch {
+    return false
+  }
+}

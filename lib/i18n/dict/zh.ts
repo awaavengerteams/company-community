@@ -464,6 +464,7 @@ export const zh: Dict = {
   "srvErr.signInFailed": "登录失败，请再试一次",
   "menu.signedInAs": "当前登录",
   "menu.profile": "我的资料",
+  "menu.admin": "管理后台",
   "menu.signOut": "退出登录",
   "menu.open": "账号菜单",
   "auth.password": "密码",

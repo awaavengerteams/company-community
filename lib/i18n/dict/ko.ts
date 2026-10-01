@@ -464,6 +464,7 @@ export const ko: Dict = {
   "srvErr.signInFailed": "로그인하지 못했어요. 다시 시도해 주세요.",
   "menu.signedInAs": "로그인 계정",
   "menu.profile": "내 프로필",
+  "menu.admin": "관리자 메뉴",
   "menu.signOut": "로그아웃",
   "menu.open": "계정 메뉴",
   "auth.password": "비밀번호",

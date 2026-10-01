@@ -464,6 +464,7 @@ export const ru: Dict = {
   "srvErr.signInFailed": "Войти не получилось. Попробуйте снова.",
   "menu.signedInAs": "Вы вошли как",
   "menu.profile": "Мой профиль",
+  "menu.admin": "Администрирование",
   "menu.signOut": "Выйти",
   "menu.open": "Меню аккаунта",
   "auth.password": "Пароль",

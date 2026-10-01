@@ -464,6 +464,7 @@ export const ms: Dict = {
   "srvErr.signInFailed": "Gagal log masuk. Sila cuba lagi.",
   "menu.signedInAs": "Log masuk sebagai",
   "menu.profile": "Profil saya",
+  "menu.admin": "Panel pentadbir",
   "menu.signOut": "Log keluar",
   "menu.open": "Menu akaun",
   "auth.password": "Kata laluan",

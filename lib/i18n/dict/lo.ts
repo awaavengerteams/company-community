@@ -464,6 +464,7 @@ export const lo: Dict = {
   "srvErr.signInFailed": "ເຂົ້າໃຊ້ງານບໍ່ສຳເລັດ ລອງໃໝ່ອີກຄັ້ງ",
   "menu.signedInAs": "ເຂົ້າໃຊ້ໃນນາມ",
   "menu.profile": "ໂປຣໄຟລ໌ຂອງຂ້ອຍ",
+  "menu.admin": "ຜູ້ດູແລລະບົບ",
   "menu.signOut": "ອອກຈາກລະບົບ",
   "menu.open": "ເມນູບັນຊີ",
   "auth.password": "ລະຫັດຜ່ານ",

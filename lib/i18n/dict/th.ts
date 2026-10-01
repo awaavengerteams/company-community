@@ -531,6 +531,7 @@ export const th = {
   "srvErr.signInFailed": "เข้าใช้งานไม่สำเร็จ ลองใหม่อีกครั้ง",
   "menu.signedInAs": "เข้าใช้งานในนาม",
   "menu.profile": "โปรไฟล์ของฉัน",
+  "menu.admin": "ผู้ดูแลระบบ",
   "menu.signOut": "ออกจากระบบ",
   "menu.open": "เมนูบัญชี",
   "auth.password": "รหัสผ่าน",

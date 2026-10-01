@@ -464,6 +464,7 @@ export const ar: Dict = {
   "srvErr.signInFailed": "تعذّر الدخول. حاول مرة أخرى.",
   "menu.signedInAs": "مسجّل الدخول باسم",
   "menu.profile": "ملفي الشخصي",
+  "menu.admin": "أدوات المشرف",
   "menu.signOut": "تسجيل الخروج",
   "menu.open": "قائمة الحساب",
   "auth.password": "كلمة المرور",

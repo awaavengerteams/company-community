@@ -464,6 +464,7 @@ export const id: Dict = {
   "srvErr.signInFailed": "Gagal masuk. Silakan coba lagi.",
   "menu.signedInAs": "Masuk sebagai",
   "menu.profile": "Profil saya",
+  "menu.admin": "Panel admin",
   "menu.signOut": "Keluar",
   "menu.open": "Menu akun",
   "auth.password": "Kata sandi",

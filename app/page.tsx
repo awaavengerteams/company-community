@@ -9,6 +9,7 @@ import { SetupNotice } from '@/components/home/SetupNotice'
 import { getHomeStats } from '@/lib/home/stats'
 import { SignInScreen } from '@/components/SignInScreen'
 import { getRegisteredUser } from '@/lib/supabase/server'
+import { viewerIsAdmin } from '@/lib/office/session'
 import { getT } from '@/lib/i18n/server'
 
 /**
@@ -40,6 +41,15 @@ export default async function HomePage() {
   const me = await getRegisteredUser()
   if (!me) return <SignInScreen />
 
+  /*
+   * ★ อ่านสิทธิ์ Admin แยกต่างหาก ไม่ไปเพิ่มคอลัมน์ใน getRegisteredUser
+   *   ★★ ฟังก์ชันนั้นเป็นด่านเข้าของทั้งเว็บ และมีประวัติว่าเคยพังจนทุกคน
+   *      ถูกเด้งออกพร้อมกันเพราะ select คอลัมน์ที่ยังไม่มี (ดูคอมเมนต์ในไฟล์นั้น)
+   *   ★ query เล็ก ๆ ที่ล้มได้โดยไม่กระทบอะไรจึงปลอดภัยกว่า — ล้มแล้วแค่
+   *     ไม่เห็นปุ่ม Admin ไม่ใช่เข้าเว็บไม่ได้
+   */
+  const isAdmin = await viewerIsAdmin(me.id)
+
   const stats = await getHomeStats()
   const { t } = await getT()
 
@@ -58,7 +68,7 @@ export default async function HomePage() {
         /* ★ หน้านี้ไม่ได้อ่านสิทธิ์ Admin มา (getRegisteredUser ไม่คืนมาให้)
              ★★ ไม่ยิง query เพิ่มเพื่อป้ายเล็ก ๆ อันเดียว — ป้าย Admin
                 แสดงในแถบบนของโมดูลออฟฟิศซึ่งเป็นที่ที่สิทธิ์นั้นมีผลจริง */
-          right={<UserMenu displayName={me.displayName} isAdmin={false} avatarUrl={me.avatarUrl} />}
+          right={<UserMenu displayName={me.displayName} isAdmin={isAdmin} avatarUrl={me.avatarUrl} />}
       />
 
       <PortalHero stats={stats} />

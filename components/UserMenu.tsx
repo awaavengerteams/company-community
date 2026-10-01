@@ -124,6 +124,34 @@ export function UserMenu({
             </p>
           </div>
 
+          {/*
+            * ★★ ทางเข้าหน้าผู้ดูแลระบบอยู่ในเมนูด้วย ไม่ใช่แค่ปุ่มบนแถบ
+            *    ★ ปุ่มบนแถบมีเฉพาะในโมดูลออฟฟิศ ★★ แต่เมนูนี้อยู่ทุกหน้า
+            *       รวมหน้าแรก — Admin จึงไม่ต้องกลับไปหน้ารวมก่อนทุกครั้ง
+            */}
+          {isAdmin ? (
+            <Link
+              href="/office/admin/users"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 border-b border-line px-4 py-3 text-sm font-medium text-accent transition-colors hover:bg-accent/10"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6zM9.5 12l2 2 3.5-3.5" />
+              </svg>
+              {t('menu.admin')}
+            </Link>
+          ) : null}
+
           <Link
             href={profileHref}
             role="menuitem"

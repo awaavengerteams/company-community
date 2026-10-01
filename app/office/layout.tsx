@@ -89,6 +89,37 @@ function OfficeHeader({
       </Link>
 
       <div className="ms-auto flex items-center gap-1">
+        {/*
+          * ★★★ ปุ่มเข้าหน้าผู้ดูแลระบบ — เห็นเฉพาะ Admin
+          *
+          *     ★ เดิมต้องกลับไปหน้ารวม → หาการ์ด "ผู้ดูแลระบบ" → กดเข้า
+          *       แดชบอร์ด → แล้วค่อยกดแท็บ "ผู้ใช้งาน" รวมสี่จังหวะ
+          *       ★★ ทั้งที่เป็นงานที่ Admin ทำบ่อยที่สุดในระบบ
+          *     ★ ปุ่มนี้พาไปหน้าจัดการผู้ใช้ตรง ๆ ไม่ใช่แดชบอร์ด —
+          *       ★★ คนกดปุ่ม Admin ส่วนใหญ่มาเพื่อจัดการคน ไม่ได้มาดูกราฟ
+          */}
+        {isAdmin ? (
+          <Link
+            href="/office/admin/users"
+            title={ot('nav.admin')}
+            aria-label={ot('nav.admin')}
+            className="grid size-9 shrink-0 place-items-center rounded-full text-accent transition-colors hover:bg-accent/15"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="size-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6zM9.5 12l2 2 3.5-3.5" />
+            </svg>
+          </Link>
+        ) : null}
+
         <NotificationBell userId={userId} />
         <ThemeToggle />
         {/*

@@ -464,6 +464,7 @@ export const es: Dict = {
   "srvErr.signInFailed": "No se pudo entrar. Inténtalo otra vez.",
   "menu.signedInAs": "Sesión iniciada como",
   "menu.profile": "Mi perfil",
+  "menu.admin": "Administración",
   "menu.signOut": "Cerrar sesión",
   "menu.open": "Menú de cuenta",
   "auth.password": "Contraseña",

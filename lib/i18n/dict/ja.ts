@@ -464,6 +464,7 @@ export const ja: Dict = {
   "srvErr.signInFailed": "ログインできませんでした。もう一度お試しください。",
   "menu.signedInAs": "ログイン中",
   "menu.profile": "プロフィール",
+  "menu.admin": "管理メニュー",
   "menu.signOut": "ログアウト",
   "menu.open": "アカウントメニュー",
   "auth.password": "パスワード",
