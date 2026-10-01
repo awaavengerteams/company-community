@@ -2,6 +2,11 @@ import { type Locale } from '../config'
 import { makeOt, type Ot } from '../office-format'
 import { th, type OfficeDict, type OfficeKey } from './th'
 import { en } from './en'
+import { ja } from './ja'
+import { zh } from './zh'
+import { ko } from './ko'
+import { lo } from './lo'
+import { vi } from './vi'
 
 export type { OfficeDict, OfficeKey, Ot }
 
@@ -27,7 +32,7 @@ export type { OfficeDict, OfficeKey, Ot }
  *          แล้วไม่มีใครรู้จนกว่าจะมีคนบ่น
  */
 const DICTS: Partial<Record<Locale, OfficeDict>> = {
-  th, en,
+  th, en, ja, zh, ko, lo, vi,
 }
 
 export function officeDictOf(locale: Locale): OfficeDict {
