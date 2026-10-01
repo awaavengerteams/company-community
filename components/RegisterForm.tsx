@@ -32,6 +32,31 @@ import { ot } from '@/lib/i18n/office'
 
 const PREFIXES = ['นาย', 'นาง', 'นางสาว', 'ดร.', 'อื่น ๆ'] as const
 
+/*
+ * ★★★ ฝ่าย/แผนกเป็นรายการให้เลือก ไม่ใช่ช่องพิมพ์อิสระ
+ *
+ *     ★ ช่องพิมพ์อิสระทำให้ฝ่ายเดียวกันถูกเขียนหลายแบบ — "IT" · "ไอที" ·
+ *       "ฝ่ายไอที" · "it" ★★ แล้วตัวกรองในหน้า Admin กับการสรุปยอดตามฝ่าย
+ *       จะนับเป็นคนละฝ่ายกันทั้งหมด โดยไม่มีใครสังเกตจนกว่าจะมีคนทัก
+ *
+ * ★★ ยังมี "อื่น ๆ" ให้พิมพ์เองได้ ★ รายการที่ปิดตายจะบล็อกคนที่อยู่ฝ่ายใหม่
+ *    ซึ่งเกิดขึ้นจริงเสมอในบริษัทที่ยังโต — และคนนั้นจะสมัครไม่ได้เลย
+ */
+const DEPARTMENTS = [
+  'ฝ่ายพัฒนาระบบ',
+  'ฝ่ายทดสอบระบบ',
+  'ฝ่ายวิเคราะห์ระบบ',
+  'ฝ่ายออกแบบ',
+  'ฝ่ายโครงสร้างพื้นฐานและระบบเครือข่าย',
+  'ฝ่ายบริหารโครงการ',
+  'ฝ่ายสนับสนุนและบริการลูกค้า',
+  'ฝ่ายขายและการตลาด',
+  'ฝ่ายบุคคล',
+  'ฝ่ายบัญชีและการเงิน',
+  'ฝ่ายบริหาร',
+  'อื่น ๆ',
+] as const
+
 export function RegisterForm() {
   const router = useRouter()
 
@@ -45,8 +70,8 @@ export function RegisterForm() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
-  const [company, setCompany] = useState('')
-  const [department, setDepartment] = useState('')
+  const [department, setDepartment] = useState<string>('')
+  const [customDept, setCustomDept] = useState('')
   const [position, setPosition] = useState('')
 
   const [purpose, setPurpose] = useState('')
@@ -58,6 +83,7 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null)
 
   const realPrefix = prefix === 'อื่น ๆ' ? customPrefix.trim() : prefix
+  const realDept = department === 'อื่น ๆ' ? customDept.trim() : department
 
   /* ★ ตรวจครบทุกช่องที่บังคับ ปุ่มจึงบอกได้ว่า "ยังกรอกไม่ครบ" ก่อนกด */
   const ready =
@@ -68,8 +94,7 @@ export function RegisterForm() {
     realPrefix.length > 0 &&
     firstName.trim().length > 0 &&
     lastName.trim().length > 0 &&
-    company.trim().length > 0 &&
-    department.trim().length > 0 &&
+    realDept.length > 0 &&
     terms
 
   async function submit(e: React.FormEvent) {
@@ -94,8 +119,11 @@ export function RegisterForm() {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           phone: phone.trim(),
-          company: company.trim(),
-          department: department.trim(),
+          /* ★ บริษัทเป็นค่าคงที่ ไม่ได้มาจากฟอร์ม — แต่ยังส่งไปเก็บ
+             ★★ เพื่อให้หน้า Admin และรายงานยังอ่านฟิลด์เดิมได้เหมือนเดิม
+                วันที่มีบริษัทที่สองจะได้ไม่ต้องย้อนไปเติมข้อมูลเก่าทั้งหมด */
+          company: ot('reg.companyName'),
+          department: realDept,
           position: position.trim(),
           purpose: purpose.trim(),
           terms: true,
@@ -251,26 +279,59 @@ export function RegisterForm() {
           />
         </Field>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={ot('reg.company')} required>
-            <Input
-              radius="round"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              maxLength={80}
-              required
-            />
-          </Field>
-          <Field label={ot('reg.department')} required>
-            <Input
-              radius="round"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              maxLength={80}
-              required
-            />
-          </Field>
+        {/*
+          * ★★ บริษัทแสดงให้อ่าน ไม่ใช่ช่องกรอก
+          *    ★ ระบบนี้ใช้ในบริษัทเดียว ช่องที่ทุกคนต้องพิมพ์คำตอบเดียวกัน
+          *      คือช่องที่ไม่ควรมี — มีแต่จะพิมพ์ไม่ตรงกันเฉย ๆ
+          *    ★★ แต่ยังต้องเห็นว่าสมัครเข้าบริษัทไหน จึงแสดงเป็นข้อมูลพร้อมที่อยู่
+          */}
+        <div className="rounded-2xl border border-line bg-surface/50 p-4">
+          <p className="text-xs text-ink-faint">
+            {ot('reg.company')}
+            <span className="ms-1.5">({ot('reg.companyFixed')})</span>
+          </p>
+          <p className="mt-1 text-sm font-medium leading-snug text-ink">
+            {ot('reg.companyName')}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+            {ot('reg.companyAddress')}
+          </p>
         </div>
+
+        <Field label={ot('reg.department')} required>
+          <select
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
+            required
+            className={cn(
+              'field-input h-11 w-full rounded-full border border-line bg-input px-4',
+              'text-[16px] text-ink sm:text-sm',
+              'transition-colors focus:border-accent/70 focus:outline-none',
+              /* ★ ยังไม่เลือก = สีจาง เหมือน placeholder ของช่องกรอกอื่น
+                 ★★ ไม่งั้นข้อความ "เลือกฝ่าย/แผนก" จะดูเหมือนคำตอบที่เลือกไว้แล้ว */
+              department === '' && 'text-ink-faint',
+            )}
+          >
+            <option value="">{ot('reg.deptPick')}</option>
+            {DEPARTMENTS.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+
+          {department === 'อื่น ๆ' ? (
+            <Input
+              radius="round"
+              value={customDept}
+              onChange={(e) => setCustomDept(e.target.value)}
+              maxLength={80}
+              className="mt-2"
+              placeholder={ot('reg.deptOther')}
+              required
+            />
+          ) : null}
+        </Field>
 
         <Field label={ot('reg.position')} hint={ot('reg.optional')}>
           <Input
