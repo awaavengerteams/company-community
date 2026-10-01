@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -87,7 +87,7 @@ export function AdminUsers({ selfId }: { selfId: string }) {
   })
 
   return (
-    <div className="py-2">
+    <div className="page-wide py-2">
       <p className="mt-1 text-sm text-ink-soft">{ot('admin.users.count', { n: rows.length })}</p>
 
       {error ? (
@@ -121,14 +121,13 @@ export function AdminUsers({ selfId }: { selfId: string }) {
         />
       </div>
 
-      <div className="mt-3 overflow-x-auto rounded-(--radius-card) border border-line">
-        <table className="w-full min-w-[820px] text-sm">
+      <div className="chat-shell mt-3 overflow-x-auto">
+        <table className="w-full min-w-[920px] text-sm">
           <thead className="bg-surface text-xs text-ink-soft">
             <tr>
               <Th>ชื่อ</Th>
               <Th>{ot('admin.codes.code')}</Th>
               <Th>ฝ่าย</Th>
-              <Th>บทบาท</Th>
               <Th>สถานะ</Th>
               <Th> </Th>
             </tr>
@@ -136,7 +135,7 @@ export function AdminUsers({ selfId }: { selfId: string }) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-ink-faint">
+                <td colSpan={5} className="px-4 py-10 text-center text-ink-faint">
                   {ot('common.empty')}
                 </td>
               </tr>
@@ -146,64 +145,47 @@ export function AdminUsers({ selfId }: { selfId: string }) {
                 return (
                   <Fragment key={row.id}>
                   <tr className="border-t border-line">
+                    {/* ★★ ชื่อกับ username ซ้อนกันในช่องเดียว
+                        ★ สองอย่างนี้ตอบคำถามเดียวกันคือ "คนนี้คือใคร"
+                          ★★ แยกคอลัมน์แปลว่ากินความกว้างสองเท่าเพื่อข้อมูล
+                             ที่ตาอ่านพร้อมกันอยู่แล้ว */}
                     <Td>
-                      {row.nickname || row.displayName}
-                      {self ? <span className="ms-1 text-xs text-ink-faint">(คุณ)</span> : null}
+                      <span className="block font-medium text-ink">
+                        {row.nickname || row.displayName}
+                        {self ? <span className="ms-1 text-xs text-ink-faint">(คุณ)</span> : null}
+                      </span>
+                      {row.username ? (
+                        <span className="mt-0.5 block font-mono text-[11px] text-ink-faint">
+                          @{row.username}
+                        </span>
+                      ) : null}
                     </Td>
-                    <Td className="font-mono text-ink-soft">{row.employeeCode ?? '—'}</Td>
+                    <Td className="whitespace-nowrap font-mono text-ink-soft">
+                      {row.employeeCode ?? '—'}
+                    </Td>
                     <Td className="text-ink-soft">{row.department ?? '—'}</Td>
-                    <Td>{row.isAdmin ? <Badge tone="accent">Admin</Badge> : '—'}</Td>
-                    <Td>
-                      <Badge tone={row.accountStatus === 'ACTIVE' ? 'ok' : 'danger'}>
-                        {row.accountStatus === 'ACTIVE' ? 'ใช้งาน' : 'ถูกระงับ'}
-                      </Badge>
+                    {/* ★ บทบาทกับสถานะรวมช่องเดียว — ทั้งคู่เป็นป้ายสั้น ๆ
+                        ★★ และ whitespace-nowrap กัน "ใช้งาน" ถูกตัดเป็นสองบรรทัด */}
+                    <Td className="whitespace-nowrap">
+                      <span className="flex flex-wrap items-center gap-1.5">
+                        <Badge tone={row.accountStatus === 'ACTIVE' ? 'ok' : 'danger'}>
+                          {row.accountStatus === 'ACTIVE' ? 'ใช้งาน' : 'ถูกระงับ'}
+                        </Badge>
+                        {row.isAdmin ? <Badge tone="accent">Admin</Badge> : null}
+                      </span>
                     </Td>
-                    <Td>
-                      <div className="flex flex-wrap gap-1.5">
-                        {/* ★ ซ่อนปุ่มที่ใช้กับตัวเองไม่ได้ แทนที่จะให้กดแล้วเจอ error
-                            RPC ปฏิเสธอยู่แล้ว แต่ปุ่มที่กดไม่ได้ไม่ควรมีให้กด */}
-                        {!self ? (
-                          <Button
-                            size="sm"
-                            variant={row.accountStatus === 'ACTIVE' ? 'danger' : 'secondary'}
-                            loading={busy === row.id}
-                            onClick={() =>
-                              void act(row.id, {
-                                action: 'status',
-                                status: row.accountStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE',
-                              })
-                            }
-                          >
-                            {row.accountStatus === 'ACTIVE'
-                              ? ot('admin.users.suspend')
-                              : ot('admin.users.restore')}
-                          </Button>
-                        ) : null}
-
-                        <Button
-                          size="sm"
-                          loading={busy === row.id}
-                          onClick={() => void act(row.id, { action: 'resetPassword' })}
-                        >
-                          {ot('admin.users.resetPassword')}
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          loading={busy === row.id}
-                          onClick={() =>
-                            void act(row.id, { action: 'admin', isAdmin: !row.isAdmin })
-                          }
-                        >
-                          {row.isAdmin
-                            ? ot('admin.users.removeAdmin')
-                            : ot('admin.users.makeAdmin')}
-                        </Button>
-
-                        {/* ★ ปุ่มกางรายละเอียด — ข้อมูลจากฟอร์มสมัครมี 8 ช่อง
-                            ★★ ยัดลงตารางหมดจะได้ตารางที่ต้องเลื่อนแนวนอนสามจอ
-                               และอ่านไม่ออกสักคอลัมน์ */}
+                    <Td className="whitespace-nowrap text-end">
+                      {/*
+                        * ★★★ ปุ่มหลักหนึ่งปุ่ม ที่เหลืออยู่ในเมนู
+                        *
+                        *     ★ เดิมวางสี่ปุ่มเรียงกันในช่องเดียว ★★ พอชื่อฝ่ายยาว
+                        *       ช่องนี้ถูกบีบจนปุ่มตกลงไปบรรทัดที่สอง แถวสูงขึ้น
+                        *       และตารางอ่านเป็นกองปุ่มมากกว่ารายชื่อคน
+                        *     ★ "ดูข้อมูล" เป็นสิ่งที่กดบ่อยที่สุด จึงอยู่ข้างนอก
+                        *       ★★ ส่วนระงับ/รีเซ็ต/สิทธิ์ เป็นของที่กดนาน ๆ ครั้ง
+                        *          และกดผิดแล้วเดือดร้อน — อยู่ในเมนูจึงปลอดภัยกว่า
+                        */}
+                      <span className="inline-flex items-center justify-end gap-1.5">
                         <Button
                           size="sm"
                           variant="ghost"
@@ -211,13 +193,20 @@ export function AdminUsers({ selfId }: { selfId: string }) {
                         >
                           {openId === row.id ? ot('common.close') : ot('admin.users.detail')}
                         </Button>
-                      </div>
+
+                        <RowMenu
+                          row={row}
+                          self={self}
+                          busy={busy === row.id}
+                          onAct={(body) => act(row.id, body)}
+                        />
+                      </span>
                     </Td>
                   </tr>
 
                   {openId === row.id ? (
                     <tr key={`${row.id}-detail`} className="border-t border-line bg-surface/40">
-                      <td colSpan={6} className="px-4 py-4">
+                      <td colSpan={5} className="px-4 py-4">
                         <UserDetail
                           row={row}
                           busy={busy === row.id}
@@ -248,6 +237,131 @@ export function AdminUsers({ selfId }: { selfId: string }) {
  * ★ ช่องที่แก้ไม่ได้ (username · รหัสพนักงาน) แสดงเป็นข้อความ ไม่ใช่ช่องกรอก
  *   ที่กดไม่ได้ ★★ ช่องเทา ๆ ที่พิมพ์ไม่ได้ชวนให้คนพยายามพิมพ์แล้วสงสัยว่าพัง
  */
+/**
+ * เมนูจัดการผู้ใช้หนึ่งคน
+ *
+ * ★★ ของที่กดผิดแล้วเดือดร้อนไม่ควรอยู่เป็นปุ่มเปล่าในตาราง
+ *    ★ ระงับบัญชี · รีเซ็ตรหัสผ่าน · ให้สิทธิ์ผู้ดูแล — สามอย่างนี้กดนาน ๆ ครั้ง
+ *      ★★ แต่ถ้าวางเรียงไว้ มือจะพลาดไปโดนตอนกวาดสายตาหาแถวที่ต้องการ
+ *    ★ ซ่อนไว้หนึ่งชั้นทำให้ต้องตั้งใจกดจริง โดยไม่ได้ทำให้หายาก
+ */
+function RowMenu({
+  row,
+  self,
+  busy,
+  onAct,
+}: {
+  row: Row
+  self: boolean
+  busy: boolean
+  onAct: (body: Record<string, unknown>) => void | Promise<void>
+}) {
+  const [open, setOpen] = useState(false)
+  const boxRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (!boxRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const run = (body: Record<string, unknown>) => {
+    setOpen(false)
+    void onAct(body)
+  }
+
+  return (
+    <span ref={boxRef as never} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={busy}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={ot('chat.menu')}
+        className={cn(
+          'grid size-8 place-items-center rounded-full text-ink-soft transition-colors',
+          open ? 'bg-surface text-ink' : 'hover:bg-surface hover:text-ink',
+          busy && 'opacity-40',
+        )}
+      >
+        <svg viewBox="0 0 24 24" className="size-5" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="5" r="1.7" />
+          <circle cx="12" cy="12" r="1.7" />
+          <circle cx="12" cy="19" r="1.7" />
+        </svg>
+      </button>
+
+      {open ? (
+        <div
+          role="menu"
+          className="absolute end-0 z-40 mt-1 w-56 overflow-hidden rounded-2xl border border-line bg-elevated text-start shadow-xl"
+        >
+          <MenuItem onClick={() => run({ action: 'resetPassword' })}>
+            {ot('admin.users.resetPassword')}
+          </MenuItem>
+
+          <MenuItem onClick={() => run({ action: 'admin', isAdmin: !row.isAdmin })}>
+            {row.isAdmin ? ot('admin.users.removeAdmin') : ot('admin.users.makeAdmin')}
+          </MenuItem>
+
+          {/* ★ ปุ่มที่ใช้กับตัวเองไม่ได้ ไม่ต้องมีให้กด — RPC ปฏิเสธอยู่แล้ว
+              ★★ แต่ปุ่มที่กดแล้วได้ error คือปุ่มที่ไม่ควรแสดงตั้งแต่แรก */}
+          {!self ? (
+            <MenuItem
+              tone="danger"
+              onClick={() =>
+                run({
+                  action: 'status',
+                  status: row.accountStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE',
+                })
+              }
+            >
+              {row.accountStatus === 'ACTIVE'
+                ? ot('admin.users.suspend')
+                : ot('admin.users.restore')}
+            </MenuItem>
+          ) : null}
+        </div>
+      ) : null}
+    </span>
+  )
+}
+
+function MenuItem({
+  children,
+  onClick,
+  tone,
+}: {
+  children: React.ReactNode
+  onClick: () => void
+  tone?: 'danger'
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className={cn(
+        'block w-full px-4 py-2.5 text-start text-sm transition-colors',
+        tone === 'danger'
+          ? 'text-danger hover:bg-danger/10'
+          : 'text-ink hover:bg-surface',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
 function UserDetail({
   row,
   busy,

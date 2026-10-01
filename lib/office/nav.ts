@@ -214,7 +214,13 @@ export function pageMetaOf(pathname: string): PageMeta | null {
  *    ★★ แชทเป็นหน้าเดียวที่ต้องอ่านสองบานพร้อมกัน — หน้าอื่นเป็นฟอร์มหรือ
  *       รายการซึ่งกว้างไปกลับอ่านยากขึ้นเพราะบรรทัดยาวเกิน
  */
-const WIDE_PAGES = new Set(['/office/chat'])
+const WIDE_PAGES = new Set([
+  '/office/chat',
+  /* ★ ตารางผู้ใช้มี 6 คอลัมน์ + ปุ่มจัดการ ★★ ใน 1000px ปุ่มตกบรรทัด
+     และคำว่า "ใช้งาน" ถูกตัดเป็นสองบรรทัด — ข้อมูลหนาแน่นต้องการความกว้าง */
+  '/office/admin/users',
+  '/office/admin/codes',
+])
 
 export function isWidePage(pathname: string): boolean {
   return WIDE_PAGES.has(pathname)
