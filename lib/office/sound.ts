@@ -20,6 +20,8 @@
 let ctx: AudioContext | null = null
 let muted = false
 
+/* ★ ไม่เปลี่ยนตามชื่อแบรนด์ — เป็นกุญแจที่เก็บไว้ในเครื่องผู้ใช้แล้ว
+   ★★ เปลี่ยนแล้วค่าที่เขาตั้งไว้จะถูกมองว่าไม่มี แล้วรีเซ็ตเงียบ ๆ ทุกคน */
 const MUTE_KEY = 'frameroom:office:muted'
 
 export function isMuted(): boolean {

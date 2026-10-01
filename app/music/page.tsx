@@ -15,7 +15,12 @@ import { getRegisteredUser } from '@/lib/supabase/server'
 import { envStatus } from '@/lib/env'
 import { getT } from '@/lib/i18n/server'
 
-export const metadata: Metadata = { title: 'Frame Room' }
+/*
+ * ★ absolute เพื่อไม่ให้ template เติมชื่อเว็บต่อท้ายอีกรอบ
+ *   ★★ ของเดิมได้ "Frame Room · Frame Room" มาตลอดโดยไม่มีใครสังเกต
+ *      เพราะชื่อหน้ากับชื่อเว็บเป็นคำเดียวกัน
+ */
+export const metadata: Metadata = { title: { absolute: 'AWA ROOM' } }
 
 /**
  * หน้าห้องฟังเพลง — เนื้อหาเดิมของหน้าแรกทั้งหมด ย้ายมาที่ /music

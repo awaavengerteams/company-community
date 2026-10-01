@@ -558,7 +558,7 @@ export const OFFICE_TH = {
   'portal.cta': 'เที่ยงนี้กินอะไรดี',
   'portal.cta2': 'ดูยอดค้างของฉัน',
   'portal.sections': 'เลือกสิ่งที่อยากทำ',
-  'portal.musicNote': 'ระบบนี้เป็นส่วนเสริมของ Frame Room — ห้องฟังเพลงยังใช้งานได้เหมือนเดิมทุกอย่าง',
+  'portal.musicNote': 'ระบบนี้เป็นส่วนเสริมของ AWA ROOM — ห้องฟังเพลงยังใช้งานได้เหมือนเดิมทุกอย่าง',
   'portal.badge.owe': 'คุณค้างอยู่ {amount} บาท',
   'portal.badge.chat': 'มีข้อความใหม่ {n} ข้อความ',
   'portal.badge.market': 'มีประกาศใหม่ {n} รายการสัปดาห์นี้',
@@ -771,7 +771,7 @@ export const OFFICE_TH = {
   'admin.users.saved': 'บันทึกแล้ว',
   'admin.users.count': 'ทั้งหมด {n} คน',
 
-  'footer.office': '© {year} FrameRoom · ระบบกิจกรรมภายในออฟฟิศ',
+  'footer.office': '© {year} AWA ROOM · ระบบกิจกรรมภายในออฟฟิศ',
 
   /* ── ทั่วไป ──────────────────────────────────────────────────── */
   'common.save': 'บันทึก',

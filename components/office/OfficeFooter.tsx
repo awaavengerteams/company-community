@@ -40,7 +40,7 @@ export function OfficeFooter() {
             href="/"
             className="text-[13px] font-semibold text-ink transition-opacity hover:opacity-70"
           >
-            FrameRoom
+            AWA ROOM
           </Link>
 
           {links.map((s) => (
