@@ -739,6 +739,8 @@ export const id: OfficeDict = {
   "wallet.create.clear": "Bersihkan semua",
   "wallet.create.noMatch": "Tidak ada yang cocok",
   "wallet.create.perHead": "per orang",
+  "wallet.create.remove": "Hapus {name}",
+  "wallet.create.everyone": "Semua orang",
 
   "footer.office": "© {year} AWA ROOM · kegiatan internal kantor",
 

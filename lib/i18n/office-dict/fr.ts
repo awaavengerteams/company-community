@@ -739,6 +739,8 @@ export const fr: OfficeDict = {
   "wallet.create.clear": "Tout désélectionner",
   "wallet.create.noMatch": "Personne ne correspond",
   "wallet.create.perHead": "chacun",
+  "wallet.create.remove": "Retirer {name}",
+  "wallet.create.everyone": "Tout le monde",
 
   "footer.office": "© {year} AWA ROOM · activités internes du bureau",
 

@@ -739,6 +739,8 @@ export const en: OfficeDict = {
   "wallet.create.clear": "Clear all",
   "wallet.create.noMatch": "Nobody matches that search",
   "wallet.create.perHead": "each",
+  "wallet.create.remove": "Remove {name}",
+  "wallet.create.everyone": "Everyone",
 
   "footer.office": "© {year} AWA ROOM · office activities",
 

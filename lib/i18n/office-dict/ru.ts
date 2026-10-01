@@ -739,6 +739,8 @@ export const ru: OfficeDict = {
   "wallet.create.clear": "Снять выбор",
   "wallet.create.noMatch": "Никто не подходит под запрос",
   "wallet.create.perHead": "с человека",
+  "wallet.create.remove": "Убрать {name}",
+  "wallet.create.everyone": "Все",
 
   "footer.office": "© {year} AWA ROOM · внутренние офисные активности",
 

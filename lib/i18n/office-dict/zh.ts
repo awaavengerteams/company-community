@@ -739,6 +739,8 @@ export const zh: OfficeDict = {
   "wallet.create.clear": "全部清除",
   "wallet.create.noMatch": "没有符合的人",
   "wallet.create.perHead": "每人",
+  "wallet.create.remove": "移除 {name}",
+  "wallet.create.everyone": "所有人",
 
   "footer.office": "© {year} AWA ROOM · 办公室内部活动",
 

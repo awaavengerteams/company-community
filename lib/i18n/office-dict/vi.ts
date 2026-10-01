@@ -739,6 +739,8 @@ export const vi: OfficeDict = {
   "wallet.create.clear": "Bỏ chọn hết",
   "wallet.create.noMatch": "Không có ai khớp",
   "wallet.create.perHead": "mỗi người",
+  "wallet.create.remove": "Bỏ {name}",
+  "wallet.create.everyone": "Mọi người",
 
   "footer.office": "© {year} AWA ROOM · hoạt động nội bộ văn phòng",
 

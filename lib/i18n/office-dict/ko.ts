@@ -739,6 +739,8 @@ export const ko: OfficeDict = {
   "wallet.create.clear": "모두 해제",
   "wallet.create.noMatch": "맞는 사람이 없습니다",
   "wallet.create.perHead": "한 사람당",
+  "wallet.create.remove": "{name} 빼기",
+  "wallet.create.everyone": "전체",
 
   "footer.office": "© {year} AWA ROOM · 사내 활동",
 

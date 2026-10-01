@@ -739,6 +739,8 @@ export const ja: OfficeDict = {
   "wallet.create.clear": "すべて解除",
   "wallet.create.noMatch": "条件に合う人がいません",
   "wallet.create.perHead": "ひとりあたり",
+  "wallet.create.remove": "{name} を外す",
+  "wallet.create.everyone": "全員",
 
   "footer.office": "© {year} AWA ROOM · 社内アクティビティ",
 

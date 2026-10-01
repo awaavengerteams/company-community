@@ -748,6 +748,8 @@ export const ar: OfficeDict = {
   "wallet.create.clear": "إلغاء الاختيار",
   "wallet.create.noMatch": "لا أحد يطابق البحث",
   "wallet.create.perHead": "للفرد",
+  "wallet.create.remove": "إزالة {name}",
+  "wallet.create.everyone": "الجميع",
 
   "footer.office": "© {year} AWA ROOM · أنشطة المكتب الداخلية",
 

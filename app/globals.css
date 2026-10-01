@@ -3334,3 +3334,136 @@ html[data-theme='light'] .auth-card {
   );
   pointer-events: none;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * ตัวเลือกผู้ร่วมจ่าย
+ *
+ * ★★★ เปลี่ยนจาก "ป้ายห่อบรรทัด" เป็น "รายการจัดกลุ่มตามฝ่าย"
+ *
+ *     ★ ของเดิมเป็น chip ที่กว้างไม่เท่ากัน (ชื่อ + ฝ่ายต่อท้าย) ห่อลงมาเรื่อย ๆ
+ *       ★★ บนมือถือ chip หนึ่งอันกินเกือบเต็มบรรทัด — พนักงาน 30 คน
+ *          กลายเป็นบล็อกสูงกว่าสองหน้าจอ และหาคนที่ต้องการไม่เจอ
+ *          เพราะไม่มีลำดับให้กวาดตา
+ *
+ *     ★ แถวสูงเท่ากันกวาดตาได้เร็วกว่ามาก และกดโดนง่ายกว่าบนมือถือ
+ *       ★★ หัวกลุ่มฝ่ายทำให้ "หารกับทีม IT" จบในการกดครั้งเดียว
+ *          แทนที่จะต้องไล่หาทีละคนจากกองที่ไม่ได้เรียง
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.pick-box {
+  border-radius: 1rem;
+  border: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-elevated) 40%, transparent);
+  overflow: hidden;
+}
+
+/*
+ * ★ ความสูงคงที่ — หน้าไม่ยืดตามจำนวนคน
+ *   ★★ นี่คือหัวใจของการแก้: 5 คนกับ 50 คนทำให้หน้าสูงเท่ากัน
+ *      ปุ่ม "บันทึก" จึงอยู่ที่เดิมเสมอ ไม่ต้องเลื่อนตามหา
+ */
+.pick-scroll {
+  max-height: 17.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ── หัวกลุ่มฝ่าย ─────────────────────────────────────────────────────── */
+/*
+ * ★ sticky — เลื่อนอยู่กลางรายชื่อยาว ๆ แล้วยังรู้ว่ากำลังดูฝ่ายไหน
+ */
+.pick-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in oklab, var(--color-surface) 94%, transparent);
+  backdrop-filter: blur(10px);
+  border-block: 1px solid var(--color-line);
+}
+
+/* ── แถวคน ────────────────────────────────────────────────────────────── */
+.pick-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  text-align: start;
+  transition: background-color 140ms;
+}
+
+.pick-row:hover {
+  background: color-mix(in oklab, var(--color-surface) 70%, transparent);
+}
+
+.pick-row[aria-pressed='true'] {
+  background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+}
+
+/* ── ช่องติ๊ก ──────────────────────────────────────────────────────────── */
+/*
+ * ★★ ใช้กรอบสี่เหลี่ยมมุมมน ไม่ใช่วงกลม
+ *    ★ วงกลมอ่านเป็น "เลือกได้อันเดียว" (radio) ซึ่งตรงข้ามกับความจริง
+ *      ของหน้านี้ที่เลือกได้หลายคน
+ */
+.pick-check {
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  border-radius: 0.4rem;
+  border: 1.5px solid var(--color-line);
+  color: transparent;
+  transition: background-color 140ms, border-color 140ms, color 140ms;
+}
+
+.pick-row[aria-pressed='true'] .pick-check {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+/* ── ป้ายคนที่เลือกแล้ว ───────────────────────────────────────────────── */
+/*
+ * ★★★ อยู่เหนือช่องค้นหา ไม่ใช่ปนอยู่ในรายการ
+ *
+ *     ★ ของเดิมดันคนที่เลือกแล้วขึ้นบนสุดของรายการเดียวกัน
+ *       ★★ พอพิมพ์ค้นหา รายการเปลี่ยนทั้งก้อน — คนกรอกเลยไม่แน่ใจว่า
+ *          ที่เลือกไว้ยังอยู่ไหม และเลือกซ้ำหรือตกหล่น
+ *     ★ แยกออกมาเป็นแถวของตัวเองแล้ว "ใครอยู่ในบิลนี้" ตอบได้ตลอดเวลา
+ *       ไม่ว่าจะพิมพ์ค้นอะไรอยู่
+ */
+.pick-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, var(--color-accent) 35%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+  padding: 0.2rem 0.3rem 0.2rem 0.55rem;
+  font-size: 12px;
+  color: var(--color-ink);
+  max-width: 12rem;
+}
+
+.pick-tag-x {
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+  transition: background-color 140ms, color 140ms;
+}
+
+.pick-tag-x:hover {
+  background: color-mix(in oklab, var(--color-accent) 25%, transparent);
+  color: var(--color-ink);
+}

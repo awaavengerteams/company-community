@@ -790,6 +790,8 @@ export const th = {
   'wallet.create.clear': 'ล้างทั้งหมด',
   'wallet.create.noMatch': 'ไม่พบคนที่ตรงกับคำค้น',
   'wallet.create.perHead': 'ตกคนละ',
+  'wallet.create.remove': 'เอา {name} ออก',
+  'wallet.create.everyone': 'ทุกคน',
 
   'footer.office': '© {year} AWA ROOM · ระบบกิจกรรมภายในออฟฟิศ',
 

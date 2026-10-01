@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
-import { departmentLabel } from '@/lib/office/departments'
+import { ChatAvatar } from './ChatAvatar'
 import { useOt } from '@/lib/i18n/office'
 import { CATEGORIES, categoryLabel, formatBaht, previewEqualSplit } from '@/lib/office/wallet'
 import type { ExpenseCategory, SplitMode } from '@/types/database'
 
-type Person = { id: string; name: string; department: string | null }
+type Person = { id: string; name: string; department: string | null; avatarUrl: string | null }
 
 /** หน้าสร้างรายการเงิน (FR-B01 / FR-B02) */
 export function WalletCreate({ selfId }: { selfId: string }) {
@@ -33,15 +33,29 @@ export function WalletCreate({ selfId }: { selfId: string }) {
    *    ★ เรียงด้วย useMemo ไม่ใช่ sort ตอน render ทุกครั้ง — รายการนี้
    *      ถูกวาดใหม่ทุกตัวอักษรที่พิมพ์ในช่องค้นหา
    */
+  /*
+   * ★★★ รายชื่อแบน ๆ เรียงเดิมเสมอ ไม่จัดกลุ่มและไม่สลับที่
+   *
+   *     ★ เคยดันคนที่เลือกไว้ขึ้นบนสุด แล้วเคยลองจัดกลุ่มตามฝ่าย
+   *       ★★ ทั้งสองแบบทำให้ "ตำแหน่งของคน" ขยับ — คนกรอกกวาดตาหาคนถัดไป
+   *          ไม่เจอ เพราะของที่เพิ่งเห็นตรงนั้นย้ายไปแล้ว
+   *     ★ ลำดับนิ่งคือสิ่งที่ทำให้เลือกเร็ว ส่วน "ใครอยู่ในบิลนี้" ไปตอบ
+   *       ที่แถวป้ายเหนือช่องค้นหา ซึ่งตอบได้ตลอดไม่ว่าจะพิมพ์ค้นอะไรอยู่
+   *
+   * ★ ค้นด้วยชื่ออย่างเดียว — หน้านี้ไม่แสดงฝ่ายแล้ว การค้นด้วยคำที่
+   *   มองไม่เห็นบนจอทำให้ผลลัพธ์อธิบายตัวเองไม่ได้
+   */
   const shownPeople = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const match = (p: { name: string; department: string | null }) =>
-      !q || p.name.toLowerCase().includes(q) || (p.department ?? '').toLowerCase().includes(q)
+    return q ? people.filter((p) => p.name.toLowerCase().includes(q)) : people
+  }, [people, query])
 
-    const chosen = people.filter((p) => picked.includes(p.id))
-    const rest = people.filter((p) => !picked.includes(p.id) && match(p))
-    return [...chosen, ...rest]
-  }, [people, picked, query])
+  /** คนที่เลือกไว้ — เรียงตามลำดับที่กด เพื่อให้ป้ายไม่กระโดดสลับที่ */
+  const pickedPeople = useMemo(
+    () => picked.map((id) => people.find((p) => p.id === id)).filter((p): p is Person => Boolean(p)),
+    [picked, people],
+  )
+
   const [custom, setCustom] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -174,42 +188,115 @@ export function WalletCreate({ selfId }: { selfId: string }) {
               ) : null}
             </p>
 
-            {picked.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => setPicked([])}
-                className="text-xs text-ink-faint underline-offset-2 hover:text-ink hover:underline"
-              >
-                {ot('wallet.create.clear')}
-              </button>
-            ) : null}
+            {/* ★ ไม่มีหัวกลุ่มฝ่ายให้กด "เลือกทั้งฝ่าย" แล้ว — ปุ่มเลือกทุกคน
+                จึงมาอยู่ที่นี่แทน ★★ บิลกาแฟทั้งออฟฟิศจบในการกดครั้งเดียว */}
+            <div className="flex items-center gap-3">
+              {people.length > 0 && picked.length < people.length ? (
+                <button
+                  type="button"
+                  onClick={() => setPicked(people.map((p) => p.id))}
+                  className="text-xs text-accent underline-offset-2 hover:underline"
+                >
+                  {ot('wallet.create.everyone')}
+                </button>
+              ) : null}
+              {picked.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setPicked([])}
+                  className="text-xs text-ink-faint underline-offset-2 hover:text-ink hover:underline"
+                >
+                  {ot('wallet.create.clear')}
+                </button>
+              ) : null}
+            </div>
           </div>
+
+          {/* ── คนที่เลือกแล้ว ─────────────────────────────────────
+              ★★★ อยู่เหนือช่องค้นหา ไม่ใช่ปนอยู่ในรายการ
+                   ★ พอพิมพ์ค้นหา รายการข้างล่างเปลี่ยนทั้งก้อน — ถ้าของที่
+                     เลือกไว้อยู่ในนั้นด้วย คนกรอกจะไม่แน่ใจว่ายังอยู่ไหม
+                   ★★ แยกออกมาแล้ว "ใครอยู่ในบิลนี้" ตอบได้ตลอดเวลา */}
+          {pickedPeople.length > 0 ? (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {pickedPeople.map((p) => (
+                <span key={p.id} className="pick-tag">
+                  <ChatAvatar name={p.name} url={p.avatarUrl} size={18} />
+                  <span className="truncate" dir="auto">
+                    {p.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggle(p.id)}
+                    className="pick-tag-x"
+                    aria-label={ot('wallet.create.remove', { name: p.name })}
+                  >
+                    <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+                      <path d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
 
           <Input
             radius="round"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={ot('wallet.create.search')}
+            placeholder={ot('common.search')}
             className="mt-2.5"
           />
 
-          <div className="mt-2.5 flex max-h-64 flex-wrap gap-1.5 overflow-y-auto">
-            {people.length === 0 ? (
-              <p className="text-xs text-ink-faint">{ot('common.loading')}</p>
-            ) : shownPeople.length === 0 ? (
-              <p className="text-xs text-ink-faint">{ot('wallet.create.noMatch')}</p>
-            ) : (
-              shownPeople.map((p) => (
-                <Chip key={p.id} active={picked.includes(p.id)} onClick={() => toggle(p.id)}>
-                  <span dir="auto">{p.name}</span>
-                  {p.department ? (
-                    <span className="ms-1 opacity-60" dir="auto">
-                      · {departmentLabel(ot, p.department)}
-                    </span>
-                  ) : null}
-                </Chip>
-              ))
-            )}
+          {/* ── รายชื่อ ────────────────────────────────────────────
+              ★★★ สองคนต่อแถว และมีแค่ชื่อ
+                   ★ ของเดิมเป็นป้ายกว้างไม่เท่ากัน (ชื่อ + ฝ่ายต่อท้าย)
+                     ห่อลงมาเรื่อย ๆ — บนมือถือป้ายเดียวกินเกือบเต็มบรรทัด
+                     ★★ พนักงาน 30 คนกลายเป็นบล็อกสูงกว่าสองหน้าจอ
+                   ★ สองคอลัมน์ตัดความสูงลงครึ่งหนึ่งทันที และการตัดฝ่ายออก
+                     คืนความกว้างให้ชื่อ ซึ่งเป็นสิ่งเดียวที่ต้องอ่าน
+              ★ กล่องสูงคงที่ — 5 คนกับ 50 คนทำให้หน้าสูงเท่ากัน
+                ★★ ปุ่มบันทึกจึงอยู่ที่เดิมเสมอ ไม่ต้องเลื่อนตามหาบนมือถือ */}
+          <div className="pick-box mt-2.5">
+            <div className="pick-scroll">
+              {people.length === 0 ? (
+                <p className="px-3 py-6 text-center text-xs text-ink-faint">
+                  {ot('common.loading')}
+                </p>
+              ) : shownPeople.length === 0 ? (
+                <p className="px-3 py-6 text-center text-xs text-ink-faint">
+                  {ot('wallet.create.noMatch')}
+                </p>
+              ) : (
+                <div className="grid grid-cols-2">
+                  {shownPeople.map((p) => {
+                    const on = picked.includes(p.id)
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => toggle(p.id)}
+                        aria-pressed={on}
+                        className="pick-row"
+                      >
+                        <span className="pick-check" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m5 13 4 4L19 7" />
+                          </svg>
+                        </span>
+                        {/* ★★ รูปจริงถ้ามี ไม่มีก็ตัวอักษรแรกบนพื้นสีคงที่
+                            ★ ChatAvatar ตัวเดียวกับที่แชทใช้ — สีของคนคนหนึ่ง
+                              จึงเหมือนกันทุกหน้า ซึ่งเป็นสิ่งที่ทำให้จำหน้าได้ */}
+                        <ChatAvatar name={p.name} url={p.avatarUrl} size={24} />
+                        <span className="min-w-0 flex-1 truncate text-[13px] text-ink" dir="auto">
+                          {p.name}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {picked.length === 0 ? (

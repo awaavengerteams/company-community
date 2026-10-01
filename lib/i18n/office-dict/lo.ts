@@ -739,6 +739,8 @@ export const lo: OfficeDict = {
   "wallet.create.clear": "ລ້າງທັງໝົດ",
   "wallet.create.noMatch": "ບໍ່ພົບຄົນທີ່ຕົງກັບຄຳຄົ້ນ",
   "wallet.create.perHead": "ຕົກຄົນລະ",
+  "wallet.create.remove": "ເອົາ {name} ອອກ",
+  "wallet.create.everyone": "ທຸກຄົນ",
 
   "footer.office": "© {year} AWA ROOM · ລະບົບກິດຈະກຳພາຍໃນຫ້ອງການ",
 
