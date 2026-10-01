@@ -4,7 +4,6 @@ import { UserMenu } from '@/components/UserMenu'
 import { PortalHero } from '@/components/home/PortalHero'
 import { SystemHub } from '@/components/home/SystemHub'
 import { HubFeatures } from '@/components/home/HubFeatures'
-import { JumpScare } from '@/components/home/JumpScare'
 import { SetupNotice } from '@/components/home/SetupNotice'
 import { getHomeStats } from '@/lib/home/stats'
 import { OfficeSummary, type HomeSummaryData } from '@/components/home/OfficeSummary'
@@ -129,9 +128,6 @@ export default async function HomePage() {
       />
 
       <PortalHero stats={stats} />
-
-      {/* ★ หน้าจู่โจมแบบสุ่ม — อยู่นอกหัวหน้าเพราะมันคลุมทั้งจอ ไม่ใช่แค่ส่วนบน */}
-      <JumpScare />
 
       <main className="mx-auto w-full max-w-[1120px] px-4">
         <SetupNotice />

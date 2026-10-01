@@ -76,24 +76,6 @@ function Phantom({ variant }: { variant: Variant }) {
   )
 }
 
-/**
- * เฉพาะใบหน้า ขยายเต็มกรอบ — ใช้ในหน้าจู่โจม
- *
- * ★ ครอบ viewBox ให้แคบลงเหลือแค่หัว จึงได้ภาพระยะประชิดโดยไม่ต้องวาดใหม่
- *   ★★ ถ้าวาดหน้าชุดที่สองแยกต่างหาก วันที่แก้หน้าตนใดตนหนึ่งจะลืมแก้อีกที่
- */
-export function PhantomFace({ variant, index }: { variant: Variant; index: number }) {
-  const id = ids(variant, 'scare')
-  const p = faceParams(variant, index)
-
-  return (
-    <svg viewBox="55 25 110 155" className="size-full" xmlns="http://www.w3.org/2000/svg">
-      <Defs id={id} p={p} bright />
-      <Face variant={variant} id={id} p={p} />
-    </svg>
-  )
-}
-
 /* ═══ นิยามสี/ฟิลเตอร์ ═══════════════════════════════════════════════════ */
 
 function Defs({
