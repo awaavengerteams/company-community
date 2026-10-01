@@ -25,10 +25,13 @@ import { cn } from '@/lib/cn'
 export function UserMenu({
   displayName,
   isAdmin,
+  avatarUrl = null,
   profileHref = '/office/profile',
 }: {
   displayName: string
   isAdmin: boolean
+  /** ★ รูปเดียวกับที่ตั้งในหน้าโปรไฟล์ — ถ้าไม่มีใช้ตัวอักษรแรกแทน */
+  avatarUrl?: string | null
   profileHref?: string
 }) {
   const t = useT()
@@ -74,12 +77,24 @@ export function UserMenu({
           open ? 'bg-surface' : 'hover:bg-surface',
         )}
       >
-        <span
-          aria-hidden="true"
-          className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-sm font-bold text-accent-ink"
-        >
-          {initial}
-        </span>
+        {/* ★★ ถ้าตั้งรูปไว้แล้วต้องเห็นที่นี่ด้วย
+            ★ ไม่งั้นหน้าโปรไฟล์โชว์รูป แต่แถบบนยังเป็นตัวอักษร —
+              คนจะคิดว่าอัปไม่ติด ทั้งที่ติดแล้ว */}
+        {avatarUrl ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={avatarUrl}
+            alt=""
+            className="size-8 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-sm font-bold text-accent-ink"
+          >
+            {initial}
+          </span>
+        )}
 
         {/* ★ ชื่อซ่อนเฉพาะจอแคบมาก แต่วงกลมตัวอักษรยังอยู่เสมอ */}
         <span className="hidden max-w-36 truncate text-sm text-ink-soft sm:block">

@@ -16,7 +16,11 @@ export const GET = withErrorHandling(async () => {
   const [{ data: profile }, { data: prefs }] = await Promise.all([
     admin
       .from('profiles')
-      .select('display_name, nickname, department, employee_code, payment_qr_path, is_admin')
+      /* ★ เพิ่มข้อมูลที่ฟอร์มสมัครเก็บไว้ (0041) — หน้าโปรไฟล์ต้องโชว์ด้วย
+         ★★ ไม่งั้นคนกรอกไปสิบช่องแล้วไม่มีที่ไหนให้ดูว่ากรอกอะไรไป */
+      .select(
+        'display_name, nickname, department, employee_code, payment_qr_path, is_admin, avatar_url, prefix, first_name, last_name, phone, company, position_title, username',
+      )
       .eq('id', actor.id)
       .maybeSingle(),
     admin.from('notification_prefs').select('type, enabled').eq('user_id', actor.id),
@@ -30,6 +34,14 @@ export const GET = withErrorHandling(async () => {
       employeeCode: profile?.employee_code ?? null,
       hasQr: Boolean(profile?.payment_qr_path),
       isAdmin: Boolean(profile?.is_admin),
+      avatarUrl: profile?.avatar_url ?? null,
+      username: profile?.username ?? null,
+      prefix: profile?.prefix ?? null,
+      firstName: profile?.first_name ?? null,
+      lastName: profile?.last_name ?? null,
+      phone: profile?.phone ?? null,
+      company: profile?.company ?? null,
+      position: profile?.position_title ?? null,
     },
     /* ★ ส่งมาแค่แถวที่ "ปิด" ก็พอ — ไม่มีแถว = เปิด (ดู notify() ใน 0023) */
     off: (prefs ?? []).filter((p) => !p.enabled).map((p) => p.type),

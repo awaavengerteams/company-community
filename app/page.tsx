@@ -58,7 +58,7 @@ export default async function HomePage() {
         /* ★ หน้านี้ไม่ได้อ่านสิทธิ์ Admin มา (getRegisteredUser ไม่คืนมาให้)
              ★★ ไม่ยิง query เพิ่มเพื่อป้ายเล็ก ๆ อันเดียว — ป้าย Admin
                 แสดงในแถบบนของโมดูลออฟฟิศซึ่งเป็นที่ที่สิทธิ์นั้นมีผลจริง */
-          right={<UserMenu displayName={me.displayName} isAdmin={false} />}
+          right={<UserMenu displayName={me.displayName} isAdmin={false} avatarUrl={me.avatarUrl} />}
       />
 
       <PortalHero stats={stats} />

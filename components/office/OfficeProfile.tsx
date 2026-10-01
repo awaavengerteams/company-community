@@ -1,10 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { apiFetch } from '@/lib/api/client'
+import { apiFetch, apiUpload } from '@/lib/api/client'
+import { shrinkImage } from '@/lib/image/shrink'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { ot, type OfficeKey } from '@/lib/i18n/office'
 
@@ -15,7 +15,32 @@ type Profile = {
   employeeCode: string | null
   hasQr: boolean
   isAdmin: boolean
+  avatarUrl: string | null
+  username: string | null
+  prefix: string | null
+  firstName: string | null
+  lastName: string | null
+  phone: string | null
+  company: string | null
+  position: string | null
 }
+
+/* ★ รายการเดียวกับฟอร์มสมัคร — ฝ่ายต้องเขียนเหมือนกันทั้งสองที่
+   ★★ ถ้าที่นี่พิมพ์อิสระ คนจะแก้เป็น "IT" แล้วหลุดจากกลุ่ม "ฝ่ายพัฒนาระบบ"
+      ที่ตัวกรองใช้ — ปัญหาเดียวกับที่แก้ไปแล้วตอนทำฟอร์มสมัคร */
+const DEPARTMENTS = [
+  'ฝ่ายพัฒนาระบบ',
+  'ฝ่ายทดสอบระบบ',
+  'ฝ่ายวิเคราะห์ระบบ',
+  'ฝ่ายออกแบบ',
+  'ฝ่ายโครงสร้างพื้นฐานและระบบเครือข่าย',
+  'ฝ่ายบริหารโครงการ',
+  'ฝ่ายสนับสนุนและบริการลูกค้า',
+  'ฝ่ายขายและการตลาด',
+  'ฝ่ายบุคคล',
+  'ฝ่ายบัญชีและการเงิน',
+  'ฝ่ายบริหาร',
+] as const
 
 /**
  * ชนิดแจ้งเตือนที่ผู้ใช้ปิดได้
@@ -44,6 +69,9 @@ export function OfficeProfile() {
   const [saved, setSaved] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [avatarNote, setAvatarNote] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -77,6 +105,35 @@ export function OfficeProfile() {
     }
   }
 
+  /**
+   * ★★ ใช้ /api/profile/avatar ของห้องเพลง ไม่สร้างทางอัปใหม่
+   *
+   *    ★ รูปโปรไฟล์เป็นของเดียวกันทั้งสองระบบ (คอลัมน์ avatar_url เดียวกัน)
+   *      ★★ ถ้าทำทางอัปของออฟฟิศแยก จะมีสองที่ที่เขียนคอลัมน์เดียวกัน
+   *         ด้วยกฎคนละชุด — วันที่เปลี่ยนขนาดหรือชนิดไฟล์จะลืมแก้ที่หนึ่ง
+   *
+   * ★ ย่อเหลือ 256px ฝั่ง client ก่อนส่ง เหมือนที่ห้องเพลงทำ
+   *   ★★ รูปจากมือถือใบหนึ่ง 4MB ส่งขึ้นไปเพื่อแสดงเป็นวงกลม 40px คือ
+   *      การเผาเน็ตของคนใช้และพื้นที่เก็บของเราไปพร้อมกัน
+   */
+  async function uploadAvatar(file: File) {
+    setUploading(true)
+    setError(null)
+    setAvatarNote(null)
+    try {
+      const small = await shrinkImage(file, 256)
+      await apiUpload<{ avatarUrl: string }>('/api/profile/avatar', small, {
+        signal: AbortSignal.timeout(30_000),
+      })
+      await load()
+      setAvatarNote(ot('profile.avatarSaved'))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : ot('common.error'))
+    } finally {
+      setUploading(false)
+    }
+  }
+
   async function toggle(type: string) {
     const next = new Set(off)
     const enabled = next.has(type)
@@ -102,32 +159,124 @@ export function OfficeProfile() {
   }
 
   return (
-    <div className="max-w-xl py-2">
+    <div className="max-w-3xl py-2">
 
-      {/* ── ข้อมูลพนักงาน ────────────────────────────────────── */}
-      <div className="mt-4 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
-        <dl className="flex flex-col gap-2 text-sm">
-          <div className="flex items-center gap-3">
-            <dt className="flex-1 text-ink-soft">{ot('profile.name')}</dt>
-            <dd className="text-ink">{profile.nickname || profile.displayName}</dd>
+      {/*
+        * ═══ หัวโปรไฟล์: รูป + ชื่อ + รหัสพนักงาน ═══
+        *
+        * ★★★ หน้านี้เคยเป็นตารางคู่ป้าย-ค่า สามบรรทัด
+        *     ★ ซึ่งอ่านเป็น "หน้าแสดงข้อมูล" ไม่ใช่ "โปรไฟล์ของฉัน"
+        *       ★★ รูปกับชื่อที่ใหญ่พอทำให้คนรู้ทันทีว่ากำลังดูของตัวเองอยู่
+        *          ซึ่งสำคัญในระบบที่มีเรื่องเงินและเครื่องที่ใช้ร่วมกัน
+        */}
+      <div className="profile-hero mt-4 flex flex-col items-center gap-4 rounded-3xl p-6 sm:flex-row sm:items-start">
+        <div className="relative shrink-0">
+          {profile.avatarUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={profile.avatarUrl}
+              alt={profile.displayName}
+              className="size-24 rounded-full object-cover ring-2 ring-accent/35"
+            />
+          ) : (
+            <span className="grid size-24 place-items-center rounded-full bg-accent text-3xl font-bold text-accent-ink ring-2 ring-accent/35">
+              {(profile.nickname || profile.displayName).trim().charAt(0) || '?'}
+            </span>
+          )}
+
+          {/* ★ ปุ่มกล้องทับมุมรูป — ที่ที่คนไปกดเปลี่ยนรูปโดยไม่ต้องอ่าน */}
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            title={ot('profile.avatarChange')}
+            aria-label={ot('profile.avatarChange')}
+            className={cn(
+              'absolute -end-1 -bottom-1 grid size-9 place-items-center rounded-full',
+              'border-2 border-page bg-surface text-ink transition-colors',
+              'hover:bg-accent hover:text-accent-ink disabled:opacity-50',
+            )}
+          >
+            {uploading ? (
+              <span className="size-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                className="size-4.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
+                <circle cx="12" cy="13" r="3.2" />
+              </svg>
+            )}
+          </button>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void uploadAvatar(f)
+              e.target.value = ''
+            }}
+          />
+        </div>
+
+        <div className="min-w-0 flex-1 text-center sm:text-start">
+          <p className="text-[22px] font-bold leading-tight text-ink">
+            {profile.nickname || profile.displayName}
+          </p>
+          <p className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-ink-soft sm:justify-start">
+            {profile.username ? <span className="font-mono">@{profile.username}</span> : null}
+            {profile.employeeCode ? (
+              <span className="rounded-full bg-surface px-2 py-0.5 font-mono">
+                {profile.employeeCode}
+              </span>
+            ) : null}
+            {profile.isAdmin ? (
+              <span className="rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+                Admin
+              </span>
+            ) : null}
+          </p>
+
+          <p className="mt-2 text-xs text-ink-faint">{ot('profile.avatarHint')}</p>
+          {avatarNote ? <p className="mt-1 text-xs text-accent">{avatarNote}</p> : null}
+
+          <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+            <Link
+              href="/office/wallet/qr"
+              className="inline-flex h-9 items-center rounded-full bg-surface px-4 text-sm text-ink transition-colors hover:bg-surface-hover"
+            >
+              {profile.hasQr ? ot('profile.qrChange') : ot('profile.qrAdd')}
+            </Link>
           </div>
-          <div className="flex items-center gap-3">
-            <dt className="flex-1 text-ink-soft">{ot('profile.code')}</dt>
-            <dd className="font-mono text-ink">{profile.employeeCode ?? '—'}</dd>
-          </div>
-          <div className="flex items-center gap-3">
-            <dt className="flex-1 text-ink-soft">{ot('profile.qr')}</dt>
-            <dd>
-              <Link href="/office/wallet/qr" className="text-sm text-link hover:underline">
-                {profile.hasQr ? ot('profile.qrChange') : ot('profile.qrAdd')}
-              </Link>
-            </dd>
-          </div>
+        </div>
+      </div>
+
+      {/* ── ข้อมูลพนักงาน (อ่านอย่างเดียว) ───────────────────── */}
+      <div className="mt-4 rounded-2xl border border-line bg-elevated/30 p-5 backdrop-blur-md">
+        <p className="text-sm font-medium text-ink">{ot('profile.secEmployee')}</p>
+        <p className="mt-0.5 text-xs text-ink-faint">{ot('profile.askAdmin')}</p>
+
+        <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          <Row label={ot('reg.firstName')} value={profile.firstName} />
+          <Row label={ot('reg.lastName')} value={profile.lastName} />
+          <Row label={ot('profile.phone')} value={profile.phone} mono />
+          <Row label={ot('profile.position')} value={profile.position} />
+          <Row label={ot('profile.company')} value={profile.company} wide />
         </dl>
 
-        {/* ★ ชื่อกับรูปโปรไฟล์แก้ที่ห้องเพลง — มีหน้าอยู่แล้วและใช้ร่วมกัน
-            การทำหน้าแก้ชื่อซ้ำอีกที่จะทำให้สองที่ไม่ตรงกันวันใดวันหนึ่ง */}
-        <p className="mt-3 text-xs text-ink-faint">{ot('profile.editElsewhere')}</p>
+        {/* ★ ชื่อที่แสดงกับรูปใช้ร่วมกับห้องเพลง — บอกไว้ไม่ให้งงว่าทำไม
+            เปลี่ยนที่นี่แล้วไปเปลี่ยนที่โน่นด้วย */}
+        <p className="mt-4 text-xs text-ink-faint">{ot('profile.editElsewhere')}</p>
       </div>
 
       {/* ── ฝ่าย/แผนก ────────────────────────────────────────── */}
@@ -136,18 +285,43 @@ export function OfficeProfile() {
           {ot('profile.department')}
         </label>
         <p className="mt-0.5 text-xs text-ink-faint">{ot('profile.departmentHint')}</p>
-        <div className="mt-2 flex items-center gap-2">
-          <Input radius="round"
+        {/*
+          * ★★ เป็นรายการให้เลือก ไม่ใช่ช่องพิมพ์ — ชุดเดียวกับฟอร์มสมัคร
+          *    ★ ถ้าที่นี่พิมพ์อิสระ คนจะแก้ "ฝ่ายพัฒนาระบบ" เป็น "IT" แล้ว
+          *      หลุดออกจากกลุ่มที่ตัวกรองในหน้า Admin ใช้ทันที
+          *      ★★ ซึ่งเป็นปัญหาเดียวกับที่แก้ไปแล้วตอนทำฟอร์มสมัคร
+          *         การแก้ที่เดียวแล้วปล่อยอีกที่ไว้คือการแก้ครึ่งเดียว
+          */}
+        <div className="mt-2.5 flex items-center gap-2">
+          <select
             id="dept"
             value={department}
             onChange={(e) => {
               setDepartment(e.target.value)
               setSaved(false)
             }}
-            placeholder={ot('profile.departmentPlaceholder')}
-            maxLength={40}
-          />
-          <Button size="sm" loading={busy} onClick={saveDepartment}>
+            className={cn(
+              'field-input h-11 min-w-0 flex-1 rounded-full border border-line bg-input px-4',
+              'text-[16px] text-ink sm:text-sm',
+              'transition-colors focus:border-accent/70 focus:outline-none',
+              department === '' && 'text-ink-faint',
+            )}
+          >
+            <option value="">{ot('reg.deptPick')}</option>
+            {DEPARTMENTS.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+            {/* ★ ฝ่ายเดิมที่ไม่อยู่ในรายการต้องไม่หายไปจากช่อง
+                ★★ คนที่ Admin ตั้งค่าให้เป็นฝ่ายอื่น หรือสมัครด้วย "อื่น ๆ"
+                   จะเห็นช่องว่างเปล่าแล้วเผลอเซฟทับของเดิมทิ้ง */}
+            {department && !DEPARTMENTS.includes(department as never) ? (
+              <option value={department}>{department}</option>
+            ) : null}
+          </select>
+
+          <Button size="sm" loading={busy} disabled={!department} onClick={saveDepartment}>
             {ot('common.save')}
           </Button>
         </div>
@@ -197,6 +371,30 @@ export function OfficeProfile() {
           {error}
         </p>
       ) : null}
+    </div>
+  )
+}
+
+/** หนึ่งบรรทัดของข้อมูลพนักงานที่อ่านอย่างเดียว */
+function Row({
+  label,
+  value,
+  mono,
+  wide,
+}: {
+  label: string
+  value: string | null
+  mono?: boolean
+  wide?: boolean
+}) {
+  return (
+    <div className={cn('min-w-0', wide && 'sm:col-span-2')}>
+      <dt className="text-[11px] text-ink-faint">{label}</dt>
+      {/* ★ ช่องที่ยังไม่กรอกบอกว่า "ยังไม่ได้กรอก" ไม่ใช่ขีดกลาง
+          ★★ ขีดกลางอ่านได้ทั้ง "ไม่มี" และ "ระบบดึงมาไม่ได้" */}
+      <dd className={cn('mt-0.5 truncate text-sm', value ? 'text-ink' : 'text-ink-faint', mono && value && 'font-mono')}>
+        {value || ot('profile.notSet')}
+      </dd>
     </div>
   )
 }

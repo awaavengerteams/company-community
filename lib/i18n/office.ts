@@ -771,6 +771,19 @@ export const OFFICE_TH = {
   'admin.users.saved': 'บันทึกแล้ว',
   'admin.users.count': 'ทั้งหมด {n} คน',
 
+  /* ── หน้าโปรไฟล์ (0041) ──────────────────────────────────────── */
+  'profile.avatarChange': 'เปลี่ยนรูป',
+  'profile.avatarHint': 'JPG · PNG · WebP — ระบบย่อให้เหลือ 256px ก่อนส่ง',
+  'profile.avatarSaved': 'เปลี่ยนรูปแล้ว',
+  'profile.secEmployee': 'ข้อมูลพนักงาน',
+  'profile.secNotify': 'การแจ้งเตือน',
+  'profile.username': 'Username',
+  'profile.phone': 'เบอร์โทรศัพท์',
+  'profile.company': 'บริษัท',
+  'profile.position': 'ตำแหน่ง',
+  'profile.notSet': 'ยังไม่ได้กรอก',
+  'profile.askAdmin': 'ข้อมูลนี้แก้ได้โดยผู้ดูแลระบบ',
+
   'footer.office': '© {year} AWA ROOM · ระบบกิจกรรมภายในออฟฟิศ',
 
   /* ── ทั่วไป ──────────────────────────────────────────────────── */

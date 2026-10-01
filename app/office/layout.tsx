@@ -54,6 +54,7 @@ export default async function OfficeLayout({ children }: LayoutProps<'/office'>)
         isAdmin={viewer.isAdmin}
         displayName={viewer.displayName}
         userId={viewer.id}
+        avatarUrl={viewer.avatarUrl}
       />
 
       <main className="flex-1">{children}</main>
@@ -72,10 +73,12 @@ function OfficeHeader({
   isAdmin,
   displayName,
   userId,
+  avatarUrl,
 }: {
   isAdmin: boolean
   displayName: string
   userId: string
+  avatarUrl: string | null
 }) {
   return (
     <header className="sticky top-0 z-50 flex h-(--spacing-header) items-center gap-3 border-b border-line bg-page px-4">
@@ -94,7 +97,7 @@ function OfficeHeader({
           * ★★ เดิมเป็นลิงก์เฉย ๆ ที่พาไปหน้าโปรไฟล์ และไม่มีทางออกจากระบบเลย
           *    ★ ตอนนี้เป็นเมนูที่มีทั้งโปรไฟล์และออกจากระบบ
           */}
-        <UserMenu displayName={displayName} isAdmin={isAdmin} />
+        <UserMenu displayName={displayName} isAdmin={isAdmin} avatarUrl={avatarUrl} />
       </div>
     </header>
   )
