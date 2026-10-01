@@ -354,9 +354,18 @@ function FeatureDemo({ kind, t }: { kind: DemoKind; t: Translate }) {
         <div className="absolute inset-x-0 top-1/2 z-10 h-px -translate-y-1/2 bg-accent/25" />
         {/* ★ pt-12 ดันแถวแรกให้อยู่กลางกล่องพอดี (48 + 16 = 64 = ครึ่งของ 128) */}
         <div className="demo-roll flex flex-col pt-12">
-          {['ก๋วยเตี๋ยวเรือ', 'ข้าวมันไก่', 'ส้มตำ', 'ราเมน', 'ข้าวมันไก่'].map((name, i) => (
+          {/* ★★ ชื่อร้านมาจากดิกชันนารี ไม่ฝังไทยไว้ตรงนี้
+              ★ เดโมนี้อยู่บนหน้าแรกซึ่งเป็นหน้าที่คนทั่วโลกเปิดเจอก่อนอย่างอื่น
+                ★★ ชื่ออาหารไทยกลางหน้าภาษาเยอรมันอ่านเป็น "หน้าแปลไม่เสร็จ"
+                   ไม่ใช่ "ร้านในวงล้อ" — ซึ่งเป็นความประทับใจแรกที่เสียเปล่า
+              ★ วนซ้ำอันแรกต่อท้ายให้วงล้อไหลต่อเนื่องไม่กระตุกตอนวนรอบ */}
+          {(() => {
+            const names = t('home.demo.food').split('·').map((x) => x.trim()).filter(Boolean)
+            return [...names, names[0] ?? '']
+          })().map((name, i) => (
             <span
               key={i}
+              dir="auto"
               className="flex h-8 shrink-0 items-center justify-center text-sm font-medium text-ink"
             >
               {name}

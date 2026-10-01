@@ -84,10 +84,20 @@ async function thaiLeak(p: Page) {
     const THAI = /[฀-๿]/
     // ★ ตัดก้อนที่ fill() กั้นทิศไว้ทิ้งก่อน — นั่นคือค่าจากตัวแปร ไม่ใช่คำแปล
     const ISOLATED = /⁨[^⁩]*⁩/g
+    /*
+     * ★★★ ฿ อยู่ในบล็อกยูนิโคดของไทย แต่ไม่ใช่ตัวหนังสือไทย
+     *
+     *     ★ มันคือเครื่องหมายสกุลเงิน อยู่หมวดเดียวกับ $ และ €
+     *       ★★ เงินในระบบนี้เป็นบาททุกบาท ไม่ว่าใครอ่าน — การแปลงเป็น
+     *          สกุลอื่นคือการบอกตัวเลขที่ไม่มีใครรับจริง (ดู formatBaht)
+     *     ★ ถ้าไม่ตัดออก ด่านจะฟ้องทุกหน้าที่มีเงิน 30 ครั้งต่อรอบ
+     *       ★★ ด่านที่ฟ้องของที่ถูกอยู่แล้ว คือด่านที่คนเลิกอ่านผลของมัน
+     */
+    const BAHT = /฿/g
     const out: string[] = []
     const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
     for (let node = walk.nextNode(); node; node = walk.nextNode()) {
-      const text = (node.nodeValue ?? '').replace(ISOLATED, '').trim()
+      const text = (node.nodeValue ?? '').replace(ISOLATED, '').replace(BAHT, '').trim()
       if (!text || !THAI.test(text)) continue
       const el = node.parentElement
       if (!el) continue

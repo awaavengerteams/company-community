@@ -6,6 +6,7 @@ import { apiFetch, apiUpload } from '@/lib/api/client'
 import { shrinkImage } from '@/lib/image/shrink'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
+import { companyLabel } from '@/lib/office/company'
 import { DEPARTMENTS } from '@/lib/office/departments'
 import { useOt, type OfficeKey } from '@/lib/i18n/office'
 
@@ -258,7 +259,7 @@ export function OfficeProfile() {
           <Row label={ot('reg.lastName')} value={profile.lastName} />
           <Row label={ot('profile.phone')} value={profile.phone} mono />
           <Row label={ot('profile.position')} value={profile.position} />
-          <Row label={ot('profile.company')} value={profile.company} wide />
+          <Row label={ot('profile.company')} value={companyLabel(ot, profile.company)} wide />
         </dl>
 
         {/* ★ ชื่อที่แสดงกับรูปใช้ร่วมกับห้องเพลง — บอกไว้ไม่ให้งงว่าทำไม
@@ -380,7 +381,12 @@ function Row({
       <dt className="text-[11px] text-ink-faint">{label}</dt>
       {/* ★ ช่องที่ยังไม่กรอกบอกว่า "ยังไม่ได้กรอก" ไม่ใช่ขีดกลาง
           ★★ ขีดกลางอ่านได้ทั้ง "ไม่มี" และ "ระบบดึงมาไม่ได้" */}
-      <dd className={cn('mt-0.5 truncate text-sm', value ? 'text-ink' : 'text-ink-faint', mono && value && 'font-mono')}>
+      {/* ★ ค่าในแถวพวกนี้มาจากฐานข้อมูล (ชื่อ · เบอร์ · ฝ่าย · บริษัท)
+          ★★ เป็นภาษาอะไรก็ได้ ไม่เกี่ยวกับภาษาของหน้า จึงต้องกั้นทิศเอง */}
+      <dd
+        dir="auto"
+        className={cn('mt-0.5 truncate text-sm', value ? 'text-ink' : 'text-ink-faint', mono && value && 'font-mono')}
+      >
         {value || ot('profile.notSet')}
       </dd>
     </div>

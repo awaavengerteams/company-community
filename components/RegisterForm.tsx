@@ -8,6 +8,7 @@ import { rememberProfile, signInWithUsername } from '@/lib/auth/session'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
+import { COMPANY_VALUE } from '@/lib/office/company'
 import {
   DEPARTMENTS,
   DEPT_OTHER,
@@ -100,8 +101,11 @@ export function RegisterForm() {
           phone: phone.trim(),
           /* ★ บริษัทเป็นค่าคงที่ ไม่ได้มาจากฟอร์ม — แต่ยังส่งไปเก็บ
              ★★ เพื่อให้หน้า Admin และรายงานยังอ่านฟิลด์เดิมได้เหมือนเดิม
-                วันที่มีบริษัทที่สองจะได้ไม่ต้องย้อนไปเติมข้อมูลเก่าทั้งหมด */
-          company: ot('reg.companyName'),
+                วันที่มีบริษัทที่สองจะได้ไม่ต้องย้อนไปเติมข้อมูลเก่าทั้งหมด
+             ★★★ ส่ง COMPANY_VALUE ไม่ใช่ ot('reg.companyName')
+                  ★ เคยส่งคำแปล แล้วบริษัทเดียวถูกเก็บเป็นหลายค่าตามภาษา
+                    ที่คนนั้นเปิดหน้าไว้ตอนกดสมัคร — เหตุผลใน company.ts */
+          company: COMPANY_VALUE,
           department: realDept,
           position: position.trim(),
           purpose: purpose.trim(),

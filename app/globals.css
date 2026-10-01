@@ -2943,3 +2943,161 @@ html[data-theme='dark'] {
   width: auto;
   object-fit: cover;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * หน้าเข้าใช้งาน — ชิ้นส่วนที่มีแต่หน้านี้ใช้
+ *
+ * ★★★ หน้านี้คือหน้าเดียวที่คนยังไม่มีบัญชีได้เห็น
+ *
+ *     ★ ทุกอย่างในนี้จึงต้องอ่านออกและดูดีทั้งโหมดมืดและโหมดสว่าง
+ *       ★★ ไม่มีแถบบนให้สลับธีมเหมือนหน้าอื่น — ปุ่มธีมจึงอยู่บนหน้านี้เอง
+ *          (เหตุผลเดียวกับปุ่มเปลี่ยนภาษาที่ต้องมีที่นี่)
+ *     ★ สีทุกค่าอ้าง token ของธีม ไม่ฝังค่าสีตรง ๆ สักที่
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── กล่องลอยมุมบน: ธีม + ภาษา ─────────────────────────────────────────── */
+.signin-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-elevated) 72%, transparent);
+  padding: 0.25rem;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 18px 40px -28px rgb(0 0 0 / 0.55);
+}
+
+/* ── ป้ายเล็กเหนือพาดหัว ──────────────────────────────────────────────── */
+/*
+ * ★ จุดเต้นข้าง ๆ บอกว่า "ระบบเปิดอยู่" โดยไม่ต้องเขียนคำว่าเปิดอยู่
+ *   ★★ เป็นสัญญาณที่คนอ่านได้ก่อนตัวหนังสือเสมอ
+ */
+.signin-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, var(--color-line) 100%, transparent);
+  background: color-mix(in oklab, var(--color-elevated) 55%, transparent);
+  padding: 0.3rem 0.8rem 0.3rem 0.6rem;
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+  color: var(--color-ink-soft);
+  backdrop-filter: blur(12px);
+}
+
+.signin-dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: rgb(var(--aurora-1));
+  flex-shrink: 0;
+}
+
+.signin-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: rgb(var(--aurora-1) / 0.35);
+  animation: signin-pulse 2.6s ease-out infinite;
+}
+
+@keyframes signin-pulse {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  70%  { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ── การ์ดโมดูลในคอลัมน์ซ้าย ──────────────────────────────────────────── */
+/*
+ * ★★ ใช้ --tint ชุดเดียวกับการ์ดบนหน้าพอร์ทัล
+ *    ★ คนที่เห็นสีเขียว = กระเป๋าเงิน ที่นี่ แล้วเข้าไปเจอสีเขียวอันเดิม
+ *      จะรู้ว่าเดินมาถูกที่ — สีคือป้ายชื่อที่จำได้เร็วกว่าตัวหนังสือ
+ */
+.signin-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  border-radius: 1rem;
+  border: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-elevated) 46%, transparent);
+  padding: 0.8rem 0.85rem;
+  backdrop-filter: blur(14px);
+}
+
+.signin-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 90% at 88% -20%, rgb(var(--tint) / 0.10), transparent 60%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.signin-icon {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex-shrink: 0;
+  border-radius: 0.7rem;
+  border: 1px solid rgb(var(--tint) / 0.28);
+  background: rgb(var(--tint) / 0.13);
+  color: rgb(var(--tint));
+}
+
+@media (hover: hover) {
+  .signin-card:hover {
+    border-color: rgb(var(--tint) / 0.45);
+    box-shadow: 0 20px 48px -30px rgb(var(--tint) / 0.7);
+  }
+}
+
+/* ── วงแสงหลังการ์ดฟอร์ม ──────────────────────────────────────────────── */
+/*
+ * ★★★ งานเดียวของมันคือดึงตาไปที่ช่องกรอก
+ *
+ *     ★ หน้านี้มีของให้อ่านเยอะขึ้นกว่าเดิมมาก ★★ ถ้าไม่มีอะไรบอกว่า
+ *       "เริ่มตรงนี้" คนจะอ่านคอลัมน์ซ้ายจบแล้วค่อยหาฟอร์ม ซึ่งช้ากว่าที่ควร
+ *     ★ จางมาก ตั้งใจให้รู้สึกมากกว่าให้เห็น
+ */
+.signin-ring {
+  position: absolute;
+  inset: -14%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    closest-side,
+    rgb(var(--aurora-1) / 0.16),
+    rgb(var(--aurora-2) / 0.10) 55%,
+    transparent 78%
+  );
+  filter: blur(26px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+html[data-theme='light'] .signin-ring {
+  /* ★ บนพื้นขาว แสงฟุ้งกลายเป็นคราบเทา — ลดลงจนเหลือแค่ไออุ่น ๆ */
+  background: radial-gradient(
+    closest-side,
+    rgb(var(--aurora-1) / 0.10),
+    rgb(var(--aurora-2) / 0.07) 55%,
+    transparent 78%
+  );
+}
+
+/* ── แถวจุดขายใต้การ์ด ────────────────────────────────────────────────── */
+.signin-perk {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 11.5px;
+  color: var(--color-ink-faint);
+  white-space: nowrap;
+}

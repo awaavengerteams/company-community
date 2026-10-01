@@ -117,8 +117,11 @@ export function WalletSummary() {
   const maxDay = Math.max(1, ...(data?.byDay ?? []).map((d) => Number(d.amount)))
   const label =
     mode === 'month'
-      ? anchor.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })
-      : anchor.toLocaleDateString('th-TH', { year: 'numeric' })
+      /* ★★★ ตรึงไว้ที่ 'th-TH' ทำให้ทุกภาษาเห็น "ตุลาคม 2569"
+         ★ ไม่ใช่แค่ไม่แปล — พ.ศ. ยังทำให้คนนอกไทยอ่านปีผิดไป 543 ปี
+           ★★ ด่าน i18n จับได้ทั้ง 15 ภาษาในรอบเดียว */
+      ? anchor.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+      : anchor.toLocaleDateString(locale, { year: 'numeric' })
 
   return (
     <div className="max-w-3xl py-2">
