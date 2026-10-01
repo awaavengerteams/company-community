@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { AppHeader } from '@/components/AppHeader'
+import { UserMenu } from '@/components/UserMenu'
 import { PortalHero } from '@/components/home/PortalHero'
 import { SystemHub } from '@/components/home/SystemHub'
 import { HubFeatures } from '@/components/home/HubFeatures'
@@ -49,7 +50,16 @@ export default async function HomePage() {
              และเบราว์เซอร์ที่ไม่รองรับก็แค่ไม่เห็นแถบ ไม่พังอะไร */}
       <div className="scroll-progress" aria-hidden="true" />
 
-      <AppHeader center={<span />} />
+      {/* ★ หน้าแรกก็ต้องบอกว่าใครล็อกอินอยู่ และออกจากระบบได้
+          ★★ เดิมแถบบนมีแค่ภาษากับธีม — คนที่เข้ามาหน้านี้จึงไม่มีทางรู้ว่า
+             ตัวเองเป็นใครอยู่ และไม่มีทางออก */}
+      <AppHeader
+        center={<span />}
+        /* ★ หน้านี้ไม่ได้อ่านสิทธิ์ Admin มา (getRegisteredUser ไม่คืนมาให้)
+             ★★ ไม่ยิง query เพิ่มเพื่อป้ายเล็ก ๆ อันเดียว — ป้าย Admin
+                แสดงในแถบบนของโมดูลออฟฟิศซึ่งเป็นที่ที่สิทธิ์นั้นมีผลจริง */
+          right={<UserMenu displayName={me.displayName} isAdmin={false} />}
+      />
 
       <PortalHero stats={stats} />
 

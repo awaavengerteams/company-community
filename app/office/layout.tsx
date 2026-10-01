@@ -5,6 +5,7 @@ import { NotificationBell } from '@/components/office/NotificationBell'
 import { ot } from '@/lib/i18n/office'
 import { Logo } from '@/components/Logo'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { UserMenu } from '@/components/UserMenu'
 
 /**
  * โครงของทุกหน้าในระบบกิจกรรมออฟฟิศ (FR-X07)
@@ -90,17 +91,10 @@ function OfficeHeader({
         {/*
           * ★ ชื่อผู้ใช้เป็นตัวยืนยันว่า "กำลังใช้ในนามใคร" ซึ่งสำคัญมากใน
           *   ระบบที่มีเรื่องเงิน — คนต้องเห็นได้ทันทีว่าไม่ได้สวมบัญชีคนอื่นอยู่
-          * ★★ และเป็นทางเข้าหน้าโปรไฟล์ด้วย เพราะพอถอดแถบเมนูซ้ายออกแล้ว
-          *    หน้าโปรไฟล์จะไม่มีทางเข้าเลยถ้าไม่ผูกไว้ตรงนี้ — ชื่อตัวเอง
-          *    เป็นที่ที่คนไปกดหาการตั้งค่าของตัวเองอยู่แล้วเป็นปกติ
+          * ★★ เดิมเป็นลิงก์เฉย ๆ ที่พาไปหน้าโปรไฟล์ และไม่มีทางออกจากระบบเลย
+          *    ★ ตอนนี้เป็นเมนูที่มีทั้งโปรไฟล์และออกจากระบบ
           */}
-        <Link
-          href="/office/profile"
-          className="hidden max-w-40 truncate rounded-full px-3 py-1.5 text-sm text-ink-soft transition-colors hover:bg-surface hover:text-ink sm:block"
-        >
-          {displayName}
-          {isAdmin ? <span className="ms-1 text-accent">·&nbsp;Admin</span> : null}
-        </Link>
+        <UserMenu displayName={displayName} isAdmin={isAdmin} />
       </div>
     </header>
   )
