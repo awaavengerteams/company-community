@@ -175,6 +175,16 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     throw new AppError('DATABASE_ERROR', { cause: updateError })
   }
 
+  /*
+   * ★★★ ประทับว่าบัญชีนี้ "มีรหัสผ่านแล้ว" (0042)
+   *
+   *     ★ ถ้าไม่ทำ ระบบจะยังคิดว่าบัญชีนี้เป็นบัญชีรุ่นเก่าที่ไม่มีรหัสผ่าน
+   *       ★★ แล้วใครก็เข้าได้ด้วยการเว้นช่องรหัสผ่านว่างไว้ —
+   *          รหัสชั่วคราวที่เพิ่งตั้งให้จะไม่มีความหมายเลย
+   */
+  const { error: markError } = await admin.rpc('mark_password_set', { p_user: body.userId })
+  if (markError) throw fromPostgresError(markError)
+
   await admin.from('audit_log').insert({
     actor_id: actor.id,
     action: 'account.resetPassword',

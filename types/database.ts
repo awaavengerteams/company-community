@@ -75,6 +75,7 @@ export type Database = {
           position_title: string | null
           purpose: string | null
           terms_accepted_at: string | null
+          password_set_at: string | null
           id: string
           display_name: string
           avatar_url: string | null
@@ -1135,6 +1136,10 @@ export type Database = {
           p_purpose?: string | null
         }
         Returns: Database['public']['Tables']['profiles']['Row']
+      }
+      mark_password_set: {
+        Args: { p_user: string }
+        Returns: undefined
       }
       user_has_password: {
         Args: { p_user: string }
