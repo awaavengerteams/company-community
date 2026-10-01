@@ -3216,3 +3216,121 @@ html[data-theme='light'] .auth-card {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--color-line), transparent);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * หน้าห้องฟังเพลง
+ *
+ * ★★★ หน้านี้เหลือแค่ "ห้องเพลง" แล้ว — เนื้อหาแนะนำตัวถูกตัดออกทั้งก้อน
+ *
+ *     ★ ของที่ตัดไป (วิธีใช้ · ตัวอย่าง · คำถามที่พบบ่อย) เขียนไว้สำหรับคน
+ *       ที่ยังไม่รู้จักเว็บ ★★ แต่คนที่เดินมาถึง /music คือคนที่กดการ์ด
+ *       "ห้องฟังเพลง" มาจากพอร์ทัลแล้ว — เขารู้อยู่แล้วว่ามาทำอะไร
+ *     ★ ปล่อยไว้เท่ากับให้เขาเลื่อนผ่านของที่อ่านจบไปแล้วทุกครั้งที่เข้ามา
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.music-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-line);
+}
+
+/* ★ แสงอุ่นพาดบนสุด แล้วจางหายก่อนถึงเนื้อหา — ไม่ตัดเป็นเส้นคม */
+.music-hero::before {
+  content: '';
+  position: absolute;
+  inset: -40% 0 auto 0;
+  height: 150%;
+  background:
+    radial-gradient(60% 55% at 50% 0%, rgb(var(--aurora-1) / 0.20), transparent 70%),
+    radial-gradient(45% 45% at 15% 10%, rgb(var(--aurora-2) / 0.16), transparent 70%),
+    radial-gradient(45% 45% at 85% 5%, rgb(var(--aurora-3) / 0.14), transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ── ป้ายตัวเลขสด ─────────────────────────────────────────────────────── */
+/*
+ * ★ ตัวเลขจริงทำให้หน้ารู้สึกมีชีวิต ซึ่งสโลแกนทำไม่ได้
+ *   ★★ เป็นเหตุผลเดียวกับป้ายบนพอร์ทัลออฟฟิศ
+ */
+.music-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-elevated) 62%, transparent);
+  padding: 0.4rem 0.9rem;
+  backdrop-filter: blur(14px);
+}
+
+.music-stat b {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
+}
+
+.music-stat span {
+  font-size: 11.5px;
+  color: var(--color-ink-soft);
+}
+
+/* ── จุดแดงเต้นตอนมีคนฟังอยู่จริง ─────────────────────────────────────── */
+.music-live {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: rgb(var(--aurora-1));
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.music-live::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: rgb(var(--aurora-1) / 0.35);
+  animation: signin-pulse 2.4s ease-out infinite;
+}
+
+/* ── การ์ดลงมือทำ ─────────────────────────────────────────────────────── */
+.music-act {
+  position: relative;
+  border-radius: 1.5rem;
+  border: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-elevated) 58%, transparent);
+  backdrop-filter: blur(18px);
+  transition: border-color 200ms, box-shadow 200ms;
+}
+
+.music-act-primary {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-elevated) 88%, transparent),
+      color-mix(in oklab, var(--color-elevated) 64%, transparent)
+    );
+  box-shadow: 0 34px 80px -54px rgb(var(--aurora-1) / 0.9);
+}
+
+/* ★ เส้นไล่สีขอบบน เหมือนการ์ดฟอร์มเข้าใช้งาน — ผูกสองหน้าเข้าด้วยกัน */
+.music-act-primary::before {
+  content: '';
+  position: absolute;
+  inset-inline: 1.25rem;
+  top: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--aurora-1) / 0.85),
+    rgb(var(--aurora-2) / 0.85) 55%,
+    transparent
+  );
+  pointer-events: none;
+}
