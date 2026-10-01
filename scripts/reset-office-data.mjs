@@ -219,8 +219,26 @@ for (const table of TABLES) {
     console.log(`    ${table.padEnd(24)} ข้าม — ${before.error}`)
     continue
   }
-  /* ★ เงื่อนไขที่เป็นจริงเสมอ — PostgREST ไม่ยอมให้ delete แบบไม่มี where */
-  const { error } = await db.from(table).delete().not('id', 'is', null)
+  /*
+   * ★★★ ห้ามเดาชื่อคอลัมน์ — อ่านจากแถวจริงแทน
+   *
+   *     ★ เดารอบแรกว่าทุกตารางมี id → ล้มห้าตาราง (ตารางเชื่อมใช้ primary key
+   *       แบบคู่) ★ เดารอบสองว่าทุกตารางมี created_at → ล้มอีกสามตาราง
+   *       ★★ การเดาครั้งที่สามก็จะล้มอีกแบบหนึ่ง เพราะปัญหาไม่ใช่ว่าเดาผิดคอลัมน์
+   *          แต่เป็นการเดาเอง ทั้งที่ถามได้
+   *
+   *     ★ ดึงมาหนึ่งแถวแล้วใช้ชื่อคอลัมน์แรกของมัน — ตารางว่างก็ไม่ต้องลบอยู่แล้ว
+   *       ★★ ใช้ได้กับทุกตารางโดยไม่ต้องรู้โครงสร้างล่วงหน้า และไม่พังเงียบ ๆ
+   *          วันที่มีคนเพิ่มตารางใหม่ที่หน้าตาไม่เหมือนใคร
+   */
+  const { data: sample } = await db.from(table).select('*').limit(1)
+  const col = sample?.[0] ? Object.keys(sample[0])[0] : null
+  if (!col) {
+    console.log(`    ${table.padEnd(24)} 0 → 0`)
+    continue
+  }
+
+  const { error } = await db.from(table).delete().not(col, 'is', null)
   const after = await countRows(table)
   console.log(
     `    ${table.padEnd(24)} ${error ? '✗ ' + error.message : `${n(before.count)} → ${n(after.count ?? 0)}`}`,
