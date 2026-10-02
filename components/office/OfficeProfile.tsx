@@ -46,6 +46,8 @@ const NOTIFY_TYPES: { type: string; labelKey: OfficeKey }[] = [
   { type: 'marketMessage', labelKey: 'profile.n.marketMessage' },
   { type: 'marketAlert', labelKey: 'profile.n.marketAlert' },
   { type: 'contentHidden', labelKey: 'profile.n.contentHidden' },
+  { type: 'gameChallenge', labelKey: 'profile.n.gameChallenge' },
+  { type: 'gameTurn', labelKey: 'profile.n.gameTurn' },
 ]
 
 /** หน้าโปรไฟล์ + ตั้งค่าแจ้งเตือน (หัวข้อ 8.1) */

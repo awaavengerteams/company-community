@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getOfficeViewer } from '@/lib/office/session'
 import { OfficePageChrome } from '@/components/office/OfficePageChrome'
 import { OfficeFooter } from '@/components/office/OfficeFooter'
+import { ChallengeBanner } from '@/components/office/games/ChallengeBanner'
 
 /**
  * ด่าน "ต้องผูกรหัสพนักงานก่อน" + หัวหน้าของทุกหน้าในระบบออฟฟิศ (NFR-11)
@@ -52,6 +53,9 @@ export default async function OfficeMemberLayout({ children }: LayoutProps<'/off
       </div>
 
       <OfficeFooter />
+
+      {/* ★ คำท้าเกม — แตะ "รับ" ครั้งเดียวจากหน้าไหนก็ได้ */}
+      <ChallengeBanner userId={viewer.id} />
     </>
   )
 }

@@ -14,7 +14,7 @@
     "db:types": "supabase gen types typescript --local > types/database.ts",
     "db:diff": "supabase db diff",
     "db:setup": "bash ./scripts/setup-cloud.sh",
-    "test": "tsx --tsconfig tsconfig.json tests/youtube.test.ts && tsx --tsconfig tsconfig.json tests/sync.test.ts",
+    "test": "tsx --tsconfig tsconfig.json tests/youtube.test.ts && tsx --tsconfig tsconfig.json tests/sync.test.ts && tsx --tsconfig tsconfig.json tests/checkers.test.ts && tsx --tsconfig tsconfig.json tests/typing.test.ts",
     "db:apply": "echo \"วาง supabase/apply-all.sql ใน SQL Editor หรือใช้ npm run db:setup\"",
     "db:test:rest": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/db-test-rest.ts",
     "test:e2e": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/e2e.ts",

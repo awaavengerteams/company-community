@@ -1,4 +1,5 @@
 import type { OfficeKey } from '@/lib/i18n/office-format'
+import { GAME_ICONS } from '@/lib/games/catalog'
 
 /**
  * โครงเมนูของระบบกิจกรรมออฟฟิศ (FR-X07 · หัวข้อ 8 ของเอกสาร)
@@ -81,6 +82,10 @@ export const OFFICE_NAV: NavSection[] = [
     labelKey: 'nav.fun',
     icon: ICONS.fun,
     children: [
+      /* ★ ชิปแรกพากลับหน้าเมนูเกม — ทุกเกมในหมวดมีทางกลับในแตะเดียว */
+      { href: '/office/fun', labelKey: 'games.all' , icon: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z' },
+      { href: '/office/fun/checkers', labelKey: 'nav.fun.checkers' , icon: GAME_ICONS.checkers },
+      { href: '/office/fun/typing', labelKey: 'nav.fun.typing' , icon: GAME_ICONS.typing },
       { href: '/office/fun/name', labelKey: 'nav.fun.name' , icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 5v4l3 2M12 3v3' },
       { href: '/office/fun/team', labelKey: 'nav.fun.team' , icon: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M16 20a6 6 0 0 1 6-6' },
       { href: '/office/fun/lottery', labelKey: 'nav.fun.lottery' , icon: 'M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4zM9 8v8' },
@@ -171,6 +176,9 @@ const PAGE_META: Record<string, PageMeta> = {
   '/office/wallet/qr': { titleKey: 'wallet.qr.title', descKey: 'pdesc.walletQr', section: '/office/wallet' },
   '/office/wallet/pay': { titleKey: 'wallet.action.pay', descKey: 'pdesc.walletPay', section: '/office/wallet' },
 
+  '/office/fun': { titleKey: 'nav.fun', descKey: 'pdesc.fun', section: '/office/fun' },
+  '/office/fun/checkers': { titleKey: 'nav.fun.checkers', descKey: 'games.desc.checkers', section: '/office/fun' },
+  '/office/fun/typing': { titleKey: 'nav.fun.typing', descKey: 'games.desc.typing', section: '/office/fun' },
   '/office/fun/name': { titleKey: 'fun.name.title', descKey: 'pdesc.funName', section: '/office/fun' },
   '/office/fun/team': { titleKey: 'fun.team.title', descKey: 'pdesc.funTeam', section: '/office/fun' },
   '/office/fun/lottery': { titleKey: 'fun.lottery.title', descKey: 'pdesc.funLottery', section: '/office/fun' },

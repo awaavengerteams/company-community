@@ -25,6 +25,14 @@ export const APP_ERRORS = {
   PREMATURE_END: { status: 409 },
   RATE_LIMITED: { status: 429 },
 
+  /* ── เกม (0048) ── */
+  GAME_NOT_FOUND: { status: 404 },
+  /** ★ กระดานเปลี่ยนก่อนคำขอนี้มาถึง (อีกฝ่ายเดินแล้ว / ไม่ใช่ตาเรา / หมดเวลา) — โหลดใหม่ */
+  GAME_STALE: { status: 409 },
+  CHALLENGE_EXPIRED: { status: 410 },
+  /** ห้องแข่งพิมพ์เต็ม หรือเริ่มแข่งไปแล้ว */
+  ROOM_FULL: { status: 409 },
+
   /* ── ระบบกิจกรรมออฟฟิศ (0023) ─────────────────────────────────────────
    * ★ ชื่อต้องตรงกับที่ RPC `raise exception` เป๊ะ ๆ
    *   fromPostgresError() จับคู่ด้วยการ match ชื่อในข้อความ error

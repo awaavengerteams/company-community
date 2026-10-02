@@ -65,7 +65,7 @@ const CARDS: Card[] = [
     demo: 'split',
   },
   {
-    href: '/office/fun/name',
+    href: '/office/fun',
     titleKey: 'hub.fun',
     detailKey: 'hub.funDetail',
     icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 3',

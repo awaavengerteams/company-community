@@ -54,7 +54,7 @@ const FEATURES: Feature[] = [
     icon: 'M3 8a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2M3 8v9a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3M3 8h1m17 3h-4a2 2 0 0 0 0 4h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z',
   },
   {
-    href: '/office/fun/name',
+    href: '/office/fun',
     demo: 'fun',
     tint: '175 82 222',
     titleKey: 'hub.fun',

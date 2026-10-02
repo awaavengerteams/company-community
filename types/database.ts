@@ -862,6 +862,192 @@ export type Database = {
         Relationships: []
       }
 
+      /* ── เกม: คำท้า + หมากฮอส (0048) ─────────────────────────────── */
+
+      game_challenges: {
+        Row: {
+          id: string
+          game: 'checkers'
+          from_user: string
+          to_user: string
+          settings: { forceCapture?: boolean; turnSeconds?: number | null }
+          status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'EXPIRED'
+          expires_at: string
+          match_id: string | null
+          created_at: string
+          responded_at: string | null
+        }
+        Insert: {
+          game?: 'checkers'
+          from_user: string
+          to_user: string
+          settings?: { forceCapture?: boolean; turnSeconds?: number | null }
+          expires_at: string
+        }
+        Update: {
+          status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'EXPIRED'
+          match_id?: string | null
+          responded_at?: string | null
+        }
+        Relationships: []
+      }
+
+      /* ── เกม: แข่งพิมพ์ดีด (0049) ─────────────────────────────────── */
+
+      typing_rooms: {
+        Row: {
+          id: string
+          code: string
+          host_id: string
+          lang: 'th' | 'en'
+          length: 'short' | 'medium'
+          passage_idx: number
+          round: number
+          status: 'WAITING' | 'RACING' | 'FINISHED'
+          max_players: number
+          auto_start_at: string | null
+          starts_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          host_id: string
+          lang: 'th' | 'en'
+          length: 'short' | 'medium'
+          passage_idx: number
+          max_players?: number
+        }
+        Update: {
+          host_id?: string
+          passage_idx?: number
+          round?: number
+          status?: 'WAITING' | 'RACING' | 'FINISHED'
+          auto_start_at?: string | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+      typing_room_players: {
+        Row: {
+          room_id: string
+          user_id: string
+          joined_at: string
+          left_at: string | null
+          round: number
+          finished_at: string | null
+        }
+        Insert: { room_id: string; user_id: string; round?: number; left_at?: string | null; finished_at?: string | null }
+        Update: { left_at?: string | null; round?: number; finished_at?: string | null; joined_at?: string }
+        Relationships: []
+      }
+
+      typing_runs: {
+        Row: {
+          id: string
+          user_id: string
+          mode: 'PRACTICE' | 'RACE'
+          room_id: string | null
+          round: number | null
+          lang: 'th' | 'en'
+          length: 'short' | 'medium'
+          passage_idx: number
+          created_at: string
+          began_at: string | null
+          finished_at: string | null
+          chars: number | null
+          keystrokes: number | null
+          first_try: number | null
+          elapsed_ms: number | null
+          wpm: number | null
+          accuracy: number | null
+          valid: boolean
+          flag: string | null
+        }
+        Insert: {
+          user_id: string
+          mode: 'PRACTICE' | 'RACE'
+          room_id?: string | null
+          round?: number | null
+          lang: 'th' | 'en'
+          length: 'short' | 'medium'
+          passage_idx: number
+          began_at?: string | null
+          finished_at?: string | null
+          chars?: number | null
+          keystrokes?: number | null
+          first_try?: number | null
+          elapsed_ms?: number | null
+          wpm?: number | null
+          accuracy?: number | null
+          valid?: boolean
+          flag?: string | null
+        }
+        Update: {
+          began_at?: string | null
+          finished_at?: string | null
+          chars?: number | null
+          keystrokes?: number | null
+          first_try?: number | null
+          elapsed_ms?: number | null
+          wpm?: number | null
+          accuracy?: number | null
+          valid?: boolean
+          flag?: string | null
+        }
+        Relationships: []
+      }
+
+      checkers_matches: {
+        Row: {
+          id: string
+          challenge_id: string | null
+          player_bottom: string
+          player_top: string
+          state: { board: number[]; turn: 1 | -1; quiet: number; ply: number }
+          version: number
+          force_capture: boolean
+          turn_seconds: number | null
+          turn_deadline: string | null
+          timeouts_bottom: number
+          timeouts_top: number
+          last_move: { from: number; path: number[]; captures: number[] } | null
+          draw_offer_by: string | null
+          status: 'ACTIVE' | 'FINISHED'
+          winner_id: string | null
+          end_reason: 'NO_PIECES' | 'NO_MOVES' | 'NO_CAPTURE' | 'RESIGN' | 'TIMEOUT' | 'DRAW_AGREED' | null
+          created_at: string
+          updated_at: string
+          finished_at: string | null
+        }
+        Insert: {
+          challenge_id?: string | null
+          player_bottom: string
+          player_top: string
+          state: { board: number[]; turn: 1 | -1; quiet: number; ply: number }
+          force_capture?: boolean
+          turn_seconds?: number | null
+          turn_deadline?: string | null
+        }
+        Update: {
+          state?: { board: number[]; turn: 1 | -1; quiet: number; ply: number }
+          version?: number
+          turn_deadline?: string | null
+          timeouts_bottom?: number
+          timeouts_top?: number
+          last_move?: { from: number; path: number[]; captures: number[] } | null
+          draw_offer_by?: string | null
+          status?: 'ACTIVE' | 'FINISHED'
+          winner_id?: string | null
+          end_reason?: 'NO_PIECES' | 'NO_MOVES' | 'NO_CAPTURE' | 'RESIGN' | 'TIMEOUT' | 'DRAW_AGREED' | null
+          updated_at?: string
+          finished_at?: string | null
+        }
+        Relationships: []
+      }
+
       /* ── แชทออฟฟิศ (0038) ─────────────────────────────────────── */
 
       office_chat_rooms: {

@@ -234,6 +234,12 @@ const KIND_OF: Record<string, (typeof KINDS)[keyof typeof KINDS]> = {
   'notify.type.marketReserved': KINDS.market,
   'notify.type.marketAlert': KINDS.market,
   'notify.type.drawInvite': KINDS.fun,
+  'notify.type.gameChallenge': KINDS.fun,
+  'notify.type.gameAccepted': KINDS.fun,
+  'notify.type.gameDeclined': KINDS.fun,
+  'notify.type.gameTimeout': KINDS.warn,
+  'notify.type.gameTimeoutLost': KINDS.warn,
+  'notify.type.typingInvite': KINDS.fun,
   'notify.type.contentHidden': KINDS.warn,
 }
 
