@@ -98,6 +98,8 @@ export type Database = {
           account_status: 'ACTIVE' | 'SUSPENDED'
           /** path ใน private bucket ไม่ใช่ URL สาธารณะ (NFR-07) */
           payment_qr_path: string | null
+          /** 0046 — เบอร์พร้อมเพย์ ใช้สร้าง QR ที่มียอดเงินอยู่แล้ว */
+          promptpay_id: string | null
           created_at: string
           updated_at: string
         }
@@ -127,6 +129,7 @@ export type Database = {
           is_admin?: boolean
           account_status?: 'ACTIVE' | 'SUSPENDED'
           payment_qr_path?: string | null
+          promptpay_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -649,7 +652,13 @@ export type Database = {
           amount: number
           description?: string | null
         }
-        Update: { status?: DebtStatus; slip_path?: string | null }
+        Update: {
+          status?: DebtStatus
+          slip_path?: string | null
+          paid_at?: string | null
+          confirmed_at?: string | null
+          last_reminded_at?: string | null
+        }
         Relationships: []
       }
 

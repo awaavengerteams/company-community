@@ -23,6 +23,16 @@ const actionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('markPaid'), slipPath: z.string().max(300).optional().nullable() }),
   z.object({ action: z.literal('confirm') }),
   z.object({ action: z.literal('cancel') }),
+  /*
+   * ★★★ "ยังไม่ได้รับ" — เจ้าหนี้ปฏิเสธการโอนที่ลูกหนี้แจ้งไว้
+   *
+   *     ★ ข้อกำหนด 3.3: ข้างปุ่มยืนยันต้องมีลิงก์เล็ก "ยังไม่ได้รับ"
+   *       → สถานะกลับเป็นค้างจ่ายและแจ้งลูกหนี้
+   *     ★★ เดิมไม่มีทางย้อน — เจ้าหนี้ที่กดยืนยันพลาด หรือลูกหนี้ที่กด
+   *        "จ่ายแล้ว" ทั้งที่ยังไม่โอน ทำให้หนี้ค้างอยู่ในสถานะรอยืนยันตลอดไป
+   *        ★ ทางออกเดียวคือ "ยกเลิกหนี้" ซึ่งลบหนี้ทิ้งทั้งที่เงินยังไม่ได้รับ
+   */
+  z.object({ action: z.literal('reject') }),
   z.object({ action: z.literal('remind'), tone: z.enum(['POLITE', 'FUNNY']).default('POLITE') }),
 ])
 
@@ -53,6 +63,38 @@ export const POST = withErrorHandling(
       const { data, error } = await admin.rpc('confirm_debt', { p_actor: actor.id, p_id: id })
       if (error) throw fromPostgresError(error)
       return ok({ status: data?.status })
+    }
+
+    if (body.action === 'reject') {
+      /*
+       * ★★ เขียนตรงที่ตาราง ไม่มี RPC ให้ใช้
+       *    ★ เงื่อนไขความปลอดภัยอยู่ใน where ทั้งหมด: ต้องเป็นเจ้าหนี้ของใบนี้
+       *      และใบนี้ต้องอยู่สถานะรอยืนยันเท่านั้น
+       *      ★★ ใส่เงื่อนไขใน where ไม่ใช่เช็คก่อนแล้วค่อยเขียน —
+       *         การเช็คก่อนเปิดช่องให้สถานะเปลี่ยนระหว่างนั้น
+       */
+      const { data, error } = await admin
+        .from('debts')
+        .update({ status: 'PENDING', paid_at: null, slip_path: null })
+        .eq('id', id)
+        .eq('creditor_id', actor.id)
+        .eq('status', 'PAID_PENDING')
+        .select('id, debtor_id, amount')
+        .maybeSingle()
+
+      if (error) throw fromPostgresError(error)
+      if (!data) throw new AppError('FORBIDDEN')
+
+      /* ★ ลูกหนี้ต้องรู้ว่าถูกตีกลับ ไม่งั้นเขาคิดว่าจบไปแล้ว */
+      await admin.rpc('notify', {
+        p_user: data.debtor_id,
+        p_type: 'debtCreated',
+        p_title_key: 'notify.type.debtRejected',
+        p_params: { amount: data.amount },
+        p_link: '/office/wallet/owed',
+      })
+
+      return ok({ status: 'PENDING' })
     }
 
     if (body.action === 'cancel') {

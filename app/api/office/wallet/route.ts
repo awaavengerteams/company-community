@@ -28,7 +28,7 @@ export const GET = withErrorHandling(async () => {
     admin
       .from('debts')
       .select(
-        'id, bill_id, creditor_id, debtor_id, amount, description, status, slip_path, paid_at, last_reminded_at, created_at',
+        'id, bill_id, creditor_id, debtor_id, amount, description, status, slip_path, paid_at, last_reminded_at, is_settlement, created_at',
       )
       .or(`creditor_id.eq.${actor.id},debtor_id.eq.${actor.id}`)
       .order('created_at', { ascending: false })
@@ -44,13 +44,44 @@ export const GET = withErrorHandling(async () => {
       (rows ?? []).map((d) => (d.creditor_id === actor.id ? d.debtor_id : d.creditor_id)),
     ),
   ]
-  const people = new Map<string, { name: string; hasQr: boolean }>()
+  const people = new Map<
+    string,
+    { name: string; hasQr: boolean; avatarUrl: string | null; promptPayId: string | null }
+  >()
   if (others.length > 0) {
-    const { data: profiles } = await admin
+    /*
+     * ★★★ promptpay_id มาจาก migration 0046 — อ่านแบบล้มได้
+     *
+     *     ★ บทเรียนเดิมของโปรเจกต์: โค้ดที่ select คอลัมน์ที่ยังไม่มี
+     *       ทำให้ทั้งหน้าพัง ไม่ใช่แค่ฟีเจอร์เดียวหาย
+     *       ★★ หน้านี้คือหน้าที่คนเปิดดูว่า "ติดเงินใครอยู่" — พังไม่ได้
+     *     ★ ล้มแล้วถอยไปอ่านชุดเดิม ผลคือไม่มี QR ที่มียอดเงิน
+     *       แต่ยังกด "จ่ายแล้ว" ได้ครบทุกอย่าง
+     */
+    let profiles: {
+      id: string
+      display_name: string
+      nickname: string | null
+      avatar_url: string | null
+      payment_qr_path: string | null
+      promptpay_id?: string | null
+    }[] = []
+
+    const withPromptPay = await admin
       .from('profiles')
-      .select('id, display_name, nickname, payment_qr_path')
+      .select('id, display_name, nickname, avatar_url, payment_qr_path, promptpay_id')
       .in('id', others)
-    for (const p of profiles ?? []) {
+
+    if (withPromptPay.error) {
+      const fallback = await admin
+        .from('profiles')
+        .select('id, display_name, nickname, avatar_url, payment_qr_path')
+        .in('id', others)
+      profiles = fallback.data ?? []
+    } else {
+      profiles = withPromptPay.data ?? []
+    }
+    for (const p of profiles) {
       people.set(p.id, {
         name: p.nickname || p.display_name,
         /*
@@ -60,6 +91,14 @@ export const GET = withErrorHandling(async () => {
          *     หน้าจ่ายเงินขอ signed URL ตอนจะแสดงจริงเท่านั้น
          */
         hasQr: Boolean(p.payment_qr_path),
+        avatarUrl: p.avatar_url,
+        /*
+         * ★★ เบอร์พร้อมเพย์ส่งไปให้หน้าเว็บสร้าง QR เอง
+         *    ★ ไม่ได้สร้าง QR ที่ server แล้วส่งรูปมา — สายอักขระสั้นกว่ารูปมาก
+         *      ★★ และยอดเงินเปลี่ยนได้ตอนหักลบหนี้ ถ้าเป็นรูปต้องสร้างใหม่ทุกครั้ง
+         *    ★ เบอร์พร้อมเพย์ไม่ใช่ความลับ — มันคือสิ่งที่พิมพ์ไว้บนป้ายรับเงิน
+         */
+        promptPayId: p.promptpay_id ?? null,
       })
     }
   }
@@ -82,6 +121,10 @@ export const GET = withErrorHandling(async () => {
       otherId,
       otherName: other?.name ?? ot('common.unknownName'),
       otherHasQr: other?.hasQr ?? false,
+      otherAvatar: other?.avatarUrl ?? null,
+      /* ★ ส่งเบอร์เฉพาะตอนที่ "เขาเป็นเจ้าหนี้" — เราไม่ต้องรู้เบอร์ของลูกหนี้ */
+      otherPromptPayId: d.creditor_id === actor.id ? null : (other?.promptPayId ?? null),
+      isSettlement: d.is_settlement,
       /** จำนวนวันที่ค้าง — คำนวณที่ server ให้ตรงกันทุกเครื่อง */
       daysOwed: Math.floor((Date.now() - Date.parse(d.created_at)) / 86_400_000),
     }

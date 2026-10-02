@@ -33,5 +33,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     closed: data?.closed ?? 0,
     net: data?.net ?? 0,
     direction: data?.direction ?? 'EVEN',
+    /* ★ ใบสุทธิที่เพิ่งสร้าง — แผ่นจ่ายเงินเอาไปกด "จ่ายแล้ว" ต่อทันที */
+    newDebtId: data?.newDebtId ?? null,
   })
 })
