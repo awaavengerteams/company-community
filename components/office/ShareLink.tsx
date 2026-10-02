@@ -89,7 +89,7 @@ export function ShareLink({
       )}
     >
       {done ? (
-        <svg viewBox="0 0 24 24" className="size-4 text-ok" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg viewBox="0 0 24 24" className="size-4 text-link" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m5 13 4 4L19 7" />
         </svg>
       ) : (

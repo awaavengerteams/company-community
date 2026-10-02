@@ -166,7 +166,7 @@ export function MarketDetail({ id }: { id: string }) {
                   ? 'bg-surface text-ink-faint'
                   : l.status === 'RESERVED'
                     ? 'bg-warn/20 text-warn'
-                    : 'bg-ok/15 text-ok',
+                    : 'bg-link/15 text-link',
               )}
             >
               {statusLabel(ot, l.status)}

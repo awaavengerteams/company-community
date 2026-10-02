@@ -58,6 +58,14 @@ const schema = z.union([
     type: z.string().trim().min(1).max(40),
     enabled: z.boolean(),
   }),
+  /*
+   * ★★ งบรายเดือน — null = เลิกใช้งบ ไม่ใช่ตั้งเป็นศูนย์
+   *    ★ สองอย่างนี้ต่างกันบนหน้าจอ: ไม่มีแถบเลย กับแถบที่เต็มตั้งแต่บาทแรก
+   */
+  z.object({
+    action: z.literal('budget'),
+    amount: z.number().min(0).max(9_999_999).nullable(),
+  }),
 ])
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
@@ -77,6 +85,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     const { error } = await admin.from('profiles').update({ department: value }).eq('id', actor.id)
     if (error) throw fromPostgresError(error)
     return ok({ department: value })
+  }
+
+  if (body.action === 'budget') {
+    const { error } = await admin
+      .from('profiles')
+      .update({ monthly_budget: body.amount })
+      .eq('id', actor.id)
+    if (error) throw fromPostgresError(error)
+    return ok({ monthlyBudget: body.amount })
   }
 
   const { error } = await admin.rpc('set_notification_pref', {

@@ -62,7 +62,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const [{ data: billsPaid, error: e1 }, { data: myDebts, error: e2 }] = await Promise.all([
     admin
       .from('expense_bills')
-      .select('id, title, category, bill_date, total_amount, restaurant_id')
+      .select('id, title, category, bill_date, total_amount, restaurant_id, delivery_fee, discount')
       .eq('payer_id', actor.id)
       .gte('bill_date', from)
       .lte('bill_date', to),
@@ -134,6 +134,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     shopId: string | null
     amount: number
     mine: boolean
+    deliveryFee: number
+    discount: number
   }
   const items: Item[] = []
 
@@ -149,6 +151,9 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       shopId: b.restaurant_id,
       amount: toBaht(left),
       mine: true,
+      /* ★ ค่าส่ง/ส่วนลดของ "ทั้งบิล" ไม่ใช่ของส่วนฉัน — CSV ต้องการที่มาของตัวเลข */
+      deliveryFee: Number(b.delivery_fee ?? 0),
+      discount: Number(b.discount ?? 0),
     })
   }
 
@@ -167,6 +172,9 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     if (sat <= 0) continue
 
     items.push({
+      /* ★ ส่วนของฉันในบิลคนอื่น ไม่มีค่าส่ง/ส่วนลดของตัวเอง — มันถูกหารมาแล้ว */
+      deliveryFee: 0,
+      discount: 0,
       date,
       title: b?.title ?? d.description ?? '',
       /* ★ หนี้เดี่ยวไม่มีประเภท — ให้เป็น OTHER ไม่ใช่ null
@@ -189,10 +197,128 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const totalSat = items.reduce((s, i) => s + toSatang(i.amount), 0)
   const mineSat = items.filter((i) => i.mine).reduce((s, i) => s + toSatang(i.amount), 0)
 
+  /*
+   * ── คนที่กินข้าวด้วยบ่อยสุดในช่วงนี้ ────────────────────────────
+   * ★★ นับจาก "บิลที่แชร์กัน" ไม่ใช่จากรายชื่อเพื่อนหรือห้องแชท
+   *    ★ คำถามของหน้านี้คือ "เงินค่าข้าวหมดไปกับการกินกับใคร"
+   *      ★★ ซึ่งตอบได้จากบิลเท่านั้น
+   */
+  const sharedBillIds = [...paidIds, ...debtBillIds]
+  const { data: companions } = sharedBillIds.length
+    ? await admin
+        .from('debts')
+        .select('bill_id, debtor_id, creditor_id')
+        .in('bill_id', sharedBillIds)
+        .neq('status', 'CANCELLED')
+    : { data: [] as { bill_id: string | null; debtor_id: string; creditor_id: string }[] }
+
+  /* ★ นับ "กี่บิล" ไม่ใช่ "กี่แถวหนี้" — บิลหนึ่งใบนับคนหนึ่งคนครั้งเดียว */
+  const seen = new Set<string>()
+  const metCount = new Map<string, number>()
+  for (const c of companions ?? []) {
+    for (const uid of [c.debtor_id, c.creditor_id]) {
+      if (uid === actor.id) continue
+      const key = `${c.bill_id}:${uid}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      metCount.set(uid, (metCount.get(uid) ?? 0) + 1)
+    }
+  }
+
+  const topIds = [...metCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([id]) => id)
+
+  const { data: peopleRows } = topIds.length
+    ? await admin.from('profiles').select('id, display_name, nickname, avatar_url').in('id', topIds)
+    : { data: [] as { id: string; display_name: string; nickname: string | null; avatar_url: string | null }[] }
+
+  const personOf = new Map((peopleRows ?? []).map((p) => [p.id, p]))
+
+  /*
+   * ── ยอดของช่วงก่อนหน้า — ใช้เทียบ "▲ 12% จากเดือนก่อน" ────────
+   * ★★ ใช้ช่วงยาวเท่ากันเลื่อนถอยหลัง ไม่ได้ยึดว่าเป็น "เดือนปฏิทินก่อนหน้า"
+   *    ★ หน้านี้มีโหมดรายปีด้วย ★★ การเทียบต้องถูกทั้งสองโหมดโดยไม่ต้องแยกโค้ด
+   *    ★ ผลข้างเคียงที่ยอมรับได้: เดือนที่มี 28 วันเทียบกับ 31 วันจะไม่แฟร์นัก
+   *      ★★ แต่ความต่าง 3 วันไม่ได้เปลี่ยนข้อสรุปว่า "เดือนนี้ใช้มากขึ้นหรือน้อยลง"
+   */
+  const spanDays = Math.max(1, Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1)
+  const prevTo = new Date(Date.parse(from) - 86_400_000)
+  const prevFrom = new Date(prevTo.getTime() - (spanDays - 1) * 86_400_000)
+  const iso = (d: Date) => d.toISOString().slice(0, 10)
+
+  const [{ data: prevPaid }, { data: prevDebts }] = await Promise.all([
+    admin
+      .from('expense_bills')
+      .select('id, total_amount')
+      .eq('payer_id', actor.id)
+      .gte('bill_date', iso(prevFrom))
+      .lte('bill_date', iso(prevTo)),
+    admin
+      .from('debts')
+      .select('amount, bill_id, created_at, is_settlement')
+      .eq('debtor_id', actor.id)
+      .neq('status', 'CANCELLED'),
+  ])
+
+  const prevPaidIds = (prevPaid ?? []).map((b) => b.id)
+  const { data: prevSplit } = prevPaidIds.length
+    ? await admin.from('debts').select('bill_id, amount').in('bill_id', prevPaidIds).neq('status', 'CANCELLED')
+    : { data: [] as { bill_id: string | null; amount: number }[] }
+
+  const prevOut = new Map<string, number>()
+  for (const d of prevSplit ?? []) {
+    if (!d.bill_id) continue
+    prevOut.set(d.bill_id, (prevOut.get(d.bill_id) ?? 0) + toSatang(d.amount))
+  }
+
+  let prevSat = 0
+  for (const b of prevPaid ?? []) {
+    prevSat += Math.max(0, toSatang(b.total_amount) - (prevOut.get(b.id) ?? 0))
+  }
+
+  const prevBillIds = [
+    ...new Set((prevDebts ?? []).map((d) => d.bill_id).filter((v): v is string => Boolean(v))),
+  ]
+  const { data: prevBills } = prevBillIds.length
+    ? await admin.from('expense_bills').select('id, bill_date').in('id', prevBillIds)
+    : { data: [] as { id: string; bill_date: string }[] }
+  const prevDateOf = new Map((prevBills ?? []).map((b) => [b.id, b.bill_date]))
+
+  for (const d of prevDebts ?? []) {
+    if (d.is_settlement) continue
+    const date = (d.bill_id ? prevDateOf.get(d.bill_id) : null) ?? String(d.created_at).slice(0, 10)
+    if (date < iso(prevFrom) || date > iso(prevTo)) continue
+    prevSat += toSatang(d.amount)
+  }
+
+  /*
+   * ── งบรายเดือน ───────────────────────────────────────────────
+   * ★★ อ่านแบบล้มได้ — คอลัมน์มาจาก 0047
+   *    ★ บทเรียนเดิม: select คอลัมน์ที่ยังไม่มี ทำให้ทั้งหน้าพัง
+   */
+  let monthlyBudget: number | null = null
+  const budgetRow = await admin
+    .from('profiles')
+    .select('monthly_budget')
+    .eq('id', actor.id)
+    .maybeSingle()
+  if (!budgetRow.error) monthlyBudget = budgetRow.data?.monthly_budget ?? null
+
   return ok({
     items,
     total: toBaht(totalSat),
     myShare: toBaht(mineSat),
+    /** ยอดของช่วงก่อนหน้าที่ยาวเท่ากัน — null = ไม่มีข้อมูล ให้ซ่อนการเทียบ */
+    prevTotal: prevSat > 0 ? toBaht(prevSat) : null,
+    monthlyBudget,
+    topPeople: topIds.map((id) => ({
+      id,
+      name: personOf.get(id)?.nickname || personOf.get(id)?.display_name || '—',
+      avatarUrl: personOf.get(id)?.avatar_url ?? null,
+      times: metCount.get(id) ?? 0,
+    })),
     /*
      * ★★★ เปลี่ยนชื่อจาก owedOut → myShareOthers
      *

@@ -14,6 +14,9 @@ export type SpendItem = {
   shopId: string | null
   amount: number
   mine: boolean
+  /* ── 0045 · ใช้เฉพาะตอนส่งออก CSV ไม่ได้โชว์บนกราฟ ── */
+  deliveryFee?: number
+  discount?: number
 }
 
 /**

@@ -485,7 +485,7 @@ export function WalletOwed() {
                         <span
                           className={cn(
                             'shrink-0 text-[13px] tabular-nums',
-                            g.mine.includes(d) ? 'text-danger' : 'text-ok',
+                            g.mine.includes(d) ? 'text-danger' : 'text-link',
                           )}
                         >
                           {g.mine.includes(d) ? '−' : '+'}฿{formatBaht(locale, d.amount)}

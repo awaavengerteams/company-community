@@ -751,7 +751,7 @@ export function WalletCreate() {
                 *   ★★ ประโยคที่บอกว่าเหลือศูนย์ อ่านเป็นคำเตือนที่ยังค้างอยู่
                 *      ★ คนจะมองหาว่ายังขาดอะไร ทั้งที่กรอกครบแล้ว
                 */}
-              <p className={cn('mt-1 text-xs', remainder === 0 ? 'text-ok' : 'text-warn')}>
+              <p className={cn('mt-1 text-xs', remainder === 0 ? 'text-ink-soft' : 'text-warn')}>
                 {remainder === 0
                   ? `✓ ฿${formatBaht(locale, toBaht(split.totalSatang))}`
                   : remainder > 0

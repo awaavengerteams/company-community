@@ -100,6 +100,8 @@ export type Database = {
           payment_qr_path: string | null
           /** 0046 — เบอร์พร้อมเพย์ ใช้สร้าง QR ที่มียอดเงินอยู่แล้ว */
           promptpay_id: string | null
+          /** 0047 — งบค่าข้าวต่อเดือน (null = ยังไม่ได้ตั้ง) */
+          monthly_budget: number | null
           created_at: string
           updated_at: string
         }
@@ -130,6 +132,8 @@ export type Database = {
           account_status?: 'ACTIVE' | 'SUSPENDED'
           payment_qr_path?: string | null
           promptpay_id?: string | null
+          /** 0047 — งบค่าข้าวต่อเดือน (null = ยังไม่ได้ตั้ง) */
+          monthly_budget?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -601,6 +605,10 @@ export type Database = {
           split_mode: SplitMode
           /** ★ เฟส 2 (0030) — ใช้จัดกลุ่มในหน้าสรุป ไม่ใช่ title */
           restaurant_id: string | null
+          /* ── 0045 ── ค่าส่งรวมใน total_amount แล้ว · ส่วนลดหักออกแล้ว */
+          delivery_fee: number
+          discount: number
+          rounded: boolean
           created_at: string
           updated_at: string
         }
