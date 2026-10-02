@@ -47,7 +47,7 @@ export const GET = withErrorHandling(async () => {
       .eq('status', 'ACTIVE'),
     admin
       .from('profiles')
-      .select('id, display_name, nickname, payment_qr_path')
+      .select('id, display_name, nickname, avatar_url, department, payment_qr_path')
       .in('id', [...new Set(visible.map((l) => l.seller_id))]),
   ])
 
@@ -70,7 +70,14 @@ export const GET = withErrorHandling(async () => {
   const sellerMap = new Map(
     (sellers ?? []).map((p) => [
       p.id,
-      { name: p.nickname || p.display_name, hasQr: Boolean(p.payment_qr_path) },
+      {
+        name: p.nickname || p.display_name,
+        /* ★ รูปกับฝ่าย — การ์ดใหม่ให้คนขายเด่นขึ้น ไม่ใช่บรรทัดจาง ๆ ท้ายการ์ด
+             ★★ ของมือสองซื้อขายกันด้วยความไว้ใจ คนซื้อดูก่อนว่า "ใครขาย" */
+        avatarUrl: p.avatar_url,
+        department: p.department,
+        hasQr: Boolean(p.payment_qr_path),
+      },
     ]),
   )
 
@@ -94,6 +101,8 @@ export const GET = withErrorHandling(async () => {
         images: imageMap.get(l.id) ?? [],
         sellerId: l.seller_id,
         sellerName: seller?.name ?? null,
+        sellerAvatar: seller?.avatarUrl ?? null,
+        sellerDepartment: seller?.department ?? null,
         sellerHasQr: seller?.hasQr ?? false,
         queueCount: queue.length,
         myQueuePosition: mine >= 0 ? mine + 1 : 0,

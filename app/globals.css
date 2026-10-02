@@ -2369,6 +2369,123 @@ html[data-theme='dark'] {
   backdrop-filter: blur(6px);
 }
 
+/*
+ * ห้องแชทตลาดนัด
+ *
+ * ★★★ บนมือถือเต็มจอ บนคอมเป็นการ์ดลอย
+ *
+ *     ★ ผู้ใช้สั่งว่า "ในมือถือเอาเต็มจอเลย" ★★ ซึ่งถูกตามธรรมชาติของสื่อ —
+ *       แอปแชททุกตัวบนมือถือกินเต็มจอ เพราะจอแคบอยู่แล้ว การเหลือขอบ
+ *       ข้างละ 16px คือการตัดพื้นที่อ่านข้อความทิ้งไป 10%
+ *     ★ ใช้ position: fixed ไม่ใช่แค่ขยายความกว้าง ★★ เพราะเหนือห้องแชท
+ *       ยังมีหัวข้อหน้ากับแถบแท็บของโมดูลอยู่ ซึ่งบนมือถือกินไปครึ่งจอ
+ *       ★ fixed ดึงห้องออกจากการไหลของหน้า แล้วมันจึงเต็มจอได้จริง
+ *
+ * ★★ เว้นที่ให้แถบบนของเว็บ (--spacing-header) ไม่ได้ทับมัน
+ *    ★ แถบบนมีปุ่มเปลี่ยนภาษา · แจ้งเตือน · เมนูผู้ใช้ ซึ่งต้องกดได้เสมอ
+ *      ★★ แชทที่ทับทางออกของตัวเองคือกับดัก
+ */
+.mkt-room {
+  position: fixed;
+  inset-inline: 0;
+  top: var(--spacing-header);
+  bottom: 0;
+  z-index: 40;
+  height: auto;
+  min-height: 0;
+  max-width: none;
+  border-radius: 0;
+  border-inline: 0;
+  border-block-end: 0;
+}
+
+@media (min-width: 640px) {
+  .mkt-room {
+    position: static;
+    height: calc(100dvh - 20rem);
+    min-height: 26rem;
+    max-width: 64rem;
+    border-radius: 1.5rem;
+    border-width: 1px;
+  }
+}
+
+/* ── แกลเลอรีรูปประกาศ ──────────────────────────────────────────────────── */
+
+/*
+ * ★★ ปุ่มลูกศรจางไว้ แล้วชัดขึ้นตอนชี้ที่รูป
+ *    ★ ปุ่มทึบสองปุ่มทับบนรูปตลอดเวลา คือการบังของที่คนมาดู
+ *      ★★ แต่ซ่อนสนิทก็ไม่ได้ — บนมือถือไม่มี hover จึงต้องเห็นอยู่บ้าง
+ */
+.gal-arrow {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.42);
+  color: #fff;
+  opacity: 0.72;
+  backdrop-filter: blur(6px);
+  transition:
+    opacity 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.gal-arrow:hover {
+  background: rgb(0 0 0 / 0.68);
+  opacity: 1;
+}
+
+.gal-dots {
+  position: absolute;
+  bottom: 8px;
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.gal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.5);
+  /* ★ เงาดำบาง ๆ ให้จุดขาวยังเห็นบนรูปที่สว่าง — เหตุผลเดียวกับ .market-scrim */
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25);
+  transition: background-color 0.16s ease;
+}
+
+.gal-dot-on {
+  background: #fff;
+}
+
+.gal-thumb {
+  flex-shrink: 0;
+  overflow: hidden;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  opacity: 0.62;
+  transition:
+    opacity 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.gal-thumb:hover {
+  opacity: 1;
+}
+
+.gal-thumb-on {
+  border-color: var(--color-accent);
+  opacity: 1;
+}
+
 /* ── ช่องวางรูปในฟอร์ม ───────────────────────────────────────────────────── */
 .dropzone {
   border: 1.5px dashed color-mix(in oklab, var(--color-line-strong) 90%, transparent);

@@ -40,7 +40,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
     const { data: listing } = await admin
       .from('listings')
-      .select('seller_id, title')
+      .select('seller_id, title, price, kind, status')
       .eq('id', thread.listing_id)
       .maybeSingle()
 
@@ -64,8 +64,34 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     /* ★ กดอ่านให้เลยตอนเปิดห้อง — หน้าเว็บไม่ต้องยิงอีกรอบ */
     await admin.rpc('read_listing_thread', { p_actor: actor.id, p_thread: threadId })
 
+    /*
+     * ★ หัวห้องต้องบอกว่าคุยกับใคร เรื่องอะไร ราคาเท่าไหร่
+     *   ★★ เดิมบอกแค่ชื่อประกาศ ★ คนที่เปิดห้องมาจากกล่องข้อความ
+     *      ต้องจำเองว่านี่คือใคร ซึ่งจำไม่ได้เมื่อมีหลายห้อง
+     */
+    const otherId = listing?.seller_id === actor.id ? thread.buyer_id : listing?.seller_id
+    const [{ data: other }, { data: cover }] = await Promise.all([
+      otherId
+        ? admin.from('profiles').select('display_name, nickname, avatar_url').eq('id', otherId).maybeSingle()
+        : Promise.resolve({ data: null }),
+      admin
+        .from('listing_images')
+        .select('url')
+        .eq('listing_id', thread.listing_id)
+        .order('sort')
+        .limit(1)
+        .maybeSingle(),
+    ])
+
     return ok({
       title: listing?.title ?? '',
+      price: listing?.price ?? 0,
+      kind: listing?.kind ?? 'SELL',
+      status: listing?.status ?? 'AVAILABLE',
+      cover: cover?.url ?? null,
+      withName: other?.nickname || other?.display_name || '—',
+      withAvatar: other?.avatar_url ?? null,
+      iAmSeller: listing?.seller_id === actor.id,
       buyerId: thread.buyer_id,
       listingId: thread.listing_id,
       messages: (data ?? []).map((m) => ({
@@ -91,21 +117,55 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
     const { data: listing } = await admin
       .from('listings')
-      .select('id, title, seller_id')
+      .select('id, title, seller_id, price, kind, status')
       .eq('id', listingId)
       .maybeSingle()
 
     if (!listing || listing.seller_id === actor.id) return ok({ draft: null })
 
-    const { data: existing } = await admin
-      .from('listing_threads')
-      .select('id')
-      .eq('listing_id', listingId)
-      .eq('buyer_id', actor.id)
-      .maybeSingle()
+    /*
+     * ★★★ ห้องที่ยังไม่มีข้อความก็ต้องมีหัวห้องที่สมบูรณ์
+     *
+     *     ★ เดิมคืนแค่ listingId/title/buyerId ★★ หัวห้องจึงขึ้นชื่อผู้ขายเป็น
+     *       "—" และราคาเป็น "฿0" ทั้งที่ของชิ้นนั้นมีคนขายและมีราคาอยู่
+     *     ★ จังหวะนี้คือจังหวะแรกที่คนซื้อเห็นห้อง — ข้อมูลที่ว่างเปล่า
+     *       ตรงนี้อ่านว่า "ระบบไม่รู้จักของที่ฉันกำลังจะถาม"
+     */
+    const [{ data: seller }, { data: cover }, { data: existing }] = await Promise.all([
+      admin
+        .from('profiles')
+        .select('display_name, nickname, avatar_url')
+        .eq('id', listing.seller_id)
+        .maybeSingle(),
+      admin
+        .from('listing_images')
+        .select('url')
+        .eq('listing_id', listingId)
+        .order('sort')
+        .limit(1)
+        .maybeSingle(),
+      admin
+        .from('listing_threads')
+        .select('id')
+        .eq('listing_id', listingId)
+        .eq('buyer_id', actor.id)
+        .maybeSingle(),
+    ])
 
     return ok({
-      draft: { listingId, title: listing.title, buyerId: actor.id, threadId: existing?.id ?? null },
+      draft: {
+        listingId,
+        title: listing.title,
+        price: listing.price,
+        kind: listing.kind,
+        status: listing.status,
+        cover: cover?.url ?? null,
+        withName: seller?.nickname || seller?.display_name || '—',
+        withAvatar: seller?.avatar_url ?? null,
+        iAmSeller: false,
+        buyerId: actor.id,
+        threadId: existing?.id ?? null,
+      },
     })
   }
 
@@ -137,8 +197,19 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   const { data: listings } = await admin
     .from('listings')
-    .select('id, title, seller_id')
+    .select('id, title, seller_id, price, kind, status')
     .in('id', listingIds)
+
+  /* ★ รูปแรกของแต่ละประกาศ — กล่องข้อความต้องบอกได้ว่า "เรื่องของชิ้นไหน"
+       ★★ ชื่อประกาศอย่างเดียวอ่านยากเมื่อมีห้องหลายห้องจากคนขายคนเดียวกัน */
+  const { data: covers } = await admin
+    .from('listing_images')
+    .select('listing_id, url, sort')
+    .in('listing_id', listingIds)
+    .order('sort')
+
+  const coverOf = new Map<string, string>()
+  for (const c of covers ?? []) if (!coverOf.has(c.listing_id)) coverOf.set(c.listing_id, c.url)
 
   const listingOf = new Map((listings ?? []).map((l) => [l.id, l]))
 
@@ -151,7 +222,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   ]
 
   const [{ data: people }, { data: unread }] = await Promise.all([
-    admin.from('profiles').select('id, display_name, nickname').in('id', peopleIds),
+    admin.from('profiles').select('id, display_name, nickname, avatar_url').in('id', peopleIds),
     admin
       .from('listing_messages')
       .select('thread_id')
@@ -164,6 +235,23 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   ])
 
   const nameOf = new Map((people ?? []).map((p) => [p.id, p.nickname || p.display_name]))
+  const avatarOf = new Map((people ?? []).map((p) => [p.id, p.avatar_url]))
+
+  /*
+   * ★★ ข้อความล่าสุดของแต่ละห้อง — ดึงรวดเดียวแล้วเก็บอันแรกของแต่ละห้อง
+   *    ★ กล่องข้อความที่มีแต่ชื่อ บอกไม่ได้ว่าคุยค้างไว้ตรงไหน
+   *      ★★ คนต้องเปิดทีละห้องเพื่อจะรู้ว่าห้องไหนรอเราตอบอยู่
+   */
+  const { data: lastMsgs } = await admin
+    .from('listing_messages')
+    .select('thread_id, text, sender_id, created_at')
+    .in('thread_id', rows.map((t) => t.id))
+    .order('created_at', { ascending: false })
+
+  const lastOf = new Map<string, { text: string; mine: boolean }>()
+  for (const m of lastMsgs ?? []) {
+    if (!lastOf.has(m.thread_id)) lastOf.set(m.thread_id, { text: m.text, mine: m.sender_id === actor.id })
+  }
 
   const unreadCount = new Map<string, number>()
   for (const m of unread ?? []) {
@@ -181,6 +269,13 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
         listingId: t.listing_id,
         title: listing?.title ?? '',
         withName: (otherId ? nameOf.get(otherId) : null) ?? '—',
+        withAvatar: (otherId ? avatarOf.get(otherId) : null) ?? null,
+        cover: coverOf.get(t.listing_id) ?? null,
+        price: listing?.price ?? 0,
+        kind: listing?.kind ?? 'SELL',
+        status: listing?.status ?? 'AVAILABLE',
+        lastText: lastOf.get(t.id)?.text ?? null,
+        lastMine: lastOf.get(t.id)?.mine ?? false,
         iAmSeller,
         unread: unreadCount.get(t.id) ?? 0,
         lastAt: t.last_message_at,

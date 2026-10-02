@@ -5,15 +5,21 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { ListingImage } from './ListingImage'
+import { ListingGallery } from './ListingGallery'
+import { ChatAvatar } from './ChatAvatar'
+import { ShareLink } from './ShareLink'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
 import { officeErrorText } from '@/lib/i18n/office-format'
-import { useOt } from '@/lib/i18n/office'
+import { Untranslated, useOt, type OfficeKey } from '@/lib/i18n/office'
 import {
   CATEGORIES,
   KINDS,
+  OWNERS,
+  PRICE_BANDS,
+  SORTS,
+  activeFilterCount,
   categoryLabel,
   conditionLabel,
   emptyMarketFilters,
@@ -24,6 +30,7 @@ import {
   statusLabel,
   type Listing,
   type MarketFilters,
+  type MarketSort,
 } from '@/lib/office/market'
 
 /** หน้าประกาศทั้งหมด / ของฉัน (FR-D03–D07, D10) */
@@ -55,8 +62,10 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
     const base = mineOnly
       ? items.filter((l) => l.sellerId === selfId || l.myQueuePosition > 0)
       : items
-    return filterListings(base, filters)
+    return filterListings(base, filters, selfId)
   }, [items, filters, mineOnly, selfId])
+
+  const active = activeFilterCount(filters)
 
   async function act(id: string, body: Record<string, unknown>, msg?: string) {
     setBusy(id)
@@ -110,6 +119,78 @@ export function MarketList({ mineOnly = false, selfId }: { mineOnly?: boolean; s
           placeholder={ot('market.searchPlaceholder')}
           className="max-w-sm"
         />
+        {/*
+          * ★★★ แถวแรกคือ "ของใคร" กับ "เรียงยังไง" — สองอย่างที่เปลี่ยนบ่อยที่สุด
+          *
+          *     ★ หมวดกับชนิดเป็นการค้นหา ซึ่งทำครั้งเดียวแล้วอยู่ยาว
+          *       ★★ ส่วนการเรียงกับ "ที่ฉันจองไว้" เป็นการสลับมุมมอง
+          *          ซึ่งคนกดไปกดมาหลายรอบในคราวเดียว
+          *     ★ ของที่กดบ่อยกว่าควรอยู่บนและไม่ต้องเลื่อนหา
+          */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {OWNERS.map((o) => (
+            <Chip
+              key={o}
+              active={filters.owner === o}
+              onClick={() => setFilters((f) => ({ ...f, owner: o }))}
+            >
+              <Untranslated>{ot(`market.owner.${o}` as OfficeKey)}</Untranslated>
+            </Chip>
+          ))}
+
+          <span className="mx-1 w-px self-stretch bg-line" />
+
+          {/*
+            * ★★ ใช้ <select> ไม่ใช่ชิปสี่อัน
+            *    ★ การเรียงเลือกได้ทีละอย่างเสมอ ★★ ชิปที่เลือกได้ทีละอัน
+            *       หน้าตาเหมือนชิปที่เลือกได้หลายอันเป๊ะ — คนจะพยายามกดสองอัน
+            *    ★ และ select กินที่บรรทัดเดียวบนมือถือ ส่วนชิปสี่อันกินสองบรรทัด
+            */}
+          <label className="flex items-center gap-1.5 text-xs text-ink-faint">
+            <span className="hidden sm:inline">
+              <Untranslated>{ot('market.sort')}</Untranslated>
+            </span>
+            <select
+              value={filters.sort}
+              onChange={(e) => setFilters((f) => ({ ...f, sort: e.target.value as MarketSort }))}
+              aria-label={ot('market.sort')}
+              className="h-8 rounded-full border border-line bg-surface px-3 text-[13px] text-ink"
+            >
+              {SORTS.map((o) => (
+                <option key={o} value={o}>
+                  {ot(`market.sort.${o}` as OfficeKey)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {active > 0 ? (
+            <button
+              type="button"
+              onClick={() => setFilters(emptyMarketFilters())}
+              className="ms-auto h-8 rounded-full px-3 text-[13px] text-link transition-colors hover:bg-surface"
+            >
+              <Untranslated>{ot('market.clearFilters', { n: active })}</Untranslated>
+            </button>
+          ) : null}
+        </div>
+
+        {/* ── ช่วงราคา ──────────────────────────────────────────── */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="me-1 text-xs text-ink-faint">
+            <Untranslated>{ot('market.price')}</Untranslated>
+          </span>
+          {PRICE_BANDS.map((b) => (
+            <Chip
+              key={b.id}
+              active={filters.band === b.id}
+              onClick={() => setFilters((f) => ({ ...f, band: f.band === b.id ? null : b.id }))}
+            >
+              <Untranslated>{ot(`market.price.${b.id}` as OfficeKey)}</Untranslated>
+            </Chip>
+          ))}
+        </div>
+
         <div className="flex flex-wrap gap-1.5">
           <Chip active={!filters.kind} onClick={() => setFilters((f) => ({ ...f, kind: null }))}>
             {ot('market.allKinds')}
@@ -210,25 +291,16 @@ function Card({
         *    ★ ราคาคือสิ่งที่ตาหาเป็นอันดับแรกในหน้าตลาด การวางทับบนรูป
         *      ทำให้กวาดตาทั้งตารางแล้วเทียบราคาได้โดยไม่ต้องอ่านอย่างอื่นเลย
         */}
-      <div className="market-media relative overflow-hidden">
-        {l.images[0] ? (
-          <ListingImage src={l.images[0]} alt={l.title} />
-        ) : (
-          <div className="flex aspect-4/3 w-full items-center justify-center bg-surface text-ink-faint">
-            <svg
-              viewBox="0 0 24 24"
-              className="size-8 opacity-60"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 7V5a3 3 0 0 1 6 0v2" />
-            </svg>
-          </div>
-        )}
+      {/*
+        * ★★★ รูปทั้งบล็อกเป็นลิงก์เข้าหน้ารายละเอียด
+        *
+        *     ★ ผู้ใช้ทักมาตรง ๆ ว่า "อัปรูปได้ ก็ต้องเข้าไปดูรายละเอียดได้"
+        *       ★★ ซึ่งถูก — ระบบให้ลงรูปได้ 5 ใบ แต่ทั้งหน้าตลาดโชว์ใบเดียว
+        *          และไม่มีทางไปดูที่เหลือเลยสักทาง
+        *     ★ รูปเป็นเป้ากดที่ใหญ่ที่สุดในการ์ด และเป็นที่ที่นิ้วไปอยู่แล้ว
+        */}
+      <Link href={`/office/market/${l.id}`} className="market-media relative block overflow-hidden">
+        <ListingGallery images={l.images} alt={l.title} compact />
 
         <span className="market-scrim" aria-hidden="true" />
 
@@ -237,7 +309,18 @@ function Card({
         <span className="absolute bottom-2.5 start-3 text-[19px] font-bold tabular-nums text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]">
           {priceLabel(ot, locale, l)}
         </span>
-      </div>
+
+        {/* ★ จำนวนรูปบอกตั้งแต่ในการ์ด — คนจะได้รู้ว่ากดเข้าไปแล้วมีอะไรให้ดูต่อ */}
+        {l.images.length > 1 ? (
+          <span className="absolute start-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
+            <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <rect x="7" y="3" width="14" height="14" rx="2" />
+              <path d="M3 7v12a2 2 0 0 0 2 2h12" />
+            </svg>
+            {l.images.length}
+          </span>
+        ) : null}
+      </Link>
 
       <div className="flex flex-1 flex-col p-4">
         {l.hidden ? (
@@ -256,7 +339,15 @@ function Card({
           *          ลงประกาศ ทั้งที่ไม่มีอะไรผิด (จับได้ตอนเจอประกาศ "ยางรถ"
           *          โผล่ในหน้าภาษาเยอรมัน)
           */}
-        <h2 dir="auto" className="text-[15px] font-semibold leading-snug text-ink">{l.title}</h2>
+        <h2 className="text-[15px] font-semibold leading-snug">
+          <Link
+            href={`/office/market/${l.id}`}
+            dir="auto"
+            className="text-ink transition-colors hover:text-link"
+          >
+            {l.title}
+          </Link>
+        </h2>
 
         <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-ink-faint">
           <Tag>{kindLabel(ot, l.kind)}</Tag>
@@ -274,13 +365,38 @@ function Card({
           </p>
         ) : null}
 
-        <p className="mt-2 text-xs text-ink-faint">
-          {l.sellerName ? ot('market.by', { name: l.sellerName }) : ''}
-          {l.queueCount > 0 ? ` · ${ot('market.queue', { n: l.queueCount })}` : ''}
-        </p>
+        {/*
+          * ★★★ คนขายเป็นแถวของตัวเอง มีรูป ไม่ใช่บรรทัดจาง ๆ ต่อท้าย
+          *
+          *     ★ ของมือสองซื้อขายกันด้วยความไว้ใจ — คำถามแรกของคนซื้อคือ
+          *       "ใครขาย" ไม่ใช่ "หมวดอะไร"
+          *       ★★ เดิมชื่อคนขายเป็น text-ink-faint ขนาด 12px ต่อท้ายบรรทัด
+          *          ที่มีจำนวนคนสนใจปนอยู่ด้วย ★ ซึ่งอ่านเป็นข้อมูลประกอบ
+          *          ไม่ใช่ตัวตนของคน
+          *     ★ รูปโปรไฟล์ทำให้จำได้ว่า "คนนี้คือคนที่นั่งโต๊ะข้าง ๆ" ซึ่ง
+          *       เป็นเหตุผลทั้งหมดที่ตลาดนัดในออฟฟิศใช้งานได้
+          */}
+        <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
+          <ChatAvatar name={l.sellerName ?? '—'} url={l.sellerAvatar} size={28} />
+          <span className="min-w-0 flex-1">
+            <span dir="auto" className="block truncate text-[13px] font-semibold text-ink">
+              {l.sellerName ?? '—'}
+            </span>
+            {l.sellerDepartment ? (
+              <span dir="auto" className="block truncate text-[11px] text-ink-faint">
+                {l.sellerDepartment}
+              </span>
+            ) : null}
+          </span>
+          {l.queueCount > 0 ? (
+            <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 text-[11px] text-ink-soft">
+              {ot('market.queue', { n: l.queueCount })}
+            </span>
+          ) : null}
+        </div>
 
         {l.myQueuePosition > 0 ? (
-          <p className="mt-1 text-xs font-medium text-link">
+          <p className="mt-2 rounded-xl bg-link/10 px-2.5 py-1 text-xs font-medium text-link">
             {ot('market.myQueue', { n: l.myQueuePosition })}
           </p>
         ) : null}
@@ -345,6 +461,12 @@ function Card({
               </Button>
             </>
           )}
+
+          {/* ★ ปุ่มแชร์แบบย่อ (ไอคอนอย่างเดียว) — แถวปุ่มในการ์ดแคบอยู่แล้ว
+                ★★ ใส่คำว่า "แชร์" เข้าไปด้วยจะดันปุ่มอื่นตกบรรทัดบนจอแคบ */}
+          <span className="ms-auto">
+            <ShareLink path={`/office/market/${l.id}`} title={l.title} compact />
+          </span>
         </div>
 
         {note ? <p className="mt-2 text-xs text-ink-soft">{note}</p> : null}

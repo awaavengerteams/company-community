@@ -58,8 +58,15 @@ const PY = `
 import sys, json, math
 from PIL import Image, ImageDraw, ImageFont
 
-FONTS = ['/System/Library/Fonts/Supplemental/ThonburiUI.ttc',
-         '/System/Library/Fonts/Supplemental/Ayuthaya.ttf',
+# ★★★ ต้องเป็นฟอนต์ที่มีทั้งไทยและละติน ไม่ใช่ฟอนต์ไทยล้วน
+#
+#     ★ ThonburiUI.ttc เป็นฟอนต์ไทยของ macOS แต่ไม่มีตัวละติน
+#       ★★ PIL ไม่เตือนอะไรเลย — มันคืนความกว้างให้ปกติ แล้ววาดเป็นกล่องสี่เหลี่ยม
+#          ★ ผลที่เห็นบนจอ: "หนังสือ ▯▯▯▯▯ ▯▯▯▯▯▯▯▯▯▯▯▯"
+#     ★ Arial Unicode มีครบทั้งสองชุด จึงต้องมาก่อน
+FONTS = ['/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
+         '/System/Library/Fonts/Supplemental/Tahoma.ttf',
+         '/System/Library/Fonts/Supplemental/ThonburiUI.ttc',
          '/System/Library/Fonts/Helvetica.ttc']
 
 def font(size):
@@ -69,6 +76,13 @@ def font(size):
     return ImageFont.load_default()
 
 def wrap(draw, text, fnt, maxw):
+    # ★ เคารพ \\n ที่ส่งมา แล้วค่อยตัดบรรทัดยาวต่อ
+    out = []
+    for part in text.split('\\n'):
+        out.extend(wrap1(draw, part, fnt, maxw))
+    return out[:3]
+
+def wrap1(draw, text, fnt, maxw):
     words, lines, cur = list(text), [], ''
     for ch in words:
         t = cur + ch
@@ -77,7 +91,7 @@ def wrap(draw, text, fnt, maxw):
         else:
             cur = t
     if cur: lines.append(cur)
-    return lines[:3]
+    return lines
 
 jobs = json.loads(sys.argv[1])
 for j in jobs:
@@ -135,29 +149,56 @@ async function main() {
   if (!todo.length || !APPLY) return
 
   const dir = mkdtempSync(join(tmpdir(), 'seedimg-'))
-  const jobs = todo.map((l, i) => ({
-    title: l.title,
-    sub: l.kind === 'WANTED' ? 'ตามหา' : money(Number(l.price)),
-    a: PALETTE[i % PALETTE.length][0],
-    b: PALETTE[i % PALETTE.length][1],
-    out: join(dir, `${i}.jpg`),
-  }))
 
-  execFileSync('python3', ['-c', PY, JSON.stringify(jobs)], { stdio: 'inherit' })
+  /*
+   * ★★★ หลายรูปต่อประกาศ ไม่ใช่ใบเดียว
+   *
+   *     ★ ระบบให้ลงได้ 5 ใบ และตอนนี้มีแกลเลอรีให้ดูครบแล้ว ★★ ข้อมูล
+   *       ตัวอย่างที่มีใบเดียวทุกประกาศ จะทำให้แกลเลอรีไม่เคยถูกทดสอบเลย
+   *     ★ ของจริงก็ไม่เท่ากัน — บางคนถ่ายใบเดียว บางคนถ่ายห้าใบ
+   *       ★★ จำนวนที่ต่างกันคือสิ่งที่ทำให้เห็นว่าจุดบอกหน้ารับไหวไหม
+   *
+   * ★ มุมที่สองเป็นต้นไปเขียนกำกับว่าเป็นรูปอะไร — รูปถ่ายจริงปลอมไม่ได้
+   *   แต่ "ด้านหลัง · กล่องและอุปกรณ์" บอกได้ว่าแกลเลอรีมีไว้ทำอะไร
+   */
+  const ANGLES = ['', 'ด้านหลัง', 'กล่องและอุปกรณ์', 'จุดที่มีตำหนิ', 'ขนาดเทียบมือ']
+
+  const jobs = []
+  for (const [i, l] of todo.entries()) {
+    /* ★ 1–4 ใบ แบบคงที่ต่อประกาศ — รันซ้ำแล้วได้ผลเหมือนเดิม เทียบภาพได้ */
+    const n = 1 + (i % 4)
+    for (let k = 0; k < n; k++) {
+      jobs.push({
+        listing: l,
+        k,
+        title: k === 0 ? l.title : `${l.title}\n${ANGLES[k]}`,
+        sub: k === 0 ? (l.kind === 'WANTED' ? 'ตามหา' : money(Number(l.price))) : ANGLES[k],
+        a: PALETTE[(i + k) % PALETTE.length][0],
+        b: PALETTE[(i + k) % PALETTE.length][1],
+        out: join(dir, `${i}-${k}.jpg`),
+      })
+    }
+  }
+
+  execFileSync(
+    'python3',
+    ['-c', PY, JSON.stringify(jobs.map(({ title, sub, a, b, out }) => ({ title, sub, a, b, out })))],
+    { stdio: 'inherit' },
+  )
 
   const rows = []
-  for (const [i, l] of todo.entries()) {
-    const bytes = readFileSync(jobs[i].out)
-    const path = `seed/${l.id}.jpg`
+  for (const j of jobs) {
+    const bytes = readFileSync(j.out)
+    const path = `seed/${j.listing.id}-${j.k}.jpg`
     const { error } = await db.storage
       .from('listings')
       .upload(path, bytes, { contentType: 'image/jpeg', upsert: true })
     if (error) {
-      console.error(`  ✗ อัป ${l.title}:`, error.message)
+      console.error(`  ✗ อัป ${j.listing.title}:`, error.message)
       continue
     }
     const { data: pub } = db.storage.from('listings').getPublicUrl(path)
-    rows.push({ listing_id: l.id, url: pub.publicUrl, sort: 0 })
+    rows.push({ listing_id: j.listing.id, url: pub.publicUrl, sort: j.k })
   }
 
   const { error } = await db.from('listing_images').insert(rows)
