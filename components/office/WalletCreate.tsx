@@ -9,8 +9,8 @@ import { Toast, useToast } from '@/components/ui/Toast'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
 import { officeErrorText } from '@/lib/i18n/office-format'
-import { Untranslated, useOt, type OfficeKey } from '@/lib/i18n/office'
-import { formatBaht } from '@/lib/office/wallet'
+import { Untranslated, useOt } from '@/lib/i18n/office'
+import { categoryLabel, formatBaht } from '@/lib/office/wallet'
 import { shrinkImage } from '@/lib/image/shrink'
 import { computeSplit, customRemainder, loadPrefs, savePrefs, type BillPrefs } from '@/lib/office/billDraft'
 import { toBaht } from '@/lib/office/money'
@@ -187,7 +187,21 @@ export function WalletCreate() {
       setShopId(last.shopId)
       setShopName(last.shopName)
     }
-    setPref('splitMode', last.splitMode)
+    /*
+     * ★★★ ไม่คัดลอก split_mode จากบิลเก่า — ตั้งใจ ไม่ใช่ลืม
+     *
+     *     ★ หน้านี้คำนวณยอดรายคนเองแล้วส่ง splitMode: 'CUSTOM' ไปที่ API เสมอ
+     *       (เพราะ RPC หารเองไม่ได้ มันไม่รู้เรื่องค่าส่ง ส่วนลด และการปัดเศษ)
+     *       ★★ แปลว่าบิลทุกใบที่สร้างจากหน้านี้ถูกบันทึกเป็น CUSTOM
+     *          ไม่ว่าผู้ใช้จะเลือก "หารเท่ากัน" ก็ตาม
+     *     ★ ถ้าเอาค่านั้นมาคืนให้ผู้ใช้ จะกลายเป็นว่า "หารแบบครั้งก่อน"
+     *       สลับไปโหมดระบุยอดรายคนทุกครั้ง แล้วกดบันทึกไม่ได้เพราะยังไม่กรอกยอด
+     *       ★★ วัดเจอตอนขับเบราว์เซอร์จริง: กดแล้วปุ่มบันทึกไม่ตอบสนองเลย
+     *          และข้อความบอกเหตุผลถูกซ่อนอยู่ใน "+ เพิ่มรายละเอียด" ที่ยุบอยู่
+     *
+     *     ★ วิธีหารที่เป็นความตั้งใจของผู้ใช้จริง ๆ อยู่ใน localStorage
+     *       ซึ่งจำค่าล่าสุดที่เขา "เลือกเอง" ไว้แล้ว — จึงไม่ต้องแตะอะไรตรงนี้
+     */
     amountRef.current?.focus()
   }
 
@@ -229,6 +243,15 @@ export function WalletCreate() {
       return
     }
     if (prefs.splitMode === 'CUSTOM' && remainder !== 0) {
+      /*
+       * ★★★ กาง "+ เพิ่มรายละเอียด" ให้เอง — ข้อความผิดพลาดอยู่ข้างใน
+       *
+       *     ★ ข้อกำหนดบอกว่า error ต้องแสดงใต้ช่องที่ผิด "ทันที"
+       *       ★★ แต่ช่องนั้นอยู่ในส่วนที่ยุบไว้เป็นค่าเริ่มต้น
+       *          ★ ผลที่วัดได้: กดบันทึกแล้วไม่มีอะไรเกิดขึ้นเลยสักอย่าง
+       *            ไม่มี error ไม่มีการเปลี่ยนหน้า — อ่านเป็น "ปุ่มเสีย"
+       */
+      setOpen(true)
       setFieldError({
         custom:
           remainder > 0
@@ -656,7 +679,11 @@ export function WalletCreate() {
             <div className="flex flex-wrap gap-1.5">
               {(['FOOD', 'COFFEE', 'OTHER'] as const).map((c) => (
                 <Chip key={c} active={category === c} onClick={() => setCategory(c)}>
-                  {ot(`wallet.cat.${c}` as OfficeKey)}
+                  {/* ★ ใช้ categoryLabel ของโมดูล ไม่ประกอบชื่อกุญแจเอง
+                        ★★ ผมเดาว่าเป็น wallet.cat.* แต่ของจริงคือ wallet.category.*
+                           แล้วชิปโชว์คำว่า "wallet.cat.FOOD" ออกจอ
+                           ★ ตัวประกอบชื่อกุญแจเองไม่มีอะไรมาจับผิดให้ตอนคอมไพล์ */}
+                  {categoryLabel(ot, c)}
                 </Chip>
               ))}
             </div>
@@ -719,10 +746,17 @@ export function WalletCreate() {
                   />
                 </div>
               ))}
-              <p className={cn('mt-1 text-xs', remainder === 0 ? 'text-ink-faint' : 'text-warn')}>
-                {remainder >= 0
-                  ? ot('wallet.create.leftOver', { amount: `฿${formatBaht(locale, toBaht(remainder))}` })
-                  : ot('wallet.create.overBy', { amount: `฿${formatBaht(locale, toBaht(-remainder))}` })}
+              {/*
+                * ★ ยอดครบพอดีบอกด้วยเครื่องหมายถูก ไม่ใช่ "เหลืออีก ฿0.00"
+                *   ★★ ประโยคที่บอกว่าเหลือศูนย์ อ่านเป็นคำเตือนที่ยังค้างอยู่
+                *      ★ คนจะมองหาว่ายังขาดอะไร ทั้งที่กรอกครบแล้ว
+                */}
+              <p className={cn('mt-1 text-xs', remainder === 0 ? 'text-ok' : 'text-warn')}>
+                {remainder === 0
+                  ? `✓ ฿${formatBaht(locale, toBaht(split.totalSatang))}`
+                  : remainder > 0
+                    ? ot('wallet.create.leftOver', { amount: `฿${formatBaht(locale, toBaht(remainder))}` })
+                    : ot('wallet.create.overBy', { amount: `฿${formatBaht(locale, toBaht(-remainder))}` })}
               </p>
               {fieldError.custom ? <p className="mt-1 text-xs text-danger">{fieldError.custom}</p> : null}
             </div>
