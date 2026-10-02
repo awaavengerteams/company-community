@@ -62,7 +62,13 @@ type Message = {
   /** คนอื่นที่อ่านข้อความนี้แล้วกี่คน (เฉพาะข้อความของเราเอง) */
   readers: number
   /** ข้อความที่ใบนี้ตอบกลับไป — เซิร์ฟเวอร์ส่งเนื้อหามาให้เลย ไม่ต้องไปหาในลิสต์ */
-  replyTo: { id: string; text: string; kind: Message['kind']; senderName: string } | null
+  replyTo: {
+    id: string
+    text: string
+    kind: Message['kind']
+    senderName: string
+    senderAvatar: string | null
+  } | null
   reactions: Reaction[]
 }
 
@@ -757,9 +763,19 @@ export function OfficeChat() {
                   room.id === openId ? 'chat-row-on' : 'hover:bg-surface/70',
                 )}
               >
+                {/*
+                  * ★★★ ห้องกลุ่มก็มีรูปของตัวเอง — ไม่ได้บังคับให้เป็น "#" เสมอ
+                  *
+                  *     ★ เดิมเขียนตรง ๆ ว่า kind === 'GROUP' → url = null ★★ ซึ่งแปลว่า
+                  *       กลุ่มที่อัปรูปแล้วจะเห็นรูปเฉพาะในหัวห้องกับแผงข้อมูลกลุ่ม
+                  *       แต่รายการฝั่งซ้ายยังเป็น "#" อยู่ตลอดไป
+                  *     ★ คนตั้งรูปกลุ่มเพื่อให้ "หาห้องเจอเร็วขึ้นในรายการ" เป็นหลัก —
+                  *       ★★ ที่เดียวที่รูปไม่ขึ้น คือที่เดียวที่มันมีประโยชน์จริง
+                  *     ★ "#" ยังเป็นตัวสำรองเมื่อกลุ่มยังไม่ได้ตั้งรูป (ดู ChatAvatar)
+                  */}
                 <ChatAvatar
                   name={room.title}
-                  url={room.kind === 'GROUP' ? null : room.avatar}
+                  url={room.avatar}
                   group={room.kind === 'GROUP'}
                   size={52}
                 />
@@ -1163,15 +1179,25 @@ export function OfficeChat() {
                 </svg>
 
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[11.5px] font-medium text-ink" dir="auto">
-                    {ot('chat.replyingTo', { name: replying.senderName })}
+                  {/* ★ รูปคนที่กำลังตอบอยู่ในแถบนี้ด้วย — รูปทรงเดียวกับกล่อง
+                        คำพูดในฟอง เพื่อให้คนเชื่อมได้ว่า "ที่พิมพ์อยู่จะไปโผล่แบบนี้" */}
+                  <span className="flex items-center gap-1.5">
+                    <ChatAvatar
+                      name={replying.senderName}
+                      url={replying.senderAvatar}
+                      size={16}
+                    />
+                    <span className="min-w-0 truncate text-[11.5px] font-medium text-ink" dir="auto">
+                      {ot('chat.replyingTo', { name: replying.senderName })}
+                    </span>
                   </span>
-                  <span className="quote-text text-[12px] text-ink-faint" dir="auto">
+                  <span className="quote-text mt-0.5 text-[12px] text-ink-faint" dir="auto">
                     {quoteOf(ot, {
                       id: replying.id,
                       text: replying.text,
                       kind: replying.kind,
                       senderName: replying.senderName,
+                      senderAvatar: replying.senderAvatar,
                     })}
                   </span>
                 </span>
@@ -1461,8 +1487,15 @@ function MessageBody({ m, last }: { m: Message; last: boolean }) {
         */}
       {m.replyTo ? (
         <span className="quote">
-          <span className="block font-medium" dir="auto">
-            {m.replyTo.senderName}
+          <span className="quote-head">
+            <ChatAvatar
+              name={m.replyTo.senderName}
+              url={m.replyTo.senderAvatar}
+              size={18}
+            />
+            <span className="truncate font-semibold" dir="auto">
+              {m.replyTo.senderName}
+            </span>
           </span>
           <span className="quote-text" dir="auto">
             {quoteOf(ot, m.replyTo)}

@@ -212,6 +212,10 @@ export const GET = withErrorHandling(async (_request: NextRequest, ctx: Ctx) => 
                 byId.get(parent.sender_id)?.nickname ||
                 byId.get(parent.sender_id)?.display_name ||
                 '—',
+              /* ★ รูปของคนที่ถูกตอบกลับ — กล่องคำพูดที่ยกมาแสดงรูปด้วย
+                   ★★ ในห้องกลุ่มที่คุยกันหลายคน ชื่ออย่างเดียวต้องอ่านก่อนถึงรู้
+                      ว่าตอบใคร ส่วนรูปรู้ได้ด้วยการเหลือบตาครั้งเดียว */
+              senderAvatar: byId.get(parent.sender_id)?.avatar_url ?? null,
             }
           : null,
         deleted: Boolean(m.deleted_at),
