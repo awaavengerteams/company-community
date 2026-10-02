@@ -489,6 +489,9 @@ export const ko: OfficeDict = {
 
   "profile.title": "프로필과 알림",
   "profile.name": "표시 이름",
+  "profile.secName": "ชื่อของฉัน",
+  "profile.nameHint": "ชื่อนี้ใช้ร่วมกับห้องเพลง — เปลี่ยนที่นี่แล้วเปลี่ยนทั้งสองที่",
+  "profile.nameSaved": "เปลี่ยนชื่อแล้ว",
   "profile.code": "사원 코드",
   "profile.qr": "입금 QR",
   "profile.qrAdd": "QR 올리기",

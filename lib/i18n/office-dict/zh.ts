@@ -489,6 +489,9 @@ export const zh: OfficeDict = {
 
   "profile.title": "资料与通知",
   "profile.name": "显示名称",
+  "profile.secName": "ชื่อของฉัน",
+  "profile.nameHint": "ชื่อนี้ใช้ร่วมกับห้องเพลง — เปลี่ยนที่นี่แล้วเปลี่ยนทั้งสองที่",
+  "profile.nameSaved": "เปลี่ยนชื่อแล้ว",
   "profile.code": "员工编号",
   "profile.qr": "收款码",
   "profile.qrAdd": "上传收款码",

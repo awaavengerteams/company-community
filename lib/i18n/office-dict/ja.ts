@@ -489,6 +489,9 @@ export const ja: OfficeDict = {
 
   "profile.title": "プロフィールと通知",
   "profile.name": "表示名",
+  "profile.secName": "ชื่อของฉัน",
+  "profile.nameHint": "ชื่อนี้ใช้ร่วมกับห้องเพลง — เปลี่ยนที่นี่แล้วเปลี่ยนทั้งสองที่",
+  "profile.nameSaved": "เปลี่ยนชื่อแล้ว",
   "profile.code": "社員コード",
   "profile.qr": "受取用QR",
   "profile.qrAdd": "QRをアップロード",

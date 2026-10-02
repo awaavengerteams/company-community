@@ -6,10 +6,11 @@ import { apiFetch, apiUpload } from '@/lib/api/client'
 import { officeErrorText } from '@/lib/i18n/office-format'
 import { shrinkImage } from '@/lib/image/shrink'
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { companyLabel } from '@/lib/office/company'
 import { DEPARTMENTS } from '@/lib/office/departments'
-import { useOt, type OfficeKey } from '@/lib/i18n/office'
+import { Untranslated, useOt, type OfficeKey } from '@/lib/i18n/office'
 
 type Profile = {
   displayName: string
@@ -59,12 +60,25 @@ export function OfficeProfile() {
   const [uploading, setUploading] = useState(false)
   const [avatarNote, setAvatarNote] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
+  /*
+   * ★★ ช่องชื่อเก็บแยกจาก profile ที่โหลดมา ไม่ได้แก้ profile ตรง ๆ
+   *    ★ profile คือ "ความจริงจากเซิร์ฟเวอร์" ส่วนสองตัวนี้คือ "สิ่งที่กำลังพิมพ์"
+   *      ★★ ถ้าใช้ตัวเดียวกัน พอกดบันทึกไม่ผ่านแล้วจะไม่มีค่าเดิมให้ย้อนกลับ
+   *         และหน้าจอจะโชว์ชื่อใหม่ทั้งที่เซิร์ฟเวอร์ยังเป็นชื่อเก่า
+   */
+  const [name, setName] = useState('')
+  const [nameNote, setNameNote] = useState<string | null>(null)
+  const [nameBusy, setNameBusy] = useState(false)
 
   const load = useCallback(async () => {
     try {
       const d = await apiFetch<{ profile: Profile; off: string[] }>('/api/office/profile')
       setProfile(d.profile)
       setDepartment(d.profile.department ?? '')
+      /* ★ ช่องนี้ต้องโชว์ "ชื่อที่คนอื่นเห็น" ซึ่งคือชื่อเล่นถ้ามี
+           ★★ ถ้าโชว์ display_name เฉย ๆ คนที่มีชื่อเล่นจะเห็นค่าที่ไม่ตรงกับ
+              ชื่อบนหัวการ์ดที่อยู่เหนือมันขึ้นไปสองนิ้ว */
+      setName(d.profile.nickname || d.profile.displayName)
       setOff(new Set(d.off))
     } catch (e) {
       setError(officeErrorText(e, ot))
@@ -74,6 +88,54 @@ export function OfficeProfile() {
   useEffect(() => {
     void load()
   }, [load])
+
+  /**
+   * บันทึกชื่อ
+   *
+   * ★★★ ช่องเดียว เขียนลงทั้ง display_name และ nickname
+   *
+   *     ★ ตอนแรกทำเป็นสองช่องตามที่ฐานข้อมูลมีสองคอลัมน์ ★★ แล้วพบตอน
+   *       ขับเบราว์เซอร์จริงว่าบัญชีที่เพิ่งสมัครมีสองค่านี้ "เท่ากันเป๊ะ"
+   *       — RPC ตอนสมัครเขียน display_name = nickname = ชื่อเล่นที่กรอก
+   *     ★★ และทุกที่ที่โชว์ชื่อใช้ coalesce(nickname, display_name)
+   *        ★ ผลคือคนแก้ช่องบน (ชื่อที่แสดง) แล้วกดบันทึก จะไม่เห็นอะไร
+   *          เปลี่ยนเลยสักที่ เพราะชื่อเล่นชนะอยู่ — วัดได้จริง: หัวการ์ด
+   *          ยังเป็น "ชื่อเดิม" ทั้งที่บันทึกสำเร็จและขึ้นว่า "เปลี่ยนชื่อแล้ว"
+   *     ★★ ช่องที่กรอกแล้วไม่มีอะไรเกิดขึ้น แย่กว่าไม่มีช่องให้กรอก
+   *
+   *     ★ ชื่อเดียวจึงถูกต้องกว่าสำหรับหน้านี้ — ในโมดูลออฟฟิศไม่มีที่ไหน
+   *       แสดง display_name แยกจาก nickname เลยสักจุด (ตัวตนที่เป็นทางการ
+   *       คือชื่อ-นามสกุลในการ์ด "ข้อมูลพนักงาน" ซึ่งคนละเรื่องกัน)
+   *       ★★ ใครที่อยากให้สองค่าต่างกันจริง ๆ ยังตั้งแยกได้ที่กล่องโปรไฟล์
+   *          ของห้องเพลง ซึ่งมีสองช่องอยู่แล้ว
+   *
+   * ★★ ใช้ PATCH /api/profile ของห้องเพลง ไม่สร้าง route ใหม่
+   *    ★ คอลัมน์เดียวกันทั้งสองระบบ — route ใหม่ = สองที่ที่เขียนคอลัมน์
+   *      เดียวกันด้วยกฎคนละชุด วันที่เปลี่ยนความยาวสูงสุดจะลืมแก้ที่หนึ่ง
+   *    ★ และ route นั้นมี rate limit อยู่แล้ว (ชื่อคือสิ่งที่คนทั้งบริษัทเห็น)
+   *    ★★ เหตุผลเดียวกับที่การอัปรูปใช้ /api/profile/avatar ของห้องเพลง
+   */
+  async function saveName() {
+    const next = name.trim()
+    if (!next || nameBusy) return
+
+    setNameBusy(true)
+    setError(null)
+    setNameNote(null)
+
+    try {
+      await apiFetch('/api/profile', {
+        method: 'PATCH',
+        body: { displayName: next, nickname: next },
+      })
+      await load()
+      setNameNote(ot('profile.nameSaved'))
+    } catch (e) {
+      setError(officeErrorText(e, ot))
+    } finally {
+      setNameBusy(false)
+    }
+  }
 
   async function saveDepartment() {
     setBusy(true)
@@ -250,6 +312,68 @@ export function OfficeProfile() {
         </div>
       </div>
 
+      {/* ── ชื่อของฉัน ────────────────────────────────────────── */}
+      {/*
+        * ★★★ อยู่เหนือ "ข้อมูลพนักงาน" โดยตั้งใจ
+        *
+        *     ★ การ์ดข้างล่างเป็นข้อมูลที่ผู้ใช้แก้เองไม่ได้ (ผู้ดูแลแก้ให้)
+        *       ★★ ถ้าวางช่องที่แก้ได้ไว้ใต้ช่องที่แก้ไม่ได้ คนจะเลื่อนผ่าน
+        *          การ์ดบนแล้วสรุปว่า "หน้านี้แก้อะไรไม่ได้เลย" แล้วออกไป
+        *     ★ ของที่กดได้ควรอยู่ก่อนของที่อ่านอย่างเดียวเสมอ
+        */}
+      <div className="mt-4 rounded-2xl border border-line bg-elevated/30 p-5 backdrop-blur-md">
+        {/*
+          * ★ สองบรรทัดนี้ยังไม่ได้แปล (กติกา "ทำไทยอย่างเดียว" ใน AGENTS.md)
+          *   ★★ <Untranslated> ติดป้าย lang="th" ให้ และจะเลิกติดเองวันที่แปลเสร็จ
+          */}
+        <p className="text-sm font-medium text-ink">
+          <Untranslated>{ot('profile.secName')}</Untranslated>
+        </p>
+        <p className="mt-0.5 text-xs text-ink-faint">
+          <Untranslated>{ot('profile.nameHint')}</Untranslated>
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <label htmlFor="dispName" className="sr-only">
+            {ot('profile.name')}
+          </label>
+          <Input
+            id="dispName"
+            radius="round"
+            className="min-w-0 flex-1 sm:max-w-sm"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            /* ★ ความยาวสูงสุดตรงกับ displayNameSchema ฝั่ง server เป๊ะ
+                 ★★ ให้ช่องกรอกหยุดที่ 40 ดีกว่าปล่อยให้พิมพ์ 60 แล้วค่อย
+                    ฟ้องตอนกดบันทึก ซึ่งแปลว่าต้องลบทิ้งเองยี่สิบตัว */
+            maxLength={40}
+            /* ★ ชื่อคนเป็นภาษาอะไรก็ได้ ไม่เกี่ยวกับภาษาของหน้า */
+            dir="auto"
+            onKeyDown={(e) => {
+              /* ★ Enter บันทึกเลย — ช่องเดียวในกล่องนี้ จึงไม่กำกวมว่าจะส่งอะไร */
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                void saveName()
+              }
+            }}
+          />
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={saveName}
+            /* ★ ชื่อว่างบันทึกไม่ได้ — ปุ่มบอกก่อนกด ไม่ใช่ฟ้องหลังกด */
+            disabled={!name.trim() || nameBusy}
+          >
+            {ot('common.save')}
+          </Button>
+          {nameNote ? (
+            <p className="text-xs text-accent">
+              <Untranslated>{nameNote}</Untranslated>
+            </p>
+          ) : null}
+        </div>
+      </div>
+
       {/* ── ข้อมูลพนักงาน (อ่านอย่างเดียว) ───────────────────── */}
       <div className="mt-4 rounded-2xl border border-line bg-elevated/30 p-5 backdrop-blur-md">
         <p className="text-sm font-medium text-ink">{ot('profile.secEmployee')}</p>
@@ -263,9 +387,16 @@ export function OfficeProfile() {
           <Row label={ot('profile.company')} value={companyLabel(ot, profile.company)} wide />
         </dl>
 
-        {/* ★ ชื่อที่แสดงกับรูปใช้ร่วมกับห้องเพลง — บอกไว้ไม่ให้งงว่าทำไม
-            เปลี่ยนที่นี่แล้วไปเปลี่ยนที่โน่นด้วย */}
-        <p className="mt-4 text-xs text-ink-faint">{ot('profile.editElsewhere')}</p>
+        {/*
+          * ★★★ เอาบรรทัด "ชื่อและรูปแก้ได้ที่หน้าตั้งค่าของห้องเพลง" ออกแล้ว
+          *
+          *     ★ มันพูดไม่จริงมาตั้งแต่วันที่ใส่ปุ่มกล้องบนรูปในหน้านี้ —
+          *       รูปแก้ได้ที่นี่อยู่แล้ว ★★ และตอนนี้ชื่อก็แก้ได้ที่นี่ด้วย
+          *     ★ คำแนะนำที่พาไปผิดที่ แย่กว่าไม่มีคำแนะนำเลย — คนจะเดินไป
+          *       หน้าห้องเพลงแล้วหาไม่เจอ แล้วสรุปว่าแก้ชื่อไม่ได้
+          *     ★★ เรื่อง "ใช้ร่วมกันทั้งสองระบบ" ย้ายไปอยู่ใต้หัวข้อชื่อ
+          *        ซึ่งเป็นที่ที่คนกำลังจะแก้ชื่ออ่านอยู่พอดี
+          */}
       </div>
 
       {/* ── ฝ่าย/แผนก ────────────────────────────────────────── */}

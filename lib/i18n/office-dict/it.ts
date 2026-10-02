@@ -489,6 +489,9 @@ export const it: OfficeDict = {
 
   "profile.title": "Profilo e notifiche",
   "profile.name": "Nome mostrato",
+  "profile.secName": "ชื่อของฉัน",
+  "profile.nameHint": "ชื่อนี้ใช้ร่วมกับห้องเพลง — เปลี่ยนที่นี่แล้วเปลี่ยนทั้งสองที่",
+  "profile.nameSaved": "เปลี่ยนชื่อแล้ว",
   "profile.code": "Codice dipendente",
   "profile.qr": "QR per incassare",
   "profile.qrAdd": "Carica il QR",

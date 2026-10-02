@@ -498,6 +498,9 @@ export const ar: OfficeDict = {
 
   "profile.title": "الملف الشخصي والإشعارات",
   "profile.name": "الاسم الظاهر",
+  "profile.secName": "ชื่อของฉัน",
+  "profile.nameHint": "ชื่อนี้ใช้ร่วมกับห้องเพลง — เปลี่ยนที่นี่แล้วเปลี่ยนทั้งสองที่",
+  "profile.nameSaved": "เปลี่ยนชื่อแล้ว",
   "profile.code": "رمز الموظف",
   "profile.qr": "رمز الاستلام",
   "profile.qrAdd": "رفع الرمز",

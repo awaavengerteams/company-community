@@ -489,6 +489,9 @@ export const lo: OfficeDict = {
 
   "profile.title": "ໂປຣໄຟລ໌ ແລະ ການແຈ້ງເຕືອນ",
   "profile.name": "ຊື່ທີ່ສະແດງ",
+  "profile.secName": "ชื่อของฉัน",
+  "profile.nameHint": "ชื่อนี้ใช้ร่วมกับห้องเพลง — เปลี่ยนที่นี่แล้วเปลี่ยนทั้งสองที่",
+  "profile.nameSaved": "เปลี่ยนชื่อแล้ว",
   "profile.code": "ລະຫັດພະນັກງານ",
   "profile.qr": "QR ຮັບເງິນ",
   "profile.qrAdd": "ອັປໂຫຼດ QR",

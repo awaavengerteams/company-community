@@ -489,6 +489,9 @@ export const ru: OfficeDict = {
 
   "profile.title": "Профиль и уведомления",
   "profile.name": "Отображаемое имя",
+  "profile.secName": "ชื่อของฉัน",
+  "profile.nameHint": "ชื่อนี้ใช้ร่วมกับห้องเพลง — เปลี่ยนที่นี่แล้วเปลี่ยนทั้งสองที่",
+  "profile.nameSaved": "เปลี่ยนชื่อแล้ว",
   "profile.code": "Код сотрудника",
   "profile.qr": "QR для получения",
   "profile.qrAdd": "Загрузить QR",

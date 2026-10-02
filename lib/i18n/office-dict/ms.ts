@@ -489,6 +489,9 @@ export const ms: OfficeDict = {
 
   "profile.title": "Profil dan pemberitahuan",
   "profile.name": "Nama paparan",
+  "profile.secName": "ชื่อของฉัน",
+  "profile.nameHint": "ชื่อนี้ใช้ร่วมกับห้องเพลง — เปลี่ยนที่นี่แล้วเปลี่ยนทั้งสองที่",
+  "profile.nameSaved": "เปลี่ยนชื่อแล้ว",
   "profile.code": "Kod pekerja",
   "profile.qr": "QR terima duit",
   "profile.qrAdd": "Muat naik QR",
