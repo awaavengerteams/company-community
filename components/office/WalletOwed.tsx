@@ -228,10 +228,18 @@ function SummaryCard({
       )}
     >
       <p className="text-sm text-ink-soft">{label}</p>
+      {/*
+        * ★★★ ยอดศูนย์ใช้สีปกติ ไม่ใช่สีแดง
+        *
+        *     ★ ผู้ใช้สั่งว่า "ใช้สีแดงเฉพาะเมื่อมียอดค้างจริง"
+        *       ★★ การ์ด "ฉันต้องจ่าย ฿0.00" สีแดง คือการเตือนเรื่องที่ไม่มีอยู่
+        *          ★ ซึ่งทำให้คนเลิกเชื่อสีแดงตัวอื่นในหน้าเดียวกันไปด้วย —
+        *            รวมถึงยอดที่ค้างจริงซึ่งเป็นสิ่งที่ต้องรีบเห็น
+        */}
       <p
         className={cn(
           'mt-1 text-2xl font-bold tabular-nums',
-          tone === 'danger' ? 'text-danger' : 'text-ink',
+          tone === 'danger' && amount > 0 ? 'text-danger' : 'text-ink',
         )}
       >
         ฿{formatBaht(locale, amount)}

@@ -6,17 +6,25 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
-import { useOt } from '@/lib/i18n/office'
+import Link from 'next/link'
+import { Untranslated, useOt } from '@/lib/i18n/office'
+import { SpendChart, type SpendItem } from './SpendChart'
 import { categoryLabel, formatBaht } from '@/lib/office/wallet'
 import type { ExpenseCategory } from '@/types/database'
 
+/*
+ * ★★★ API คืน "รายการย่อย" ไม่ใช่ยอดรวมสำเร็จรูป 4 ชุด
+ *
+ *     ★ เหตุผลเต็มอยู่ที่ app/api/office/wallet/summary/route.ts
+ *       สรุปสั้น ๆ: ยอดรวมกับรายละเอียดเคยคำนวณจากคนละเงื่อนไข แล้วเพี้ยนกัน
+ *     ★★ รวมยอดที่นี่ที่เดียวจากอาร์เรย์เดียว — ทุกส่วนจึงบวกกลับได้เท่ายอดรวม
+ *        "โดยโครงสร้าง" ไม่ใช่โดยความระมัดระวัง
+ */
 type Summary = {
+  items: SpendItem[]
   total: number
   myShare: number
-  owedOut: number
-  byCategory: Record<string, number>
-  byRestaurant: { name: string; amount: number }[]
-  byDay: { date: string; amount: number }[]
+  myShareOthers: number
 }
 
 /** หน้าสรุปค่าข้าว (FR-B09 / FR-B10) */
@@ -57,6 +65,26 @@ export function WalletSummary() {
     void load()
   }, [load])
 
+  /*
+   * ★★ จัดกลุ่มจากอาร์เรย์เดียวกับที่กราฟใช้
+   *    ★ ตัวเลขในตารางกับความสูงของแท่งจึงมาจากที่เดียวกันเสมอ
+   */
+  const byCategory = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const i of data?.items ?? []) m.set(i.category, (m.get(i.category) ?? 0) + Number(i.amount))
+    return [...m.entries()].sort((a, b) => b[1] - a[1])
+  }, [data])
+
+  const byShop = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const i of data?.items ?? []) {
+      /* ★ บิลที่ไม่ได้ระบุร้านยังต้องนับ ไม่งั้นผลรวมของตารางจะน้อยกว่ายอดรวม */
+      const key = i.shop ?? ot('wallet.summary.noShop')
+      m.set(key, (m.get(key) ?? 0) + Number(i.amount))
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)
+  }, [data, ot])
+
   function shift(delta: number) {
     setAnchor((d) =>
       mode === 'month'
@@ -85,19 +113,24 @@ export function WalletSummary() {
       [ot('summary.csv.section'), ot('summary.csv.baht')],
       [ot('summary.csv.total'), data.total.toFixed(2)],
       [ot('summary.csv.myShare'), data.myShare.toFixed(2)],
-      [ot('summary.csv.owedOut'), data.owedOut.toFixed(2)],
+      [ot('summary.csv.owedOut'), data.myShareOthers.toFixed(2)],
       [],
       [ot('summary.csv.category'), ot('summary.csv.baht')],
-      ...Object.entries(data.byCategory).map(([k, v]) => [
-        categoryLabel(ot, k as ExpenseCategory),
-        Number(v).toFixed(2),
-      ]),
+      ...byCategory.map(([k, v]) => [categoryLabel(ot, k as ExpenseCategory), v.toFixed(2)]),
       [],
       [ot('summary.csv.restaurant'), ot('summary.csv.baht')],
-      ...data.byRestaurant.map((r) => [r.name, Number(r.amount).toFixed(2)]),
+      ...byShop.map(([name, v]) => [name, v.toFixed(2)]),
       [],
       [ot('summary.csv.date'), ot('summary.csv.baht')],
-      ...data.byDay.map((d) => [d.date, Number(d.amount).toFixed(2)]),
+      /* ★ CSV ลงรายละเอียดทีละรายการ ไม่ใช่ยอดรวมรายวัน — ไฟล์ที่เอาไปทำต่อได้
+           ★★ ยอดรวมรายวันคำนวณกลับเองได้ แต่รายการที่ถูกยุบไปแล้วกู้ไม่ได้ */
+      ...(data.items ?? []).map((i) => [
+        i.date,
+        i.title,
+        categoryLabel(ot, i.category as ExpenseCategory),
+        i.shop ?? '',
+        Number(i.amount).toFixed(2),
+      ]),
     ]
 
     /* ★ ใส่เครื่องหมายคำพูดรอบค่าที่มีคอมมา ไม่งั้นคอลัมน์เลื่อน */
@@ -114,7 +147,6 @@ export function WalletSummary() {
     URL.revokeObjectURL(url)
   }
 
-  const maxDay = Math.max(1, ...(data?.byDay ?? []).map((d) => Number(d.amount)))
   const label =
     mode === 'month'
       /* ★★★ ตรึงไว้ที่ 'th-TH' ทำให้ทุกภาษาเห็น "ตุลาคม 2569"
@@ -156,59 +188,64 @@ export function WalletSummary() {
       {loading ? (
         <p className="py-10 text-center text-sm text-ink-faint">{ot('common.loading')}</p>
       ) : !data || data.total === 0 ? (
-        <EmptyState
-          icon={'M4 19V9m5 10V5m5 14v-7m5 7V8'}
-          title={ot('wallet.summary.empty')}
-          description={ot('wallet.summary.emptyHint')}
-        />
+        /*
+         * ★★ เดือนที่ไม่มีรายการต้องบอกตรง ๆ ว่าเดือนไหน และมีทางไปต่อ
+         *    ★ ข้อความกลาง ๆ ว่า "ยังไม่มีข้อมูล" ทำให้คนไม่รู้ว่าเลื่อนเดือน
+         *      ผิดหรือระบบพัง ★★ และหน้าตันที่ไม่มีปุ่มคือหน้าที่คนปิดทิ้ง
+         */
+        <div className="mt-6">
+          <EmptyState
+            icon={'M4 19V9m5 10V5m5 14v-7m5 7V8'}
+            title={ot(mode === 'month' ? 'wallet.summary.noMonth' : 'wallet.summary.noYear')}
+            description={ot('wallet.summary.emptyHint')}
+          />
+          <div className="mt-3 flex justify-center">
+            <Link
+              href="/office/wallet/create"
+              className="inline-flex h-11 items-center rounded-full bg-accent px-5 text-sm font-medium text-accent-ink transition-colors hover:bg-accent-hover"
+            >
+              <Untranslated>{ot('wallet.summary.createBill')}</Untranslated>
+            </Link>
+          </div>
+        </div>
       ) : (
         <>
           {/* ── ยอดรวม ───────────────────────────────────────────── */}
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <Stat label={ot('wallet.summary.total')} value={data.total} big />
             <Stat label={ot('wallet.summary.myShare')} value={data.myShare} />
-            <Stat label={ot('wallet.summary.owedOut')} value={data.owedOut} />
+            {/*
+              * ★★★ ชื่อใหม่: "ส่วนของฉันในบิลคนอื่น" ไม่ใช่ "ส่วนที่ค้างคนอื่น"
+              *
+              *     ★ ค่าตัวนี้รวมหนี้ที่จ่ายจบไปแล้วด้วย ★★ ชื่อเดิมจึงขัดกับ
+              *       หน้ายอดค้างที่บอก ฿0.00 — ผู้ใช้เห็นสองหน้าพูดคนละเรื่อง
+              *       แล้วสรุปว่าตัวเลขของระบบเชื่อไม่ได้
+              *     ★ มันคือเงินที่ฉันใช้ไปจริงในบิลที่คนอื่นออกให้ ซึ่งต้องนับ
+              *       ในยอดรวมไม่ว่าจะคืนเงินเขาแล้วหรือยัง
+              */}
+            <Stat
+              label={ot('wallet.summary.myShareOthers')}
+              value={data.myShareOthers}
+              untranslated
+            />
           </div>
 
-          {/* ── กราฟรายวัน ───────────────────────────────────────── */}
-          {data.byDay.length > 0 ? (
-            <div className="mt-5 rounded-2xl border border-line bg-elevated/30 backdrop-blur-md p-4">
-              <p className="text-sm font-medium text-ink">{ot('wallet.summary.byDay')}</p>
-              {/*
-                ★ กราฟแท่งด้วย div ธรรมดา ไม่ใช้ไลบรารีกราฟ
-                  ข้อมูลเป็นชุดเดียว แกนเดียว ★ ไลบรารีกราฟที่เล็กที่สุด
-                  ยังใหญ่กว่าโค้ดทั้งหน้านี้หลายเท่า
-              */}
-              {/*
-                ★★ จำกัดความกว้างสูงสุดของแท่ง
-                   ★ flex-1 อย่างเดียวทำให้เดือนที่มีรายการวันเดียว ได้แท่งเดียว
-                     กว้างเต็มกล่อง ★★ ซึ่งอ่านเป็น "แผ่นสีแดง" ไม่ใช่กราฟ
-                   ★ เดือนที่มีข้อมูลครบยังบีบลงพอดีเหมือนเดิม
-              */}
-              <div className="mt-3 flex h-32 items-end justify-start gap-0.5 overflow-x-auto">
-                {data.byDay.map((d) => (
-                  <div
-                    key={d.date}
-                    title={`${d.date} · ฿${formatBaht(locale, Number(d.amount))}`}
-                    className="min-w-1.5 max-w-[42px] flex-1 rounded-t-sm bg-accent/70 transition-colors hover:bg-accent"
-                    style={{ height: `${Math.max(4, (Number(d.amount) / maxDay) * 100)}%` }}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
+          {/* ── กราฟ ─────────────────────────────────────────────── */}
+          <div className="mt-5">
+            <SpendChart items={data.items} mode={mode} anchor={anchor} locale={locale} />
+          </div>
 
           {/* ── แยกตามประเภท / ร้าน ──────────────────────────────── */}
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Panel title={ot('wallet.summary.byCategory')}>
-              {Object.entries(data.byCategory).map(([k, v]) => (
-                <Line key={k} name={categoryLabel(ot, k as ExpenseCategory)} amount={Number(v)} />
+              {byCategory.map(([k, v]) => (
+                <Line key={k} name={categoryLabel(ot, k as ExpenseCategory)} amount={v} />
               ))}
             </Panel>
 
             <Panel title={ot('wallet.summary.byRestaurant')}>
-              {data.byRestaurant.map((r) => (
-                <Line key={r.name} name={r.name} amount={Number(r.amount)} />
+              {byShop.map(([name, v]) => (
+                <Line key={name} name={name} amount={v} />
               ))}
             </Panel>
           </div>
@@ -218,15 +255,36 @@ export function WalletSummary() {
   )
 }
 
-function Stat({ label, value, big }: { label: string; value: number; big?: boolean }) {
+function Stat({
+  label,
+  value,
+  big,
+  untranslated,
+}: {
+  label: string
+  value: number
+  big?: boolean
+  untranslated?: boolean
+}) {
   const locale = useLocale()
   return (
-    <div className="rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-4">
-      <p className="text-xs text-ink-soft">{label}</p>
+    <div className="rounded-2xl border border-line bg-elevated/60 p-4 backdrop-blur-md">
+      <p className="text-xs text-ink-soft">
+        {untranslated ? <Untranslated>{label}</Untranslated> : label}
+      </p>
+      {/*
+        * ★★★ ยอดศูนย์ใช้สีปกติ ไม่ใช่สีแดง
+        *
+        *     ★ ผู้ใช้สั่งว่า "฿0.00 ทุกที่ให้แสดงเป็นสีปกติ ใช้สีแดงเฉพาะเมื่อ
+        *       มียอดค้างจริง" ★★ ซึ่งถูก — สีแดงคือสัญญาณว่าต้องทำอะไรสักอย่าง
+        *       ★ ฿0.00 สีแดงคือการเตือนเรื่องที่ไม่มีอยู่ ซึ่งทำให้คนเลิกเชื่อ
+        *         สีแดงตัวอื่นในหน้าเดียวกันไปด้วย
+        */}
       <p
         className={cn(
-          'mt-1 font-bold tabular-nums text-ink',
-          big ? 'text-2xl text-accent' : 'text-lg',
+          'mt-1 font-bold tabular-nums',
+          big ? 'text-2xl' : 'text-lg',
+          big && value > 0 ? 'text-accent' : 'text-ink',
         )}
       >
         ฿{formatBaht(locale, value)}
