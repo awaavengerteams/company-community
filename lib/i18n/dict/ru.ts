@@ -443,6 +443,7 @@ export const ru: Dict = {
   "valid.nameSetTaken": "มีชุดรายชื่อชื่อนี้อยู่แล้ว",
   "valid.lotteryNumber": "เลขต้องเป็น 2, 3 หรือ 6 หลัก",
   "valid.needImage": "ต้องมีรูปสินค้าอย่างน้อย 1 รูป",
+  "valid.promptpay": "ใส่ตัวเลข 10 หรือ 13 หลัก",
   "valid.needTwoTeams": "ต้องมีอย่างน้อย 2 ทีมถึงจะสร้างสายได้",
   "valid.keywordLen": "คำค้นต้องยาว 2–40 ตัวอักษร",
   "valid.needTwoOptions": "ต้องมีตัวเลือกอย่างน้อย 2 อย่าง",

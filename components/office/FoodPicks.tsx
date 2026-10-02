@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
@@ -276,7 +278,16 @@ function Card({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <h2 className="font-medium text-ink" dir="auto">{r.name}</h2>
+        {/* ★ ชื่อร้านเป็นลิงก์เข้าหน้ารายละเอียด — เป็นที่ที่คนคาดว่าจะกดได้อยู่แล้ว */}
+        <h2 className="font-medium">
+          <Link
+            href={`/office/food/picks/${r.id}`}
+            dir="auto"
+            className="text-ink transition-colors hover:text-link"
+          >
+            {r.name}
+          </Link>
+        </h2>
         {r.maybeClosed ? (
           <span className="shrink-0 rounded-full bg-danger/15 px-2 py-0.5 text-xs text-danger">
             {ot('food.picks.maybeClosed')}

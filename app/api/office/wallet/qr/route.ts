@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server'
+import { z } from 'zod'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { AppError, fromPostgresError } from '@/lib/http/errors'
-import { assertSameOrigin } from '@/lib/http/guard'
+import { assertSameOrigin, parseJsonBody } from '@/lib/http/guard'
 import { ok, withErrorHandling } from '@/lib/http/respond'
 import { enforceRateLimit } from '@/lib/ratelimit'
 import { requireOfficeUser } from '@/lib/office/guard'
@@ -20,8 +21,62 @@ export const GET = withErrorHandling(async () => {
   const actor = await requireOfficeUser()
   const path = actor.profile.payment_qr_path
 
-  if (!path) return ok({ url: null })
-  return ok({ url: await signedUrl(BUCKETS.qr, path) })
+  /*
+   * ★★ อ่านเบอร์พร้อมเพย์แบบล้มได้ — คอลัมน์มาจาก 0046
+   *    ★ หน้านี้ต้องเปิดได้เสมอแม้ migration ยังไม่ขึ้น
+   */
+  let promptPayId: string | null = null
+  const row = await getSupabaseAdminClient()
+    .from('profiles')
+    .select('promptpay_id')
+    .eq('id', actor.id)
+    .maybeSingle()
+  if (!row.error) promptPayId = row.data?.promptpay_id ?? null
+
+  return ok({
+    url: path ? await signedUrl(BUCKETS.qr, path) : null,
+    promptPayId,
+  })
+})
+
+/**
+ * PATCH — ตั้ง/ลบเบอร์พร้อมเพย์
+ *
+ * ★★★ แยกจาก POST ที่อัปรูป — คนละอย่างกันคนละวิธีส่ง
+ *
+ *     ★ POST รับ FormData (ไฟล์) ★ PATCH รับ JSON (ตัวเลข)
+ *       ★★ ยัดรวมกันจะต้องเดาจากชนิด content-type ซึ่งอ่านยากและพลาดง่าย
+ *
+ * ★ null = ลบทิ้ง ไม่ใช่ "ไม่เปลี่ยน" — ผู้ใช้ต้องเอาเบอร์ออกได้
+ */
+export const PATCH = withErrorHandling(async (request: NextRequest) => {
+  assertSameOrigin(request)
+
+  const body = await parseJsonBody(
+    request,
+    z.object({
+      /*
+       * ★ ตรวจรูปแบบที่นี่ด้วย ไม่พึ่ง check constraint อย่างเดียว
+       *   ★★ constraint โยน error ของ Postgres ซึ่งแปลเป็นข้อความให้ผู้ใช้ไม่ได้
+       */
+      promptPayId: z
+        .string()
+        .trim()
+        .regex(/^[0-9]{10,13}$/, 'valid.promptpay')
+        .nullable(),
+    }),
+  )
+
+  const actor = await requireOfficeUser()
+  await enforceRateLimit('walletAction', actor.id)
+
+  const { error } = await getSupabaseAdminClient()
+    .from('profiles')
+    .update({ promptpay_id: body.promptPayId })
+    .eq('id', actor.id)
+
+  if (error) throw fromPostgresError(error)
+  return ok({ promptPayId: body.promptPayId })
 })
 
 /** POST — อัปโหลด/เปลี่ยนรูป QR */

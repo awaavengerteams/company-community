@@ -79,6 +79,8 @@ export function WalletCreate() {
   const [query, setQuery] = useState('')
   const [shopSearch, setShopSearch] = useState(false)
   const [shopQuery, setShopQuery] = useState('')
+  /** ร้านที่กำลังชวนให้โหวตหลังบันทึกบิล — null = ไม่ชวน */
+  const [voteShop, setVoteShop] = useState<string | null>(null)
 
   const amountRef = useRef<HTMLInputElement | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
@@ -116,12 +118,44 @@ export function WalletCreate() {
     if (p) setPicked(p.split(',').filter(Boolean))
   }, [params])
 
-  /* ★ ชื่อร้านจาก id ที่ส่งมาทาง URL — ต้องรอ recent โหลดเสร็จ */
+  /*
+   * ★★★ ชื่อร้านที่ส่งมาทาง URL — ถามชื่อมาเองถ้าไม่อยู่ใน 5 ร้านล่าสุด
+   *
+   *     ★ ร้านที่มาจากหน้าร้านเด็ดหรือหน้าสุ่มอาหาร ส่วนใหญ่ "ไม่ใช่ร้านที่เพิ่งใช้"
+   *       ★★ มันคือร้านใหม่ที่เพิ่งเจอ ★ ถ้าหาเฉพาะใน recent.shops จะไม่เจอ
+   *          แล้วหน้าจะไม่มีอะไรบอกเลยว่าร้านถูกเลือกไว้
+   *
+   * ★★★ effect นี้ผูกกับ shopId อย่างเดียว ห้ามผูกกับ recent
+   *
+   *     ★ เคยผูกกับ recent ด้วย ★★ แล้ว recent เปลี่ยนค่าระหว่างที่ fetch
+   *        ยังไม่กลับมา → cleanup ตั้ง alive = false → ผลลัพธ์ถูกทิ้งเงียบ ๆ
+   *        ★ วัดได้จากเบราว์เซอร์จริง: คำขอคืน 200 พร้อมชื่อร้านครบ
+   *          แต่หน้าจอไม่ขึ้นอะไรเลย และ catch ก็ไม่ทำงานเพราะไม่มี error
+   */
+  const [urlShop, setUrlShop] = useState<Shop | null>(null)
+
   useEffect(() => {
-    if (!shopId || shopName || !recent) return
-    const hit = recent.shops.find((s) => s.id === shopId)
-    if (hit) setShopName(hit.name)
-  }, [shopId, shopName, recent])
+    if (!shopId) return
+    let alive = true
+    apiFetch<{ restaurant: { id: string; name: string; cuisine: string | null } }>(
+      `/api/office/food/restaurants/${shopId}`,
+    )
+      .then((d) => {
+        if (!alive) return
+        setUrlShop({ id: d.restaurant.id, name: d.restaurant.name, cuisine: d.restaurant.cuisine })
+        setShopName(d.restaurant.name)
+        /* ★ ร้านกาแฟ → เดาประเภทให้เลย เหมือนตอนกดชิปเอง */
+        if (/กาแฟ|coffee|cafe/i.test(`${d.restaurant.name} ${d.restaurant.cuisine ?? ''}`)) {
+          setCategory('COFFEE')
+        }
+      })
+      .catch(() => {
+        /* ★ ร้านถูกลบไปแล้ว — ยังบันทึกบิลได้ แค่ไม่ผูกร้าน */
+      })
+    return () => {
+      alive = false
+    }
+  }, [shopId])
 
   /* ★ โฟกัสช่องเงินทันทีที่เปิดหน้า — คนเปิดหน้านี้มาเพื่อกรอกยอด */
   useEffect(() => {
@@ -141,6 +175,13 @@ export function WalletCreate() {
     const extra = picked.filter((id) => !freq.some((p) => p.id === id)).map((id) => byId.get(id))
     return [...freq, ...extra].filter((p): p is Person => Boolean(p))
   }, [recent, picked, byId])
+
+  /* ★ ร้านจาก URL ขึ้นก่อนเสมอ — มันคือร้านที่ผู้ใช้เพิ่งเลือกมาจากอีกหน้า */
+  const shopChips = useMemo(() => {
+    const base = recent?.shops ?? []
+    if (!urlShop || base.some((s) => s.id === urlShop.id)) return base
+    return [urlShop, ...base].slice(0, 6)
+  }, [recent, urlShop])
 
   const split = useMemo(
     () =>
@@ -318,8 +359,39 @@ export function WalletCreate() {
 
   function finish() {
     showToast(ot('wallet.create.savedToast', { n: picked.length }))
+
+    /*
+     * ★★★ บิลที่ระบุร้าน → ชวนโหวตให้ร้านนั้น (เฟส 5.2)
+     *
+     *     ★ ข้อกำหนดเขียนว่า "รีวิวร้านนี้" ★★ แต่ระบบไม่มีรีวิว มีแต่โหวต
+     *        ★ จึงชวนโหวตแทน ซึ่งเป็นการให้ความเห็นเรื่องร้านเหมือนกัน
+     *          และใช้ของที่มีอยู่แล้วโดยไม่ต้องสร้างฟีเจอร์ใหม่
+     *     ★ ไม่ถามซ้ำถ้าโหวตร้านนี้ไปแล้วใน 7 วัน — เก็บใน localStorage
+     *       ★★ เก็บฝั่งเครื่องพอ เพราะมันเป็นเรื่อง "เคยถูกถามไปแล้วไหม"
+     *          ไม่ใช่ข้อมูลที่ต้องตรงกันข้ามเครื่อง
+     */
+    if (shopId && !askedRecently(shopId)) {
+      markAsked(shopId)
+      setVoteShop(shopId)
+      return
+    }
+
     /* ★ หน่วงให้ toast ทันขึ้น แล้วค่อยพาไปหน้ายอดค้างตามข้อกำหนด */
     window.setTimeout(() => router.push('/office/wallet/owed'), 600)
+  }
+
+  async function voteShop_() {
+    if (!voteShop) return
+    try {
+      await apiFetch(`/api/office/food/restaurants/${voteShop}`, {
+        method: 'POST',
+        body: { action: 'vote' },
+      })
+    } catch {
+      /* ★ โหวตไม่สำเร็จไม่ควรบังบิลที่บันทึกไปแล้ว */
+    }
+    setVoteShop(null)
+    router.push('/office/wallet/owed')
   }
 
   async function saveGroup() {
@@ -426,7 +498,7 @@ export function WalletCreate() {
           <Untranslated>{ot('wallet.create.shop')}</Untranslated>
         </p>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {(recent?.shops ?? []).map((s) => (
+          {shopChips.map((s) => (
             <Chip
               key={s.id}
               active={shopId === s.id}
@@ -885,9 +957,63 @@ export function WalletCreate() {
         </div>
       ) : null}
 
+      {/* ── ชวนโหวตร้านหลังบันทึกบิล ─────────────────────────── */}
+      {voteShop ? (
+        <div className="fixed inset-x-4 bottom-4 z-70 mx-auto max-w-sm rounded-2xl border border-line bg-elevated p-4 shadow-2xl">
+          <p className="text-sm font-medium text-ink">
+            <Untranslated>{ot('wallet.create.savedToast', { n: picked.length })}</Untranslated>
+          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <Button variant="primary" className="min-h-11 flex-1" onClick={voteShop_}>
+              <Untranslated>{ot('food.voteThis')}</Untranslated>
+            </Button>
+            {/* ★ ข้ามได้เสมอ — การชวนที่ปิดไม่ได้คือการบังคับ */}
+            <Button
+              variant="ghost"
+              className="min-h-11"
+              onClick={() => {
+                setVoteShop(null)
+                router.push('/office/wallet/owed')
+              }}
+            >
+              <Untranslated>{ot('wallet.create.skip')}</Untranslated>
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <Toast toast={toast} />
     </div>
   )
+}
+
+/* ── จำว่าเคยชวนโหวตร้านไหนไปแล้วเมื่อไหร่ ───────────────────── */
+const ASK_KEY = 'awa:voted-ask'
+const ASK_DAYS = 7
+
+function askedRecently(shopId: string): boolean {
+  if (typeof window === 'undefined') return true
+  try {
+    const raw = window.localStorage.getItem(ASK_KEY)
+    const map = raw ? (JSON.parse(raw) as Record<string, number>) : {}
+    const at = map[shopId]
+    return typeof at === 'number' && Date.now() - at < ASK_DAYS * 86_400_000
+  } catch {
+    /* ★ อ่านไม่ได้ = ถือว่าเคยถามแล้ว ★★ ชวนซ้ำน่ารำคาญกว่าไม่ได้ชวน */
+    return true
+  }
+}
+
+function markAsked(shopId: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = window.localStorage.getItem(ASK_KEY)
+    const map = raw ? (JSON.parse(raw) as Record<string, number>) : {}
+    map[shopId] = Date.now()
+    window.localStorage.setItem(ASK_KEY, JSON.stringify(map))
+  } catch {
+    /* ★ เขียนไม่ได้ (โหมดส่วนตัว) — ไม่ใช่เรื่องที่ต้องบอกผู้ใช้ */
+  }
 }
 
 function todayIso(): string {

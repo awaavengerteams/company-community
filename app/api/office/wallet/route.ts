@@ -254,5 +254,49 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
   }
 
+  /*
+   * ── ชวนตั้งค่า QR ครั้งแรกที่มีคนต้องจ่ายให้เรา (เฟส 5.1) ──────
+   *
+   * ★★★ แจ้งครั้งเดียวตลอดกาล ไม่ใช่ทุกครั้งที่สร้างบิล
+   *
+   *     ★ เช็กจากตารางแจ้งเตือนเองว่าเคยส่งชนิดนี้ไปหรือยัง
+   *       ★★ ไม่ต้องเพิ่มคอลัมน์ "เคยแจ้งแล้ว" — ข้อมูลนั้นมีอยู่แล้วในแถวแจ้งเตือน
+   *     ★ คนที่ลบแจ้งเตือนทิ้งจะได้รับซ้ำ ซึ่งยอมรับได้ — เขาลบเองแปลว่าเห็นแล้ว
+   *
+   * ★★ ล้มแล้วไม่กระทบการสร้างบิล — บิลบันทึกเสร็จไปแล้ว
+   */
+  if (data?.id && body.shares.length > 0) {
+    try {
+      const { data: me } = await admin
+        .from('profiles')
+        .select('payment_qr_path, promptpay_id')
+        .eq('id', actor.id)
+        .maybeSingle()
+
+      const hasAnyQr = Boolean(me?.payment_qr_path) || Boolean(me?.promptpay_id)
+
+      if (!hasAnyQr) {
+        const { data: sent } = await admin
+          .from('notifications')
+          .select('id')
+          .eq('user_id', actor.id)
+          .eq('title_key', 'notify.type.setUpQr')
+          .limit(1)
+
+        if ((sent ?? []).length === 0) {
+          await admin.rpc('notify', {
+            p_user: actor.id,
+            p_type: 'debtCreated',
+            p_title_key: 'notify.type.setUpQr',
+            p_params: {},
+            p_link: '/office/wallet/qr',
+          })
+        }
+      }
+    } catch {
+      /* ★ ชวนตั้งค่าไม่สำเร็จ ไม่ใช่เหตุให้บิลล้ม */
+    }
+  }
+
   return ok({ id: data?.id, title: data?.title })
 })

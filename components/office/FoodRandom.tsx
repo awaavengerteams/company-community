@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
-import { useOt } from '@/lib/i18n/office'
+import { Untranslated, useOt } from '@/lib/i18n/office'
 import {
   DISTANCE_OPTIONS,
   PRICE_OPTIONS,
@@ -201,12 +201,34 @@ export function FoodRandom() {
               {visitLogged ? ot('food.random.logged') : ot('food.random.goThere')}
             </Button>
 
+            {/*
+              * ★★★ "กินร้านนี้แล้ว · สร้างบิล" — เชื่อมสุ่มอาหารเข้ากับกระเป๋าเงิน
+              *
+              *     ★ ลำดับจริงของคนคือ สุ่ม → ไปกิน → จ่ายเงิน → หารกัน
+              *       ★★ แต่เดิมสามขั้นหลังไม่มีทางเดินต่อจากหน้านี้เลย
+              *          คนต้องจำชื่อร้านแล้วไปพิมพ์ใหม่ในหน้าสร้างบิล
+              *     ★ ส่งร้านไปทาง query — หน้าสร้างบิลรับ ?shop= อยู่แล้ว (เฟส 2.9)
+              */}
+            <Link
+              href={`/office/wallet/create?shop=${winner.id}`}
+              className="inline-flex h-11 items-center rounded-full bg-surface px-4 text-sm font-medium text-ink transition-colors hover:bg-surface-hover"
+            >
+              <Untranslated>{ot('food.billFromShop')}</Untranslated>
+            </Link>
+
+            <Link
+              href={`/office/food/picks/${winner.id}`}
+              className="inline-flex h-11 items-center rounded-full px-3 text-sm text-link hover:underline"
+            >
+              <Untranslated>{ot('food.detail')}</Untranslated>
+            </Link>
+
             {winner.mapUrl ? (
               <a
                 href={winner.mapUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-9 items-center rounded-full bg-surface px-4 text-sm font-medium text-ink hover:bg-surface-hover"
+                className="inline-flex h-11 items-center rounded-full bg-surface px-4 text-sm font-medium text-ink hover:bg-surface-hover"
               >
                 {ot('food.picks.openMap')}
               </a>

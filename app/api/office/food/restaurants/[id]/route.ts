@@ -35,6 +35,84 @@ const actionSchema = z.discriminatedUnion('action', [
 ])
 
 /** POST /api/office/food/restaurants/[id] — เห็นด้วย · แจ้งปิด · บันทึกการไป */
+/**
+ * GET /api/office/food/restaurants/[id] — ร้านเดียว พร้อมสถิติการกินของออฟฟิศ
+ *
+ * ★★★ "คนในออฟฟิศกินร้านนี้ X ครั้งในเดือนนี้" นับจากบิลจริง
+ *
+ *     ★ ไม่ได้นับจาก restaurant_visits ซึ่งเป็นการกด "เคยไปมาแล้ว" ด้วยมือ
+ *       ★★ คนกดปุ่มนั้นน้อยมาก ★ ส่วนบิลค่าข้าวถูกสร้างทุกครั้งที่มีการจ่ายเงินจริง
+ *          ซึ่งเป็นหลักฐานที่เชื่อได้มากกว่าและไม่ต้องขอให้ใครทำอะไรเพิ่ม
+ *     ★★ นับ "บิล" ไม่ใช่ "คน" — บิลหนึ่งใบคือการไปกินหนึ่งครั้งของกลุ่มหนึ่งกลุ่ม
+ *
+ * ★ นับของทั้งออฟฟิศ ไม่ใช่ของฉันคนเดียว
+ *   ★★ คำถามคือ "ร้านนี้คนที่นี่ชอบไหม" ไม่ใช่ "ฉันไปบ่อยแค่ไหน"
+ */
+export const GET = withErrorHandling(
+  async (_request: NextRequest, context: RouteContext<'/api/office/food/restaurants/[id]'>) => {
+    const actor = await requireOfficeUser()
+    const { id } = await context.params
+    if (!z.uuid().safeParse(id).success) throw new AppError('VALIDATION_FAILED')
+
+    const admin = getSupabaseAdminClient()
+
+    const { data: r, error } = await admin
+      .from('restaurants')
+      .select(
+        'id, name, signature_dish, image_path, cuisine, price_range, distance, map_url, note, added_by, vote_count, maybe_closed, created_at',
+      )
+      .eq('id', id)
+      .maybeSingle()
+
+    if (error) throw fromPostgresError(error)
+    if (!r) throw new AppError('ROOM_NOT_FOUND')
+
+    /* ★ ต้นเดือนนี้ตามเวลาเครื่อง server — ตรงกับช่วงที่หน้าสรุปค่าข้าวใช้ */
+    const now = new Date()
+    const monthFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+
+    const [{ data: votes }, { data: bills }, { data: adder }] = await Promise.all([
+      admin.from('restaurant_votes').select('user_id').eq('restaurant_id', id).eq('user_id', actor.id),
+      /*
+       * ★★ ห่อ try ไม่ได้ใน Promise.all — ถ้า restaurant_id ยังไม่เคยถูกเขียน
+       *    ผลลัพธ์จะเป็นอาร์เรย์ว่าง ซึ่งถูกต้องอยู่แล้ว ไม่ใช่ error
+       */
+      admin
+        .from('expense_bills')
+        .select('id, payer_id, bill_date')
+        .eq('restaurant_id', id)
+        .gte('bill_date', monthFrom),
+      r.added_by
+        ? admin.from('profiles').select('display_name, nickname').eq('id', r.added_by).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ])
+
+    return ok({
+      restaurant: {
+        id: r.id,
+        name: r.name,
+        signatureDish: r.signature_dish,
+        imagePath: r.image_path,
+        cuisine: r.cuisine,
+        priceRange: r.price_range,
+        distance: r.distance,
+        mapUrl: r.map_url,
+        note: r.note,
+        addedBy: r.added_by,
+        addedByName: adder?.nickname || adder?.display_name || null,
+        voteCount: r.vote_count,
+        maybeClosed: r.maybe_closed,
+        voted: (votes ?? []).length > 0,
+        canManage: r.added_by === actor.id || actor.isAdmin,
+      },
+      /** จำนวนบิลของร้านนี้ในเดือนนี้ — ทั้งออฟฟิศ */
+      visitsThisMonth: (bills ?? []).length,
+      /** ฉันเองกินร้านนี้กี่ครั้งในเดือนนี้ (เป็นคนจ่าย) */
+      myVisitsThisMonth: (bills ?? []).filter((b) => b.payer_id === actor.id).length,
+    })
+  },
+)
+
 export const POST = withErrorHandling(async (request: NextRequest, context: RouteContext<'/api/office/food/restaurants/[id]'>) => {
   assertSameOrigin(request)
 
