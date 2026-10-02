@@ -37,3 +37,4 @@ yarn-error.log*
 .vscode/*
 !.vscode/extensions.json
 .env*
+.seed-demo-ids.json
