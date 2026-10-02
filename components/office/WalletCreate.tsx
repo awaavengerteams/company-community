@@ -1,444 +1,886 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { apiFetch } from '@/lib/api/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Toast, useToast } from '@/components/ui/Toast'
 import { cn } from '@/lib/cn'
 import { useLocale } from '@/lib/i18n/client'
-import { ChatAvatar } from './ChatAvatar'
 import { officeErrorText } from '@/lib/i18n/office-format'
-import { useOt } from '@/lib/i18n/office'
-import { CATEGORIES, categoryLabel, formatBaht, previewEqualSplit } from '@/lib/office/wallet'
-import type { ExpenseCategory, SplitMode } from '@/types/database'
+import { Untranslated, useOt, type OfficeKey } from '@/lib/i18n/office'
+import { formatBaht } from '@/lib/office/wallet'
+import { shrinkImage } from '@/lib/image/shrink'
+import { computeSplit, customRemainder, loadPrefs, savePrefs, type BillPrefs } from '@/lib/office/billDraft'
+import { toBaht } from '@/lib/office/money'
+import { ChatAvatar } from './ChatAvatar'
 
-type Person = { id: string; name: string; department: string | null; avatarUrl: string | null }
+type Person = { id: string; name: string; avatarUrl: string | null; department: string | null }
+type Shop = { id: string; name: string; cuisine: string | null }
+type Group = { id: string; name: string; memberIds: string[] }
 
-/** หน้าสร้างรายการเงิน (FR-B01 / FR-B02) */
-export function WalletCreate({ selfId }: { selfId: string }) {
+type Recent = {
+  lastBill: { shopId: string | null; shopName: string | null; splitMode: 'EQUAL' | 'CUSTOM'; people: Person[] } | null
+  frequentPeople: Person[]
+  shops: Shop[]
+  groups: Group[]
+  suggestGroup: string[] | null
+}
+
+/**
+ * หน้าสร้างรายการเงิน — ออกแบบใหม่ทั้งหน้าเพื่อ "กรอกให้น้อยที่สุด"
+ *
+ * ★★★ หน้านี้ถูกเปิดตอนยืนอยู่หน้าแคชเชียร์ ไม่ใช่ตอนนั่งหน้าคอม
+ *
+ *     ★ ทุกการตัดสินใจในไฟล์นี้ยึดข้อนี้: ช่องบังคับมีแค่ยอดเงินกับคนที่หาร
+ *       ★★ ที่เหลือมีค่าเริ่มต้นหมด และซ่อนอยู่ใต้ "เพิ่มรายละเอียด"
+ *     ★ ลำดับบนหน้าจอเรียงตามลำดับที่คนคิดจริง: จ่ายไปเท่าไหร่ → ร้านอะไร →
+ *       หารกับใคร → คนละเท่าไหร่ ★★ ไม่ใช่เรียงตามลำดับคอลัมน์ในฐานข้อมูล
+ *
+ * ★★ ปุ่มบันทึกติดล่างจอ และบอกสิ่งที่ขาดบนตัวปุ่ม
+ *    ★ ปุ่มที่กดไม่ได้โดยไม่บอกเหตุผล ทำให้คนกดซ้ำแล้วคิดว่าเว็บค้าง
+ */
+export function WalletCreate() {
   const ot = useOt()
   const locale = useLocale()
   const router = useRouter()
+  const params = useSearchParams()
+  const { toast, showToast } = useToast()
+
+  const [recent, setRecent] = useState<Recent | null>(null)
   const [people, setPeople] = useState<Person[]>([])
-  const [title, setTitle] = useState('')
-  const [total, setTotal] = useState('')
-  const [category, setCategory] = useState<ExpenseCategory>('FOOD')
-  const [split, setSplit] = useState<SplitMode>('EQUAL')
-  const [query, setQuery] = useState('')
+  const [meId, setMeId] = useState<string | null>(null)
 
-  const [includeSelf, setIncludeSelf] = useState(true)
+  /* ── ค่าที่กรอก ────────────────────────────────────────────── */
+  const [amount, setAmount] = useState('')
+  const [shopId, setShopId] = useState<string | null>(null)
+  const [shopName, setShopName] = useState<string | null>(null)
   const [picked, setPicked] = useState<string[]>([])
-  /*
-   * ★★ คนที่เลือกแล้วอยู่บนสุดเสมอ แล้วค่อยเป็นผลการค้นหา
-   *    ★ เรียงด้วย useMemo ไม่ใช่ sort ตอน render ทุกครั้ง — รายการนี้
-   *      ถูกวาดใหม่ทุกตัวอักษรที่พิมพ์ในช่องค้นหา
-   */
-  /*
-   * ★★★ รายชื่อแบน ๆ เรียงเดิมเสมอ ไม่จัดกลุ่มและไม่สลับที่
-   *
-   *     ★ เคยดันคนที่เลือกไว้ขึ้นบนสุด แล้วเคยลองจัดกลุ่มตามฝ่าย
-   *       ★★ ทั้งสองแบบทำให้ "ตำแหน่งของคน" ขยับ — คนกรอกกวาดตาหาคนถัดไป
-   *          ไม่เจอ เพราะของที่เพิ่งเห็นตรงนั้นย้ายไปแล้ว
-   *     ★ ลำดับนิ่งคือสิ่งที่ทำให้เลือกเร็ว ส่วน "ใครอยู่ในบิลนี้" ไปตอบ
-   *       ที่แถวป้ายเหนือช่องค้นหา ซึ่งตอบได้ตลอดไม่ว่าจะพิมพ์ค้นอะไรอยู่
-   *
-   * ★ ค้นด้วยชื่ออย่างเดียว — หน้านี้ไม่แสดงฝ่ายแล้ว การค้นด้วยคำที่
-   *   มองไม่เห็นบนจอทำให้ผลลัพธ์อธิบายตัวเองไม่ได้
-   */
-  const shownPeople = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return q ? people.filter((p) => p.name.toLowerCase().includes(q)) : people
-  }, [people, query])
+  const [prefs, setPrefs] = useState<BillPrefs>(() => loadPrefs())
 
-  /** คนที่เลือกไว้ — เรียงตามลำดับที่กด เพื่อให้ป้ายไม่กระโดดสลับที่ */
-  const pickedPeople = useMemo(
-    () => picked.map((id) => people.find((p) => p.id === id)).filter((p): p is Person => Boolean(p)),
-    [picked, people],
-  )
-
+  /* ── รายละเอียดเสริม ──────────────────────────────────────── */
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [category, setCategory] = useState<'FOOD' | 'COFFEE' | 'OTHER'>('FOOD')
+  const [billDate, setBillDate] = useState(() => todayIso())
+  const [delivery, setDelivery] = useState('')
+  const [discount, setDiscount] = useState('')
   const [custom, setCustom] = useState<Record<string, string>>({})
+  const [receiptPath, setReceiptPath] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldError, setFieldError] = useState<Record<string, string>>({})
+  const [askGroup, setAskGroup] = useState(false)
+  const [groupName, setGroupName] = useState('')
+  const [showAll, setShowAll] = useState(false)
+  const [query, setQuery] = useState('')
+  const [shopSearch, setShopSearch] = useState(false)
+  const [shopQuery, setShopQuery] = useState('')
 
+  const amountRef = useRef<HTMLInputElement | null>(null)
+  const fileRef = useRef<HTMLInputElement | null>(null)
+
+  /* ── โหลดข้อมูลที่ระบบใช้เดา ───────────────────────────────── */
   const load = useCallback(async () => {
     try {
-      const data = await apiFetch<{ items: Person[] }>('/api/office/people')
-      setPeople(data.items.filter((p) => p.id !== selfId))
+      const [r, all] = await Promise.all([
+        apiFetch<Recent>('/api/office/wallet/recent'),
+        apiFetch<{ items: Person[]; meId: string }>('/api/office/people'),
+      ])
+      setRecent(r)
+      setPeople(all.items)
+      setMeId(all.meId ?? null)
     } catch (e) {
       setError(officeErrorText(e, ot))
     }
-  }, [selfId])
+  }, [])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  const totalNum = Number(total)
-  const totalValid = Number.isFinite(totalNum) && totalNum > 0
+  /*
+   * ── กรอกล่วงหน้าผ่าน URL (ใช้กับเฟส 5) ──────────────────────
+   * ★ ?shop=&people=&amount= — ปุ่ม "กินร้านนี้แล้ว สร้างบิล" จากหน้าสุ่มอาหาร
+   *   ★★ อ่านครั้งเดียวตอนเปิดหน้า ไม่ผูกกับ state ที่เปลี่ยนทีหลัง
+   */
+  useEffect(() => {
+    const a = params.get('amount')
+    const s = params.get('shop')
+    const p = params.get('people')
+    if (a && /^\d+(\.\d{1,2})?$/.test(a)) setAmount(a)
+    if (s) setShopId(s)
+    if (p) setPicked(p.split(',').filter(Boolean))
+  }, [params])
 
-  /* ★ ตัวอย่างยอดใช้สูตรเดียวกับ migration 0027 (ดู lib/office/wallet.ts) */
-  const preview = useMemo(
-    () => (totalValid ? previewEqualSplit(totalNum, picked.length, includeSelf) : null),
-    [totalNum, totalValid, picked.length, includeSelf],
+  /* ★ ชื่อร้านจาก id ที่ส่งมาทาง URL — ต้องรอ recent โหลดเสร็จ */
+  useEffect(() => {
+    if (!shopId || shopName || !recent) return
+    const hit = recent.shops.find((s) => s.id === shopId)
+    if (hit) setShopName(hit.name)
+  }, [shopId, shopName, recent])
+
+  /* ★ โฟกัสช่องเงินทันทีที่เปิดหน้า — คนเปิดหน้านี้มาเพื่อกรอกยอด */
+  useEffect(() => {
+    amountRef.current?.focus()
+  }, [])
+
+  const others = useMemo(() => people.filter((p) => p.id !== meId), [people, meId])
+  const byId = useMemo(() => new Map(others.map((p) => [p.id, p])), [others])
+
+  /*
+   * ★★ แถวบนสุดคือคนที่หารด้วยบ่อยที่สุด ตามด้วยคนที่เลือกแล้วแต่ไม่อยู่ในแถว
+   *    ★ คนที่เพิ่งเลือกจาก "ดูทุกคน" ต้องยังเห็นว่าถูกเลือกอยู่
+   *      ★★ ไม่งั้นเขาจะกดเลือกซ้ำแล้วกลายเป็นยกเลิก
+   */
+  const quickPeople = useMemo(() => {
+    const freq = recent?.frequentPeople ?? []
+    const extra = picked.filter((id) => !freq.some((p) => p.id === id)).map((id) => byId.get(id))
+    return [...freq, ...extra].filter((p): p is Person => Boolean(p))
+  }, [recent, picked, byId])
+
+  const split = useMemo(
+    () =>
+      computeSplit({
+        amount: Number(amount) || 0,
+        deliveryFee: Number(delivery) || 0,
+        discount: Number(discount) || 0,
+        others: picked.length,
+        includeSelf: prefs.includeSelf,
+        rounded: prefs.rounded,
+      }),
+    [amount, delivery, discount, picked.length, prefs.includeSelf, prefs.rounded],
   )
 
-  const customSum = picked.reduce((s, id) => s + (Number(custom[id]) || 0), 0)
+  const remainder = useMemo(
+    () =>
+      prefs.splitMode === 'CUSTOM'
+        ? customRemainder(
+            Number(amount) || 0,
+            Number(delivery) || 0,
+            Number(discount) || 0,
+            picked.map((id) => Number(custom[id]) || 0),
+          )
+        : 0,
+    [prefs.splitMode, amount, delivery, discount, picked, custom],
+  )
+
+  function setPref<K extends keyof BillPrefs>(k: K, v: BillPrefs[K]) {
+    const next = { ...prefs, [k]: v }
+    setPrefs(next)
+    savePrefs(next)
+  }
 
   function toggle(id: string) {
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
+    setFieldError((f) => ({ ...f, people: '' }))
   }
 
-  async function submit(event: React.FormEvent) {
-    event.preventDefault()
+  function applyAgain() {
+    const last = recent?.lastBill
+    if (!last) return
+    setPicked(last.people.map((p) => p.id))
+    if (last.shopId) {
+      setShopId(last.shopId)
+      setShopName(last.shopName)
+    }
+    setPref('splitMode', last.splitMode)
+    amountRef.current?.focus()
+  }
+
+  async function uploadReceipt(file: File) {
+    setUploading(true)
+    setError(null)
+    try {
+      /* ★ ย่อก่อนส่ง — ใบเสร็จถ่ายจากมือถือใบหนึ่ง 4MB เพื่อรูปที่เปิดดูครั้งเดียว */
+      const small = await shrinkImage(file, 1280)
+      const form = new FormData()
+      form.append('file', small)
+      const res = await fetch('/api/office/wallet/receipt', { method: 'POST', body: form })
+      const payload = (await res.json()) as
+        | { ok: true; data: { path: string } }
+        | { ok: false; error: { message: string } }
+      if (!payload.ok) throw new Error(payload.error.message)
+      setReceiptPath(payload.data.path)
+    } catch (e) {
+      setError(officeErrorText(e, ot))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  /** ปุ่มบันทึกบอกสิ่งที่ขาด แทนที่จะ disable เงียบ ๆ */
+  const missing = !Number(amount) ? 'amount' : picked.length === 0 ? 'people' : null
+
+  async function submit() {
     if (busy) return
+
+    /* ★ error ขึ้นใต้ช่องที่ผิด ไม่ใช่ popup — ข้อกำหนดระบุไว้ชัด */
+    if (!Number(amount)) {
+      setFieldError({ amount: ot('wallet.create.needAmount') })
+      amountRef.current?.focus()
+      return
+    }
+    if (picked.length === 0) {
+      setFieldError({ people: ot('wallet.create.needPeople') })
+      return
+    }
+    if (prefs.splitMode === 'CUSTOM' && remainder !== 0) {
+      setFieldError({
+        custom:
+          remainder > 0
+            ? ot('wallet.create.leftOver', { amount: `฿${formatBaht(locale, toBaht(remainder))}` })
+            : ot('wallet.create.overBy', { amount: `฿${formatBaht(locale, toBaht(-remainder))}` }),
+      })
+      return
+    }
 
     setBusy(true)
     setError(null)
+    setFieldError({})
+
+    const shares =
+      prefs.splitMode === 'CUSTOM'
+        ? picked.map((id) => ({ userId: id, amount: Number(custom[id]) || 0 }))
+        : picked.map((id, i) => ({ userId: id, amount: toBaht(split.othersSatang[i] ?? 0) }))
+
     try {
       await apiFetch('/api/office/wallet', {
         method: 'POST',
         body: {
-          title,
-          total: totalNum,
+          /* ★ ชื่อรายการไม่บังคับ — ตั้งให้เองจากร้านหรือวันที่ */
+          title: title.trim() || shopName || ot('wallet.create.titleAuto', { date: billDate }),
+          total: toBaht(split.totalSatang),
           category,
-          splitMode: split,
-          includeSelf,
-          shares: picked.map((id) =>
-            split === 'CUSTOM' ? { userId: id, amount: Number(custom[id]) } : { userId: id },
-          ),
+          billDate,
+          receiptPath,
+          /*
+           * ★★ ส่ง CUSTOM เสมอ ไม่ว่าจะเลือกโหมดไหน
+           *    ★ เราคำนวณยอดรายคนเองฝั่ง client แล้ว (เป็นสตางค์ integer)
+           *      ★★ ถ้าส่ง EQUAL ให้ RPC หารเอง มันจะหารด้วยกฎของตัวเอง
+           *         ซึ่งไม่รู้เรื่องค่าส่ง ส่วนลด และการปัดเศษ — ยอดจะไม่ตรง
+           *         กับที่ผู้ใช้เห็นบนจอตอนกดบันทึก
+           */
+          splitMode: 'CUSTOM',
+          includeSelf: prefs.includeSelf,
+          shares,
+          restaurantId: shopId,
+          deliveryFee: Number(delivery) || 0,
+          discount: Number(discount) || 0,
+          rounded: prefs.rounded,
         },
       })
-      router.push('/office/wallet/owed')
-      router.refresh()
+
+      /*
+       * ★ ถามเรื่องกลุ่มหลังบันทึกสำเร็จ ไม่ใช่ก่อน
+       *   ★★ ตอนก่อนบันทึกผู้ใช้กำลังรีบ — คำถามที่ขวางทางคือคำถามที่ถูกกดข้าม
+       */
+      const key = [...picked].sort().join(',')
+      const suggest = recent?.suggestGroup ? [...recent.suggestGroup].sort().join(',') : null
+      if (suggest && key === suggest) {
+        setAskGroup(true)
+        setBusy(false)
+        return
+      }
+
+      finish()
     } catch (e) {
       setError(officeErrorText(e, ot))
-    } finally {
       setBusy(false)
     }
   }
 
-  const canSubmit =
-    title.trim() !== '' &&
-    totalValid &&
-    picked.length > 0 &&
-    (split === 'EQUAL' || (customSum > 0 && customSum <= totalNum))
+  function finish() {
+    showToast(ot('wallet.create.savedToast', { n: picked.length }))
+    /* ★ หน่วงให้ toast ทันขึ้น แล้วค่อยพาไปหน้ายอดค้างตามข้อกำหนด */
+    window.setTimeout(() => router.push('/office/wallet/owed'), 600)
+  }
+
+  async function saveGroup() {
+    if (!groupName.trim()) return
+    try {
+      await apiFetch('/api/office/wallet/groups', {
+        method: 'POST',
+        body: { action: 'save', name: groupName.trim(), memberIds: picked },
+      })
+      showToast(ot('wallet.create.groupSaved'))
+    } catch {
+      /* ★ บันทึกกลุ่มไม่สำเร็จไม่ควรบังบิลที่บันทึกไปแล้ว */
+    }
+    setAskGroup(false)
+    finish()
+  }
+
+  const shopList = useMemo(() => {
+    const q = shopQuery.trim().toLowerCase()
+    if (!q) return recent?.shops ?? []
+    return (recent?.shops ?? []).filter((s) => s.name.toLowerCase().includes(q))
+  }, [recent, shopQuery])
+
+  const allList = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return q ? others.filter((p) => `${p.name} ${p.department ?? ''}`.toLowerCase().includes(q)) : others
+  }, [others, query])
 
   return (
-    <form onSubmit={submit} className="max-w-2xl py-2">
-
-      <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-line bg-elevated/60 backdrop-blur-md p-5">
-        <Field label={ot('wallet.create.billTitle')} required>
-          <Input radius="round" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required />
-        </Field>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={ot('wallet.create.total')} required>
-            {/* ★ สัญลักษณ์บาทอยู่ในช่อง ไม่ใช่ในป้ายกำกับ — คนกรอกมองที่
-                เคอร์เซอร์ ไม่ได้มองป้ายด้านบน (เหมือนช่องราคาของฟอร์มลงประกาศ) */}
-            <span className="relative flex items-center">
-              <span className="pointer-events-none absolute start-4 text-sm text-ink-faint">฿</span>
-              <Input
-                radius="round"
-                value={total}
-                onChange={(e) => setTotal(e.target.value)}
-                type="number"
-                step="0.01"
-                min="0.01"
-                inputMode="decimal"
-                invalid={total !== '' && !totalValid}
-                required
-                className="ps-8 text-lg font-semibold tabular-nums"
-              />
+    <div className="max-w-xl pb-28">
+      {/* ── 1 · หารแบบครั้งก่อน ──────────────────────────────── */}
+      {recent?.lastBill && recent.lastBill.people.length > 0 ? (
+        <button
+          type="button"
+          onClick={applyAgain}
+          /*
+           * ★★★ ปุ่มเดียวที่เติมคน ร้าน และวิธีหารให้ครบ
+           *     ★ ข้อกำหนด: กรอกยอดแล้วกดบันทึก = 3 แตะ
+           *       ★★ แตะ 1 ปุ่มนี้ · แตะ 2 ช่องเงิน (พิมพ์) · แตะ 3 บันทึก
+           */
+          className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-accent/35 bg-accent/5 p-3 text-start transition-colors hover:bg-accent/10"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent/15 text-accent">
+            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" />
+            </svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-semibold text-ink">
+              <Untranslated>{ot('wallet.create.again')}</Untranslated>
             </span>
+            <span dir="auto" className="block truncate text-[12px] text-ink-soft">
+              {recent.lastBill.shopName
+                ? ot('wallet.create.againWith', {
+                    names: recent.lastBill.people.map((p) => p.name).join(', '),
+                    shop: recent.lastBill.shopName,
+                  })
+                : ot('wallet.create.againNoShop', {
+                    names: recent.lastBill.people.map((p) => p.name).join(', '),
+                  })}
+            </span>
+          </span>
+        </button>
+      ) : null}
+
+      {/* ── 2 · ยอดรวม ───────────────────────────────────────── */}
+      <div className="mt-4">
+        <label htmlFor="amt" className="block text-sm font-medium text-ink">
+          <Untranslated>{ot('wallet.create.total')}</Untranslated>
+        </label>
+        <div className="mt-1.5 flex items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3 focus-within:border-accent">
+          <span className="text-2xl font-bold text-ink-faint">฿</span>
+          <input
+            ref={amountRef}
+            id="amt"
+            value={amount}
+            onChange={(e) => {
+              /* ★ รับเฉพาะตัวเลขกับจุด — คีย์บอร์ดบางตัวยังส่งอักษรมาได้ */
+              const v = e.target.value.replace(/[^\d.]/g, '')
+              setAmount(v)
+              setFieldError((f) => ({ ...f, amount: '' }))
+            }}
+            /* ★★ inputmode="decimal" เปิดคีย์บอร์ดตัวเลขบนมือถือ
+                 ★ type="number" จะได้ลูกศรขึ้นลงที่ไม่มีใครใช้ และ
+                   เลื่อนเมาส์ทับแล้วค่าเปลี่ยนเองโดยไม่ตั้งใจ */
+            inputMode="decimal"
+            placeholder="0"
+            aria-describedby="amtHint"
+            className="min-w-0 flex-1 bg-transparent text-3xl font-bold tabular-nums text-ink outline-none placeholder:text-ink-faint"
+          />
+        </div>
+        {fieldError.amount ? (
+          <p className="mt-1 text-xs text-danger">{fieldError.amount}</p>
+        ) : (
+          <p id="amtHint" className="mt-1 text-xs text-ink-faint">
+            <Untranslated>{ot('wallet.create.amountHint')}</Untranslated>
+          </p>
+        )}
+      </div>
+
+      {/* ── 3 · ร้าน ─────────────────────────────────────────── */}
+      <div className="mt-5">
+        <p className="text-sm font-medium text-ink">
+          <Untranslated>{ot('wallet.create.shop')}</Untranslated>
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {(recent?.shops ?? []).map((s) => (
+            <Chip
+              key={s.id}
+              active={shopId === s.id}
+              onClick={() => {
+                const on = shopId === s.id
+                setShopId(on ? null : s.id)
+                setShopName(on ? null : s.name)
+                /* ★ ร้านกาแฟ → เดาประเภทเป็นกาแฟให้เลย (ข้อกำหนด 2.7) */
+                if (!on && /กาแฟ|coffee|cafe/i.test(`${s.name} ${s.cuisine ?? ''}`)) setCategory('COFFEE')
+              }}
+            >
+              <span dir="auto">{s.name}</span>
+            </Chip>
+          ))}
+          <Chip active={shopSearch} onClick={() => setShopSearch((v) => !v)}>
+            <Untranslated>{ot('wallet.create.shopSearch')}</Untranslated>
+          </Chip>
+        </div>
+
+        {shopSearch ? (
+          <div className="mt-2">
+            <Input
+              radius="round"
+              value={shopQuery}
+              onChange={(e) => setShopQuery(e.target.value)}
+              placeholder={ot('wallet.create.shopSearch')}
+              aria-label={ot('wallet.create.shopSearch')}
+            />
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {shopList.map((s) => (
+                <Chip
+                  key={s.id}
+                  active={shopId === s.id}
+                  onClick={() => {
+                    setShopId(s.id)
+                    setShopName(s.name)
+                    setShopSearch(false)
+                  }}
+                >
+                  <span dir="auto">{s.name}</span>
+                </Chip>
+              ))}
+              {/* ★ ร้านที่ยังไม่มีในระบบ — ใช้เป็นชื่อบิลได้ แต่ไม่ผูก restaurant_id */}
+              {shopQuery.trim() && !shopList.some((s) => s.name === shopQuery.trim()) ? (
+                <Chip
+                  active={false}
+                  onClick={() => {
+                    setShopId(null)
+                    setShopName(shopQuery.trim())
+                    setShopSearch(false)
+                  }}
+                >
+                  <Untranslated>{ot('wallet.create.shopNew', { name: shopQuery.trim() })}</Untranslated>
+                </Chip>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {shopName && !shopId ? (
+          <p dir="auto" className="mt-1.5 text-xs text-ink-soft">
+            {shopName}
+          </p>
+        ) : null}
+      </div>
+
+      {/* ── 4 · คนที่หาร ─────────────────────────────────────── */}
+      <div className="mt-5">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-sm font-medium text-ink">
+            <Untranslated>{ot('wallet.create.people')}</Untranslated>
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            /* ★ สูง 44px ตามข้อกำหนด — ลิงก์ตัวเล็กที่สูง 16px กดพลาดตลอดบนมือถือ */
+            className="-my-2 min-h-11 px-2 text-xs text-link hover:underline"
+          >
+            <Untranslated>{ot('wallet.create.seeAll')}</Untranslated>
+          </button>
+        </div>
+
+        {/* กลุ่มที่บันทึกไว้ */}
+        {(recent?.groups ?? []).length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {recent!.groups.map((g) => (
+              <Chip
+                key={g.id}
+                active={g.memberIds.every((id) => picked.includes(id)) && g.memberIds.length === picked.length}
+                onClick={() => setPicked(g.memberIds)}
+              >
+                <span dir="auto">{g.name}</span>
+              </Chip>
+            ))}
+          </div>
+        ) : null}
+
+        {/*
+          * ★★ วงกลมใหญ่แตะเลือก ไม่ใช่ checkbox
+          *    ★ ข้อกำหนดระบุชัด และเหตุผลคือเป้ากด 56px กับ 16px ต่างกันมาก
+          *      เมื่อยืนกดด้วยนิ้วโป้งข้างเดียว
+          */}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {quickPeople.map((p) => {
+            const on = picked.includes(p.id)
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => toggle(p.id)}
+                aria-pressed={on}
+                className="flex w-16 flex-col items-center gap-1"
+              >
+                <span
+                  className={cn(
+                    'relative grid place-items-center rounded-full p-0.5 transition-colors',
+                    on ? 'bg-accent' : 'bg-transparent',
+                  )}
+                >
+                  <ChatAvatar name={p.name} url={p.avatarUrl} size={48} />
+                  {on ? (
+                    <span className="absolute -bottom-0.5 -inset-e-0.5 grid size-5 place-items-center rounded-full bg-accent text-accent-ink">
+                      <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="m5 13 4 4L19 7" />
+                      </svg>
+                    </span>
+                  ) : null}
+                </span>
+                <span dir="auto" className={cn('w-full truncate text-center text-[11px]', on ? 'font-semibold text-ink' : 'text-ink-soft')}>
+                  {p.name}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {showAll ? (
+          <div className="mt-2 rounded-2xl border border-line bg-elevated/40 p-3">
+            <Input
+              radius="round"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={ot('wallet.create.search')}
+              aria-label={ot('wallet.create.search')}
+            />
+            <div className="mt-2 max-h-56 overflow-y-auto">
+              {allList.length === 0 ? (
+                <p className="py-4 text-center text-xs text-ink-faint">{ot('wallet.create.noMatch')}</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-1">
+                  {allList.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => toggle(p.id)}
+                      aria-pressed={picked.includes(p.id)}
+                      className={cn(
+                        'flex min-h-11 items-center gap-2 rounded-xl px-2 py-1.5 text-start transition-colors',
+                        picked.includes(p.id) ? 'bg-accent/15' : 'hover:bg-surface',
+                      )}
+                    >
+                      <ChatAvatar name={p.name} url={p.avatarUrl} size={28} />
+                      <span dir="auto" className="min-w-0 flex-1 truncate text-[13px] text-ink">
+                        {p.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-ink-soft">{ot('wallet.create.picked', { n: picked.length })}</p>
+
+          {/* ★ "ฉันร่วมจ่ายด้วย" อยู่ในส่วนนี้ และจำค่าล่าสุด */}
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-ink">
+            <input
+              type="checkbox"
+              checked={prefs.includeSelf}
+              onChange={(e) => setPref('includeSelf', e.target.checked)}
+              className="size-4 accent-(--color-accent)"
+            />
+            {ot('wallet.create.includeSelf')}
+          </label>
+        </div>
+
+        {fieldError.people ? <p className="mt-1 text-xs text-danger">{fieldError.people}</p> : null}
+      </div>
+
+      {/* ── 5 · สรุปยอดต่อคน ─────────────────────────────────── */}
+      {picked.length > 0 && Number(amount) > 0 ? (
+        <div className="mt-4 rounded-2xl border border-line bg-elevated/50 p-4">
+          <p className="text-[22px] font-bold text-ink">
+            <Untranslated>
+              {ot('wallet.create.summaryHead', {
+                n: picked.length + (prefs.includeSelf ? 1 : 0),
+                each: `฿${formatBaht(locale, toBaht(split.perHeadSatang))}`,
+              })}
+            </Untranslated>
+          </p>
+          {prefs.includeSelf ? (
+            <p className="mt-0.5 text-xs text-ink-soft">
+              {ot('wallet.create.myShare')} ฿{formatBaht(locale, toBaht(split.mineSatang))}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* ── 6 · เพิ่มรายละเอียด ──────────────────────────────── */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="mt-4 flex min-h-11 w-full items-center justify-between gap-2 rounded-xl px-1 text-start"
+      >
+        <span className="text-sm font-medium text-link">
+          + <Untranslated>{ot('wallet.create.more')}</Untranslated>
+        </span>
+        {/* ★ สรุปสั้น ๆ ตอนยุบ ถ้ากรอกอะไรไปแล้ว (ข้อกำหนด 2.7) */}
+        {!open ? (
+          <span dir="auto" className="truncate text-xs text-ink-faint">
+            {[
+              billDate !== todayIso() ? billDate : '',
+              Number(delivery) ? `${ot('wallet.create.delivery')} ฿${delivery}` : '',
+              Number(discount) ? `${ot('wallet.create.discount')} ฿${discount}` : '',
+              receiptPath ? ot('wallet.create.receiptDone') : '',
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        ) : null}
+      </button>
+
+      {open ? (
+        <div className="mt-2 flex flex-col gap-4 rounded-2xl border border-line bg-elevated/30 p-4">
+          <Field label={ot('wallet.create.billTitle')}>
+            <Input
+              radius="round"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={100}
+              dir="auto"
+              placeholder={shopName ?? ot('wallet.create.titleAuto', { date: billDate })}
+            />
           </Field>
 
           <Field label={ot('wallet.create.category')}>
             <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map((c) => (
+              {(['FOOD', 'COFFEE', 'OTHER'] as const).map((c) => (
                 <Chip key={c} active={category === c} onClick={() => setCategory(c)}>
-                  {categoryLabel(ot, c)}
+                  {ot(`wallet.cat.${c}` as OfficeKey)}
                 </Chip>
               ))}
             </div>
           </Field>
-        </div>
 
-        {/*
-          * ── ผู้ร่วมจ่าย ──────────────────────────────────────────
-          *
-          * ★★★ มีคนในระบบสิบแปดคนแล้ว และจะเพิ่มขึ้นเรื่อย ๆ
-          *
-          *     ★ กองชิปที่ไม่เรียงและหาไม่ได้ ใช้ได้ตอนมีห้าคน
-          *       ★★ พอถึงยี่สิบคนมันกลายเป็นการไล่อ่านทีละอันจนเจอ
-          *          ซึ่งเป็นงานที่คนทำผิดพลาดง่ายกว่าการพิมพ์ค้นหา
-          *
-          * ★★ คนที่เลือกแล้วถูกดันขึ้นบนสุดเสมอ
-          *    ★ ไม่งั้นพอกรองคำค้นแล้ว คนที่เลือกไว้ก่อนหน้าจะหายไปจากจอ
-          *      ★★ แล้วคนกรอกจะไม่แน่ใจว่าเลือกใครไปบ้าง และเลือกซ้ำหรือตกหล่น
-          */}
-        <div>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-ink">
-              {ot('wallet.create.people')}
-              <span className="ms-0.5 text-accent">*</span>
-              {picked.length > 0 ? (
-                <span className="ms-2 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
-                  {ot('wallet.create.picked', { n: picked.length })}
-                </span>
-              ) : null}
-            </p>
-
-            {/* ★ ไม่มีหัวกลุ่มฝ่ายให้กด "เลือกทั้งฝ่าย" แล้ว — ปุ่มเลือกทุกคน
-                จึงมาอยู่ที่นี่แทน ★★ บิลกาแฟทั้งออฟฟิศจบในการกดครั้งเดียว */}
-            <div className="flex items-center gap-3">
-              {people.length > 0 && picked.length < people.length ? (
-                <button
-                  type="button"
-                  onClick={() => setPicked(people.map((p) => p.id))}
-                  className="text-xs text-accent underline-offset-2 hover:underline"
-                >
-                  {ot('wallet.create.everyone')}
-                </button>
-              ) : null}
-              {picked.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setPicked([])}
-                  className="text-xs text-ink-faint underline-offset-2 hover:text-ink hover:underline"
-                >
-                  {ot('wallet.create.clear')}
-                </button>
-              ) : null}
-            </div>
-          </div>
-
-          {/* ── คนที่เลือกแล้ว ─────────────────────────────────────
-              ★★★ อยู่เหนือช่องค้นหา ไม่ใช่ปนอยู่ในรายการ
-                   ★ พอพิมพ์ค้นหา รายการข้างล่างเปลี่ยนทั้งก้อน — ถ้าของที่
-                     เลือกไว้อยู่ในนั้นด้วย คนกรอกจะไม่แน่ใจว่ายังอยู่ไหม
-                   ★★ แยกออกมาแล้ว "ใครอยู่ในบิลนี้" ตอบได้ตลอดเวลา */}
-          {pickedPeople.length > 0 ? (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {pickedPeople.map((p) => (
-                <span key={p.id} className="pick-tag">
-                  <ChatAvatar name={p.name} url={p.avatarUrl} size={18} />
-                  <span className="truncate" dir="auto">
-                    {p.name}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => toggle(p.id)}
-                    className="pick-tag-x"
-                    aria-label={ot('wallet.create.remove', { name: p.name })}
-                  >
-                    <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
-                      <path d="M6 6l12 12M18 6L6 18" />
-                    </svg>
-                  </button>
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          <Input
-            radius="round"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={ot('common.search')}
-            className="mt-2.5"
-          />
-
-          {/* ── รายชื่อ ────────────────────────────────────────────
-              ★★★ สองคนต่อแถว และมีแค่ชื่อ
-                   ★ ของเดิมเป็นป้ายกว้างไม่เท่ากัน (ชื่อ + ฝ่ายต่อท้าย)
-                     ห่อลงมาเรื่อย ๆ — บนมือถือป้ายเดียวกินเกือบเต็มบรรทัด
-                     ★★ พนักงาน 30 คนกลายเป็นบล็อกสูงกว่าสองหน้าจอ
-                   ★ สองคอลัมน์ตัดความสูงลงครึ่งหนึ่งทันที และการตัดฝ่ายออก
-                     คืนความกว้างให้ชื่อ ซึ่งเป็นสิ่งเดียวที่ต้องอ่าน
-              ★ กล่องสูงคงที่ — 5 คนกับ 50 คนทำให้หน้าสูงเท่ากัน
-                ★★ ปุ่มบันทึกจึงอยู่ที่เดิมเสมอ ไม่ต้องเลื่อนตามหาบนมือถือ */}
-          <div className="pick-box mt-2.5">
-            <div className="pick-scroll">
-              {people.length === 0 ? (
-                <p className="px-3 py-6 text-center text-xs text-ink-faint">
-                  {ot('common.loading')}
-                </p>
-              ) : shownPeople.length === 0 ? (
-                <p className="px-3 py-6 text-center text-xs text-ink-faint">
-                  {ot('wallet.create.noMatch')}
-                </p>
-              ) : (
-                <div className="grid grid-cols-2">
-                  {shownPeople.map((p) => {
-                    const on = picked.includes(p.id)
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => toggle(p.id)}
-                        aria-pressed={on}
-                        className="pick-row"
-                      >
-                        <span className="pick-check" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="m5 13 4 4L19 7" />
-                          </svg>
-                        </span>
-                        {/* ★★ รูปจริงถ้ามี ไม่มีก็ตัวอักษรแรกบนพื้นสีคงที่
-                            ★ ChatAvatar ตัวเดียวกับที่แชทใช้ — สีของคนคนหนึ่ง
-                              จึงเหมือนกันทุกหน้า ซึ่งเป็นสิ่งที่ทำให้จำหน้าได้ */}
-                        <ChatAvatar name={p.name} url={p.avatarUrl} size={24} />
-                        <span className="min-w-0 flex-1 truncate text-[13px] text-ink" dir="auto">
-                          {p.name}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {picked.length === 0 ? (
-            <p className="mt-1.5 text-xs text-ink-faint">{ot('wallet.create.noPeople')}</p>
-          ) : null}
-        </div>
-
-        {/* ── วิธีหาร ────────────────────────────────────────────── */}
-        <div>
-          <p className="text-sm font-medium text-ink">{ot('wallet.create.splitLabel')}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Chip active={split === 'EQUAL'} onClick={() => setSplit('EQUAL')}>
-              {ot('wallet.create.splitEqual')}
-            </Chip>
-            <Chip active={split === 'CUSTOM'} onClick={() => setSplit('CUSTOM')}>
-              {ot('wallet.create.splitCustom')}
-            </Chip>
-          </div>
-
-          {split === 'EQUAL' ? (
-            <label className="mt-3 flex cursor-pointer items-start gap-2">
+          <Field label={ot('wallet.create.date')} error={fieldError.date}>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Chip active={billDate === todayIso()} onClick={() => setBillDate(todayIso())}>
+                <Untranslated>{ot('wallet.create.today')}</Untranslated>
+              </Chip>
+              <Chip active={billDate === yesterdayIso()} onClick={() => setBillDate(yesterdayIso())}>
+                <Untranslated>{ot('wallet.create.yesterday')}</Untranslated>
+              </Chip>
               <input
-                type="checkbox"
-                checked={includeSelf}
-                onChange={(e) => setIncludeSelf(e.target.checked)}
-                className="mt-0.5 size-4 accent-[var(--color-accent)]"
+                type="date"
+                value={billDate}
+                /* ★ ห้ามเลือกวันในอนาคต — บังคับที่ input ด้วย ไม่ใช่เช็กตอนกดบันทึก */
+                max={todayIso()}
+                onChange={(e) => {
+                  if (e.target.value > todayIso()) {
+                    setFieldError((f) => ({ ...f, date: ot('wallet.create.noFuture') }))
+                    return
+                  }
+                  setFieldError((f) => ({ ...f, date: '' }))
+                  setBillDate(e.target.value)
+                }}
+                className="h-11 rounded-xl border border-line bg-surface px-3 text-sm text-ink"
               />
-              <span>
-                <span className="text-sm text-ink">{ot('wallet.create.includeSelf')}</span>
-                <span className="block text-xs text-ink-faint">
-                  {ot('wallet.create.includeSelfHint')}
-                </span>
-              </span>
-            </label>
-          ) : null}
-        </div>
-
-        {/* ── ตัวอย่างยอด ───────────────────────────────────────── */}
-        {split === 'EQUAL' && preview && picked.length > 0 ? (
-          <div className="split-preview rounded-2xl p-4">
-            {/*
-              * ★★★ "ตกคนละเท่าไหร่" เป็นตัวเลขหลัก ไม่ใช่รายการเล็ก ๆ
-              *
-              *     ★ นี่คือตัวเลขเดียวที่คนกรอกอยากรู้ก่อนกดบันทึก และเป็น
-              *       ตัวเลขที่เขาจะเอาไปบอกคนอื่นต่อ
-              *       ★★ ของเดิมมันปนอยู่ในรายการชื่อตัวเท่ากันหมด
-              *          ต้องอ่านทีละบรรทัดถึงจะเจอ
-              *     ★ รายชื่อยังอยู่ข้างล่างสำหรับตรวจว่าใครได้เท่าไหร่
-              *       ซึ่งสำคัญตอนหารไม่ลงตัว
-              */}
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-xs text-ink-faint">{ot('wallet.create.perHead')}</span>
-              <span className="text-[26px] font-bold tabular-nums text-ink">
-                ฿{formatBaht(locale, preview.shares[0] ?? preview.myShare)}
-              </span>
             </div>
+          </Field>
 
-            <div className="mt-3 flex flex-col gap-0.5 border-t border-line pt-3">
-              {picked.map((id, i) => (
-                <div key={id} className="flex justify-between text-sm">
-                  <span className="text-ink-soft">
-                    {people.find((p) => p.id === id)?.name ?? '—'}
+          <Field label={ot('wallet.create.splitLabel')}>
+            <div className="flex flex-wrap gap-1.5">
+              <Chip active={prefs.splitMode === 'EQUAL'} onClick={() => setPref('splitMode', 'EQUAL')}>
+                {ot('wallet.create.splitEqual')}
+              </Chip>
+              <Chip active={prefs.splitMode === 'CUSTOM'} onClick={() => setPref('splitMode', 'CUSTOM')}>
+                {ot('wallet.create.splitCustom')}
+              </Chip>
+            </div>
+          </Field>
+
+          {prefs.splitMode === 'CUSTOM' && picked.length > 0 ? (
+            <div>
+              {picked.map((id) => (
+                <div key={id} className="flex items-center gap-2 py-1">
+                  <ChatAvatar name={byId.get(id)?.name ?? '—'} url={byId.get(id)?.avatarUrl ?? null} size={28} />
+                  <span dir="auto" className="min-w-0 flex-1 truncate text-sm text-ink">
+                    {byId.get(id)?.name ?? '—'}
                   </span>
-                  <span className="tabular-nums text-ink">฿{formatBaht(locale, preview.shares[i] ?? 0)}</span>
+                  <input
+                    value={custom[id] ?? ''}
+                    onChange={(e) =>
+                      setCustom((c) => ({ ...c, [id]: e.target.value.replace(/[^\d.]/g, '') }))
+                    }
+                    inputMode="decimal"
+                    placeholder="0"
+                    aria-label={byId.get(id)?.name ?? ''}
+                    className="h-11 w-24 rounded-xl border border-line bg-surface px-3 text-end text-sm tabular-nums text-ink"
+                  />
                 </div>
               ))}
-              {includeSelf ? (
-                <div className="mt-1 flex justify-between border-t border-line pt-1 text-sm">
-                  <span className="text-ink-soft">{ot('wallet.create.myShare')}</span>
-                  <span className="tabular-nums text-ink">฿{formatBaht(locale, preview.myShare)}</span>
-                </div>
-              ) : null}
+              <p className={cn('mt-1 text-xs', remainder === 0 ? 'text-ink-faint' : 'text-warn')}>
+                {remainder >= 0
+                  ? ot('wallet.create.leftOver', { amount: `฿${formatBaht(locale, toBaht(remainder))}` })
+                  : ot('wallet.create.overBy', { amount: `฿${formatBaht(locale, toBaht(-remainder))}` })}
+              </p>
+              {fieldError.custom ? <p className="mt-1 text-xs text-danger">{fieldError.custom}</p> : null}
             </div>
-          </div>
-        ) : null}
+          ) : null}
 
-        {split === 'CUSTOM' && picked.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {picked.map((id) => (
-              <div key={id} className="flex items-center gap-3">
-                <span className="flex-1 truncate text-sm text-ink">
-                  {people.find((p) => p.id === id)?.name ?? '—'}
-                </span>
-                <Input radius="round"
-                  value={custom[id] ?? ''}
-                  onChange={(e) => setCustom((c) => ({ ...c, [id]: e.target.value }))}
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  inputMode="decimal"
-                  className="max-w-32 tabular-nums"
-                />
-              </div>
-            ))}
-            {/* ★ เตือนทันทีเมื่อผลรวมเกิน — ไม่ต้องรอให้ server ปฏิเสธ */}
-            <p
-              className={cn(
-                'text-xs tabular-nums',
-                customSum > totalNum ? 'text-danger' : 'text-ink-faint',
-              )}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={ot('wallet.create.delivery')}>
+              <input
+                value={delivery}
+                onChange={(e) => setDelivery(e.target.value.replace(/[^\d.]/g, ''))}
+                inputMode="decimal"
+                placeholder="0"
+                aria-label={ot('wallet.create.delivery')}
+                className="h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm tabular-nums text-ink"
+              />
+            </Field>
+            <Field label={ot('wallet.create.discount')}>
+              <input
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value.replace(/[^\d.]/g, ''))}
+                inputMode="decimal"
+                placeholder="0"
+                aria-label={ot('wallet.create.discount')}
+                className="h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm tabular-nums text-ink"
+              />
+            </Field>
+          </div>
+
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={prefs.rounded}
+              onChange={(e) => setPref('rounded', e.target.checked)}
+              className="size-4 accent-(--color-accent)"
+            />
+            <Untranslated>{ot('wallet.create.roundUp')}</Untranslated>
+          </label>
+
+          <div>
+            {/* ★ capture="environment" เปิดกล้องหลังเลย — แต่ยังเลือกจากคลังได้
+                 ★★ ถ้าผู้ใช้ไม่อนุญาตกล้อง เบราว์เซอร์จะถอยไปหน้าเลือกไฟล์เอง */}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) void uploadReceipt(f)
+                e.target.value = ''
+              }}
+            />
+            <Button
+              variant="secondary"
+              loading={uploading}
+              onClick={() => fileRef.current?.click()}
+              className="min-h-11"
             >
-              {ot('wallet.create.customSum', {
-                sum: `฿${formatBaht(locale, customSum)}`,
-                total: `฿${formatBaht(locale, totalValid ? totalNum : 0)}`,
-              })}
-              {customSum > totalNum ? ` — ${ot('wallet.create.overTotal')}` : ''}
-            </p>
+              <Untranslated>
+                {receiptPath ? ot('wallet.create.receiptDone') : ot('wallet.create.receiptAdd')}
+              </Untranslated>
+            </Button>
           </div>
-        ) : null}
+        </div>
+      ) : null}
 
-        {error ? (
-          <p role="alert" className="text-sm text-danger">
-            {error}
-          </p>
-        ) : null}
+      {error ? (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
 
-        <Button type="submit" variant="primary" size="lg" loading={busy} disabled={!canSubmit} block>
-          {ot('wallet.create.submit')}
+      {/* ── 7 · ปุ่มบันทึก (ติดล่างจอ) ───────────────────────── */}
+      {/*
+        * ★★ sticky ไม่ใช่ fixed — fixed จะลอยทับเนื้อหาตอนเลื่อนสุดล่าง
+        *    ★ sticky bottom-0 หยุดอยู่ท้ายฟอร์มพอดีเมื่อเลื่อนถึง
+        *    ★★ pb-28 ที่ตัวหน้าเผื่อที่ให้ปุ่มไม่ทับช่องสุดท้าย
+        */}
+      <div className="sticky bottom-0 z-30 -mx-4 mt-5 border-t border-line bg-page/95 px-4 py-3 backdrop-blur-md">
+        <Button
+          variant="primary"
+          loading={busy}
+          onClick={submit}
+          className="h-12 w-full text-base"
+        >
+          <Untranslated>
+            {missing === 'amount'
+              ? ot('wallet.create.needAmount')
+              : missing === 'people'
+                ? ot('wallet.create.needPeople')
+                : ot('wallet.create.submit')}
+          </Untranslated>
         </Button>
       </div>
-    </form>
+
+      {/* ── ถามว่าบันทึกเป็นกลุ่มไหม ─────────────────────────── */}
+      {askGroup ? (
+        <div className="fixed inset-0 z-70 grid place-items-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl border border-line bg-elevated p-5">
+            <p className="text-base font-semibold text-ink">
+              <Untranslated>{ot('wallet.create.saveGroup')}</Untranslated>
+            </p>
+            <p className="mt-1 text-xs text-ink-soft">
+              <Untranslated>{ot('wallet.create.saveGroupHint')}</Untranslated>
+            </p>
+            <Input
+              radius="round"
+              className="mt-3"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              maxLength={40}
+              dir="auto"
+              placeholder={ot('wallet.create.groupName')}
+              aria-label={ot('wallet.create.groupName')}
+            />
+            <div className="mt-4 flex gap-2">
+              <Button variant="primary" className="min-h-11 flex-1" onClick={saveGroup}>
+                {ot('common.save')}
+              </Button>
+              <Button variant="ghost" className="min-h-11" onClick={() => { setAskGroup(false); finish() }}>
+                <Untranslated>{ot('wallet.create.skip')}</Untranslated>
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <Toast toast={toast} />
+    </div>
   )
+}
+
+function todayIso(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function yesterdayIso(): string {
+  const d = new Date(Date.now() - 86_400_000)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function Field({
   label,
-  required,
+  error,
   children,
 }: {
   label: string
-  required?: boolean
+  error?: string
   children: React.ReactNode
 }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-ink">
-        {label}
-        {required ? <span className="ms-0.5 text-accent">*</span> : null}
-      </span>
+    <div>
+      <p className="mb-1.5 text-xs text-ink-soft">{label}</p>
       {children}
-    </label>
+      {error ? <p className="mt-1 text-xs text-danger">{error}</p> : null}
+    </div>
   )
 }
 
@@ -456,8 +898,9 @@ function Chip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      /* ★ สูง 44px ตามข้อกำหนด — จุดแตะทุกจุดต้องกดโดนด้วยนิ้วโป้ง */
       className={cn(
-        'h-8 rounded-full px-3 text-[13px] transition-colors',
+        'min-h-11 rounded-full px-3.5 text-[13px] transition-colors',
         active ? 'bg-ink text-page' : 'bg-surface text-ink-soft hover:bg-surface-hover hover:text-ink',
       )}
     >

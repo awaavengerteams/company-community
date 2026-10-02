@@ -611,7 +611,15 @@ export type Database = {
           split_mode?: SplitMode
           restaurant_id?: string | null
         }
-        Update: { title?: string; receipt_path?: string | null }
+        Update: {
+          title?: string
+          receipt_path?: string | null
+          /* 0045 — เขียนตามหลังการสร้างบิล (ดู api/office/wallet/route.ts) */
+          restaurant_id?: string | null
+          delivery_fee?: number
+          discount?: number
+          rounded?: boolean
+        }
         Relationships: []
       }
 
@@ -908,6 +916,21 @@ export type Database = {
              ★★ ประกาศ Insert/Update ไว้เพื่อให้ชนิดครบรูป ไม่ใช่เพราะมีคนใช้ */
         Insert: { message_id: string; user_id: string; emoji: string }
         Update: never
+        Relationships: []
+      }
+
+      /* 0045 — กลุ่มคนที่หารค่าข้าวด้วยบ่อย */
+      split_groups: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          member_ids: string[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: { owner_id: string; name: string; member_ids: string[] }
+        Update: { name?: string; member_ids?: string[] }
         Relationships: []
       }
 

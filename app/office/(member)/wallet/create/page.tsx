@@ -14,5 +14,5 @@ export default async function WalletCreatePage() {
   const viewer = await getOfficeViewer()
   if (!viewer) redirect('/')
 
-  return <WalletCreate selfId={viewer.id} />
+  return <WalletCreate />
 }

@@ -129,6 +129,19 @@ const createSchema = z
     splitMode: z.enum(['EQUAL', 'CUSTOM']).default('EQUAL'),
     includeSelf: z.boolean().default(true),
     shares: z.array(shareSchema).min(1, 'valid.noPeople').max(50),
+    /*
+     * ★★★ ร้าน — คอลัมน์ restaurant_id มีมาตั้งแต่ 0026 แต่ไม่เคยมีใครเขียน
+     *
+     *     ★ ผลคือหน้าสรุปแสดง "ไม่ระบุร้าน" ทุกบรรทัดเสมอ และหัวข้อ
+     *       "ร้านที่ใช้จ่ายมากสุด" ไม่เคยมีความหมายเลยตั้งแต่วันแรก
+     *       ★★ เจอตอนไล่ดูหน้าสรุปด้วยข้อมูลจริง ไม่ใช่ตอนอ่านโค้ด
+     */
+    restaurantId: z.uuid().optional().nullable(),
+    /* ★ ค่าส่ง/ส่วนลด รวม/หักอยู่ใน total แล้ว — เก็บไว้เพื่อให้ CSV และ
+         การเปิดบิลเก่ามาดูรู้ที่มาของตัวเลข (ดู lib/office/split.ts) */
+    deliveryFee: z.number().min(0).max(9_999_999).default(0),
+    discount: z.number().min(0).max(9_999_999).default(0),
+    rounded: z.boolean().default(false),
   })
   .superRefine((input, ctx) => {
     /* ★ โหมด CUSTOM ต้องมียอดครบทุกคน — ตรวจที่นี่เพื่อให้ error อ่านรู้เรื่อง
@@ -160,5 +173,43 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   })
 
   if (error) throw fromPostgresError(error)
+
+  /*
+   * ★★★ เขียนร้านและรายละเอียดเสริมด้วย UPDATE ตามหลัง ไม่ได้ส่งเข้า RPC
+   *
+   *     ★ create_expense_bill รับพารามิเตอร์ตายตัว 9 ตัว การเพิ่มพารามิเตอร์
+   *       ต้อง drop+create ฟังก์ชันใหม่ ซึ่งแปลว่าถ้า migration ยังไม่ขึ้น
+   *       ระบบสร้างบิลไม่ได้เลยทั้งระบบ
+   *       ★★ UPDATE ตามหลังทำให้ "เงินถูกต้องเสมอ" ไม่ว่า migration จะขึ้นหรือยัง
+   *
+   * ★★ ล้มแล้วไม่ทำให้ทั้งคำขอล้ม — ตั้งใจ
+   *    ★ ยอดเงินกับรายการหนี้ถูกบันทึกครบไปแล้วตั้งแต่ RPC ★★ สิ่งที่หายไป
+   *      คือ "ร้านไหน · ค่าส่งเท่าไหร่" ซึ่งเป็นข้อมูลประกอบ
+   *      ★ การโยนทั้งบิลทิ้งเพราะคอลัมน์เสริมเขียนไม่ได้ แย่กว่ามาก —
+   *        ผู้ใช้ยืนอยู่หน้าแคชเชียร์และเพิ่งกดบันทึกไปแล้ว
+   */
+  if (data?.id) {
+    const extra: {
+      restaurant_id?: string
+      delivery_fee?: number
+      discount?: number
+      rounded?: boolean
+    } = {}
+    if (body.restaurantId) extra.restaurant_id = body.restaurantId
+    if (body.deliveryFee > 0) extra.delivery_fee = body.deliveryFee
+    if (body.discount > 0) extra.discount = body.discount
+    if (body.rounded) extra.rounded = body.rounded
+
+    if (Object.keys(extra).length > 0) {
+      const { error: extraError } = await admin
+        .from('expense_bills')
+        .update(extra)
+        .eq('id', data.id)
+      if (extraError) {
+        console.warn('[wallet] เขียนรายละเอียดเสริมของบิลไม่สำเร็จ', extraError.message)
+      }
+    }
+  }
+
   return ok({ id: data?.id, title: data?.title })
 })
